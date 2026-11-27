@@ -1,0 +1,48 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.2.0, pluggy-1.7.0 -- D:\DATN\.venv\Scripts\python.exe
+cachedir: .venv\pytest-cache
+rootdir: D:\DATN
+configfile: pyproject.toml
+plugins: anyio-4.16.0, asyncio-1.5.0, cov-7.1.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/integration/test_forensic_audit.py::test_training_latency_and_saved_scores FAILED [100%]
+
+================================== FAILURES ===================================
+___________________ test_training_latency_and_saved_scores ____________________
+
+real_panel =              cik      accession_number  ... sic_code  ticker
+0     0000001800  0001047469-11-001056  ...     2834     ...-24-000276  ...     7990     DIS
+1505  0001744489  0001744489-25-000155  ...     7990     DIS
+
+[1506 rows x 50 columns]
+bundle = ModelArtifactBundle(model_version='v1.2.0', clusterer=<finhealth.ml.pca_clustering.FinancialHealthClusterer object at ...000000063038890>, 'random_forest': <finhealth.ml.distress_classifier.DistressClassifier object at 0x0000000061E856D0>})
+
+    def test_training_latency_and_saved_scores(
+        real_panel: pd.DataFrame, bundle: ModelArtifactBundle
+    ) -> None:
+        """Benchmark a complete fit and compare independently reproduced saved metrics."""
+    
+        def train() -> None:
+            """Fit and evaluate the full ML pipeline on the real time series."""
+            fitted = train_and_evaluate_pipeline(real_panel, 2021, validation_end_year=2022)
+            for section in ("classification_xgboost", "forecasting", "split_summary"):
+                assert fitted.evaluation_report[section] == bundle.evaluation_report[section]
+    
+        elapsed, _ = _timing("C full training and evaluation", train, 1, warm=False)
+>       assert elapsed < 10_000
+E       assert 11238.019800046459 < 10000
+
+tests\integration\test_forensic_audit.py:712: AssertionError
+---------------------------- Captured stdout call -----------------------------
+BENCHMARK|C full training and evaluation|1|11238.019800|11238.019800|19.336003
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\DATN\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/integration/test_forensic_audit.py::test_training_latency_and_saved_scores
+=================== 1 failed, 1 warning in 62.92s (0:01:02) ===================

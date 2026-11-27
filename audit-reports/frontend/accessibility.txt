@@ -1,0 +1,18 @@
+
+Running 1 test using 1 worker
+
+  x  1 e2e\research.spec.ts:125:1 › WCAG AA checks on both themes and dense data routes (1.1m)
+
+
+  1) e2e\research.spec.ts:125:1 › WCAG AA checks on both themes and dense data routes ──────────────
+
+    Test timeout of 60000ms exceeded.
+
+    Error: browserContext._wrapApiCall: file data stream has unexpected number of bytes
+
+    Error: End of central directory record signature not found. Either not a zip file, or file is truncated.
+
+    Error Context: test-results\research-WCAG-AA-checks-on-both-themes-and-dense-data-routes\error-context.md
+
+  1 failed
+    e2e\research.spec.ts:125:1 › WCAG AA checks on both themes and dense data routes ───────────────

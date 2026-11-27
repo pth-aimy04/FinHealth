@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-11-14T06:14:21.707583+00:00",
+  "dependencies": {
+    "joblib": "1.6.0",
+    "numpy": "2.3.5",
+    "pandas": "3.0.1",
+    "scikit-learn": "1.9.1",
+    "shap": "0.54.1",
+    "xgboost": "3.0.0"
+  },
+  "model_version": "v1.1.0",
+  "sha256": "8e679eea8222b50220896d9102f1af344cdfb4a45d869c15ffc979e04a97d41b"
+}

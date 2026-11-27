@@ -1,0 +1,446 @@
+{
+  "cik": 320193,
+  "entityName": "Apple Inc.",
+  "facts": {
+    "us-gaap": {
+      "Assets": {
+        "label": "Assets",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 352755000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 352583000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 353514000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02"
+            }
+          ]
+        }
+      },
+      "Liabilities": {
+        "label": "Liabilities",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 302083000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 290437000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 279414000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02"
+            }
+          ]
+        }
+      },
+      "StockholdersEquity": {
+        "label": "StockholdersEquity",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 50672000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 62146000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 74100000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02"
+            }
+          ]
+        }
+      },
+      "Revenues": {
+        "label": "Revenues",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 394328000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2021-09-26"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 383285000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2022-09-25"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 119575000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02",
+              "start": "2023-10-01"
+            }
+          ]
+        }
+      },
+      "NetIncomeLoss": {
+        "label": "NetIncomeLoss",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 99803000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2021-09-26"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 96995000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2022-09-25"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 33916000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02",
+              "start": "2023-10-01"
+            }
+          ]
+        }
+      },
+      "OperatingIncomeLoss": {
+        "label": "OperatingIncomeLoss",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 119437000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2021-09-26"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 114301000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2022-09-25"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 40373000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02",
+              "start": "2023-10-01"
+            }
+          ]
+        }
+      },
+      "NetCashProvidedByUsedInOperatingActivities": {
+        "label": "NetCashProvidedByUsedInOperatingActivities",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 122151000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2021-09-26"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 110543000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2022-09-25"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 39895000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02",
+              "start": "2023-10-01"
+            }
+          ]
+        }
+      },
+      "EarningsPerShareBasic": {
+        "label": "EarningsPerShareBasic",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD/shares": [
+            {
+              "end": "2022-09-24",
+              "val": 6.15,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2021-09-26"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 6.16,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2022-09-25"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 2.19,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02",
+              "start": "2023-10-01"
+            }
+          ]
+        }
+      },
+      "AssetsCurrent": {
+        "label": "AssetsCurrent",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 135405000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 143566000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 143692000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02"
+            }
+          ]
+        }
+      },
+      "LiabilitiesCurrent": {
+        "label": "LiabilitiesCurrent",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": 153982000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 145308000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 133973000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02"
+            }
+          ]
+        }
+      },
+      "RetainedEarningsAccumulatedDeficit": {
+        "label": "RetainedEarningsAccumulatedDeficit",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD": [
+            {
+              "end": "2022-09-24",
+              "val": -3068000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-09-30",
+              "val": -214000000,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 8242000000,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02"
+            }
+          ]
+        }
+      },
+      "EarningsPerShareDiluted": {
+        "label": "EarningsPerShareDiluted",
+        "description": "Curated contract fixture; see README.md",
+        "units": {
+          "USD/shares": [
+            {
+              "end": "2022-09-24",
+              "val": 6.11,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2021-09-26"
+            },
+            {
+              "end": "2023-09-30",
+              "val": 6.13,
+              "accn": "0000320193-23-000106",
+              "fy": 2023,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2023-11-03",
+              "start": "2022-09-25"
+            },
+            {
+              "end": "2023-12-30",
+              "val": 2.18,
+              "accn": "0000320193-24-000006",
+              "fy": 2024,
+              "fp": "Q1",
+              "form": "10-Q",
+              "filed": "2024-02-02",
+              "start": "2023-10-01"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

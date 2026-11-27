@@ -1,0 +1,53 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Python build and tool output
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Generated financial data and model artifacts (retain directory placeholders)
+data/**
+!data/**/
+!data/**/.gitkeep
+*.sqlite3
+*.sqlite3-*
+*.bak
+*.mdf
+*.ndf
+*.ldf
+
+# Owner-authorized reproducible financial handoff (no private account data).
+!data/raw/sec_edgar/**
+!data/raw/kaggle/**
+!data/processed/parquet/*.parquet
+!data/artifacts/figures/*.png
+!data/artifacts/models/latest.json
+!data/artifacts/models/*/*.joblib
+!data/artifacts/models/*/*.json
+!data/artifacts/models/*/*.md
+!data/seed/financial.sqlite3
+
+# Frontend and editor output
+node_modules/
+frontend/test-results/
+frontend/*.tsbuildinfo
+audit-reports/frontend/playwright/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

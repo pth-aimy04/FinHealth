@@ -1,0 +1,18 @@
+D:\DATN\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+2026-11-27T11:59:32+0700 | alembic.runtime.migration | INFO | Context impl MSSQLImpl.
+2026-11-27T11:59:32+0700 | alembic.runtime.migration | INFO | Will assume transactional DDL.
+2026-11-27T11:59:33+0700 | alembic.runtime.migration | INFO | Running upgrade  -> 0001, Create financial analytics tables
+2026-11-27T11:59:33+0700 | alembic.runtime.migration | INFO | Running upgrade 0001 -> 0002, Store nullable underwriting inputs, provenance, and credit metrics.
+2026-11-27T11:59:33+0700 | alembic.runtime.migration | INFO | Running upgrade 0002 -> 0003, Index latest-period lookups without scanning statement provenance payloads.
+2026-11-27T11:59:33+0700 | alembic.runtime.migration | INFO | Running upgrade 0003 -> 0004, Create the additive filing and forecast lineage storage.
+2026-11-27T11:59:33+0700 | alembic.runtime.migration | INFO | Running upgrade 0004 -> 0005, Add account isolation, hashed sessions and ingestion administration.
+2026-11-27T11:59:34+0700 | alembic.runtime.migration | INFO | Running upgrade 0005 -> 0006, Add hashed registration OTPs without changing existing account action links.
+2026-11-27T11:59:34+0700 | alembic.runtime.migration | INFO | Running upgrade 0006 -> 0007, Replace sensitive email action links with purpose-bound OTP challenges.
+SQL Server restore verified: {'companies': 98, 'financial_statements': 3680, 'financial_metrics': 3680, 'model_predictions': 259, 'filing_versions': 3753, 'forecast_evidence': 358}
+User rows after restore: 0
+/ 200
+/api/v1/health 200
+/api/v1/companies 200
+/api/v1/models/evaluation 200
+Removed isolated verification database.

@@ -1,0 +1,20 @@
+
+> finhealth-workspace@2.0.0 test:e2e
+> playwright test
+
+[WebServer] (node:4100) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:15824) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 1 worker
+
+  ok 1 e2e\proxy.spec.ts:2:1 › Vite proxy retains real login cookies and CSRF on workspace mutations (6.9s)
+  ok 2 e2e\research.spec.ts:31:1 › guest filters, deep links, comparison, report cutoff and authorization (8.8s)
+  ok 3 e2e\research.spec.ts:67:1 › real cookie session, CSRF workspace writes and user authorization (5.2s)
+  ok 4 e2e\research.spec.ts:116:1 › administrator read views and worker-disabled controls (2.7s)
+  ok 5 e2e\research.spec.ts:134:1 › responsive themes, keyboard dialog and visual evidence (6.7s)
+  ok 6 e2e\research.spec.ts:207:1 › financial simulations, manual scoring, CSV portfolio and saved analysis (6.4s)
+  ok 7 e2e\research.spec.ts:275:1 › WCAG AA checks on both themes and dense data routes (1.1m)
+
+  7 passed (1.8m)

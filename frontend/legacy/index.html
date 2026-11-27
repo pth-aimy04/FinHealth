@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101c2c">
+  <meta name="description" content="Phân tích sức khỏe tài chính từ hồ sơ SEC, dự báo và giải thích kết quả mô hình.">
+  <title>FinHealth — Phân tích rủi ro doanh nghiệp</title>
+  <link rel="icon" type="image/svg+xml" href="/static/finhealth-logo.svg">
+  <link rel="stylesheet" href="/static/vendor/tabler/1.7.5/tabler.min.css">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/tabler-finhealth.css">
+  <script type="module" src="/static/js/app.js"></script>
+</head>
+<body class="fh-preview" data-bs-theme="light">
+  <a class="skip-link" href="#workspace">Chuyển đến phần phân tích</a>
+  <aside class="sidebar navbar navbar-vertical" id="preview-sidebar">
+    <a class="brand" href="/" aria-label="Trang chủ FinHealth"><img class="brand-logo" src="/static/finhealth-logo.svg" alt="">FinHealth<span class="brand-dot">.</span></a>
+    <div class="product-label">NGHIÊN CỨU DOANH NGHIỆP</div>
+    <div class="nav-section-label">PHÂN TÍCH</div><nav class="workspace-nav" role="tablist" aria-label="Các mục phân tích" aria-orientation="vertical">
+      <button id="tab-screener" role="tab" aria-selected="true" aria-controls="panel-screener" data-tab="screener"><span class="nav-icon">▦</span><span>Sàng lọc doanh nghiệp<small>Danh sách và mức rủi ro</small></span></button>
+      <button id="tab-company" role="tab" aria-selected="false" aria-controls="panel-company" tabindex="-1" data-tab="company"><span class="nav-icon">▥</span><span>Phân tích công ty<small>Tài chính và dự báo</small></span></button>
+      <button id="tab-compare" role="tab" aria-selected="false" aria-controls="panel-compare" tabindex="-1" data-tab="compare"><span class="nav-icon">⇄</span><span>So sánh công ty<small>Chỉ số và xu hướng tài chính</small></span></button>
+      <button id="tab-explain" role="tab" aria-selected="false" aria-controls="panel-explain" tabindex="-1" data-tab="explain"><span class="nav-icon">≋</span><span>Giải thích rủi ro<small>Các yếu tố ảnh hưởng đến dự báo</small></span></button>
+      <button id="tab-manual" role="tab" aria-selected="false" aria-controls="panel-manual" tabindex="-1" data-tab="manual"><span class="nav-icon">✎</span><span>Dự báo thủ công<small>Nhập số liệu và giải thích kết quả</small></span></button>
+      <button id="tab-science" role="tab" aria-selected="false" aria-controls="panel-science" tabindex="-1" data-tab="science"><span class="nav-icon">⠿</span><span>Mô hình và phân nhóm<small>Bản đồ PCA và kiểm định</small></span></button>
+      <button id="tab-reports" role="tab" aria-selected="false" aria-controls="panel-reports" tabindex="-1" data-tab="reports"><span class="nav-icon">▤</span><span>Kho báo cáo<small>Phiên bản và nguồn</small></span></button>
+<button id="tab-admin" role="tab" aria-selected="false" aria-controls="panel-admin" tabindex="-1" data-tab="admin" data-admin-only hidden><span class="nav-icon"></span><span>Quản trị dữ liệu<small>Tác vụ và vận hành</small></span></button>
+    </nav>
+    <div class="sidebar-footer" data-admin-only hidden><span class="source-dot"></span> Thông tin hệ thống<p>Quản lý dữ liệu và theo dõi hoạt động của FinHealth.</p><a href="/docs" target="_blank" rel="noopener">Tài liệu kỹ thuật <span>↗</span></a></div>
+  </aside>
+  <div class="main-shell page-wrapper">
+    <header class="topbar">
+      <button id="preview-menu" type="button" class="btn btn-icon" aria-label="Mở menu điều hướng" aria-expanded="false" aria-controls="preview-sidebar">☰</button>
+      <div class="breadcrumb">Phân tích <span>/</span> <strong id="workspace-name">Sàng lọc doanh nghiệp</strong></div>
+      <div class="system-status"><span id="connection" class="connection"><i></i>Đang kết nối</span><span id="active-model">Mô hình —</span><span id="header-universe"></span><span id="header-auc"></span><a href="/docs" aria-label="Mở tài liệu API">API ↗</a></div>
+    </header>
+    <div class="command-bar">
+      <label class="selector-label" for="company-selector">Công ty</label>
+      <select id="company-selector" aria-label="Chọn công ty"><option value="">Đang tải danh sách…</option></select>
+      <div id="quick-select" class="quick-select" aria-label="Công ty tiêu biểu"></div>
+      <button id="follow-company" type="button">Theo dõi doanh nghiệp</button>
+      <button id="save-filter" type="button">Lưu bộ lọc</button>
+      <button id="save-analysis" type="button" disabled>Lưu dự báo thủ công</button>
+      <form id="analyze-form" class="analyze-form" data-admin-only hidden>
+        <label class="sr-only" for="analyze-input">Mã chứng khoán hoặc CIK của công ty</label>
+        <input id="analyze-input" name="identifier" placeholder="Mã CK hoặc CIK" maxlength="30" required autocomplete="off">
+        <button id="analyze-button" type="submit"><span class="analyze-label">Phân tích hồ sơ SEC</span><span class="spinner" hidden></span><span aria-hidden="true">↗</span></button>
+      </form>
+    </div>
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <main id="workspace" tabindex="-1">
+      <section id="panel-screener" role="tabpanel" aria-labelledby="tab-screener">
+        <div class="page-heading"><div><div class="eyebrow">KHÔNG GIAN NGHIÊN CỨU</div><h1>Sàng lọc doanh nghiệp</h1><p>Tìm doanh nghiệp, đối chiếu sức khỏe tài chính và nhận diện rủi ro kỳ tới.</p></div><span class="data-stamp"><i></i>Dữ liệu hiện có</span></div>
+        <div id="universe-kpis" class="kpi-grid" aria-live="polite"></div>
+        <div class="screener-layout">
+          <section class="card screener-card" aria-labelledby="screener-title">
+            <div class="card-heading"><div><h2 id="screener-title">Danh sách doanh nghiệp</h2><span id="result-count" class="muted">Đang tải báo cáo tài chính…</span></div><div class="action-row"><button id="export-screener" class="credit-action" type="button" disabled>Xuất kết quả sàng lọc (CSV)</button><button id="reset-filters" class="text-button">Đặt lại bộ lọc ↺</button></div></div>
+            <div class="filters">
+              <label class="search-field"><span aria-hidden="true">⌕</span><input id="screener-search" type="search" placeholder="Tìm mã hoặc tên công ty" aria-label="Tìm trong danh sách doanh nghiệp"></label>
+              <select id="sector-filter" aria-label="Lọc theo ngành"><option value="">Mọi ngành</option></select>
+              <select id="risk-filter" aria-label="Lọc theo mức rủi ro"><option value="">Mọi mức rủi ro</option><option value="LOW">Thấp</option><option value="MEDIUM">Trung bình</option><option value="HIGH">Cao</option><option value="CRITICAL">Rất cao</option></select>
+              <select id="cluster-filter" aria-label="Lọc theo nhóm sức khỏe tài chính"><option value="">Mọi nhóm</option></select>
+              <select id="year-filter" aria-label="Lọc theo năm tài chính"><option value="">Mọi năm</option></select>
+            </div>
+            <div class="filters numeric-filters">
+              <label>ROA tối thiểu (%)<input id="min-roa-filter" type="number" step="any" placeholder="Mọi mức"></label>
+              <label>Nợ / tài sản tối đa (%)<input id="max-debt-filter" type="number" step="any" placeholder="Mọi mức"></label>
+              <label>Thanh toán hiện hành tối thiểu<input id="min-current-filter" type="number" min="0" step="any" placeholder="Mọi mức"></label>
+            </div>
+            <div class="table-scroll"><table id="screener-table" class="data-table"><thead><tr>
+              <th><button data-sort="ticker">Công ty <span></span></button></th>
+              <th class="numeric"><button data-sort="distress_probability">Xác suất khó khăn <span></span></button></th>
+              <th>Mức rủi ro</th><th class="numeric"><button data-sort="composite_health_score">Điểm sức khỏe <span></span></button></th><th class="numeric"><button data-sort="altman_z_score">Altman Z <span></span></button></th>
+              <th class="numeric"><button data-sort="roa">ROA <span></span></button></th>
+              <th class="numeric"><button data-sort="roe">ROE <span></span></button></th>
+              <th class="numeric"><button data-sort="debt_ratio">Nợ phải trả / tài sản <span></span></button></th>
+              <th class="numeric"><button data-sort="ocf_ratio">Dòng tiền hoạt động / nợ phải trả <span></span></button></th>
+              <th class="numeric"><button data-sort="latest_fiscal_year">Năm tài chính <span></span></button></th>
+            </tr></thead><tbody id="screener-body"><tr><td colspan="10" class="empty">Đang tải danh sách công ty từ dữ liệu SEC…</td></tr></tbody></table></div>
+            <div class="table-footer"><span>Báo cáo năm 10-K · Chọn công ty để phân tích</span><span>Giữ Shift và nhấp tiêu đề để sắp xếp theo nhiều cột</span></div>
+          </section>
+          <div class="screener-aside">
+            <section class="card"><div class="card-heading"><h2>Phân bố rủi ro</h2><span class="muted">Dự báo mới nhất</span></div><div id="risk-distribution" class="distribution"></div></section>
+            <section class="card"><div class="card-heading"><h2>Nhóm sức khỏe tài chính</h2><button class="text-button" data-open-tab="science">Xem chi tiết ↗</button></div><div id="cluster-distribution" class="distribution"></div></section>
+            <section class="card mini-map-card"><div class="card-heading"><h2>Bản đồ tài chính</h2><span class="muted">PC1 × PC2</span></div><div id="mini-pca" class="chart mini-chart"></div><div class="card-footnote">Chọn một điểm để xem phân tích công ty.</div></section>
+          </div>
+        </div>
+      </section>
+      <section id="panel-company" role="tabpanel" aria-labelledby="tab-company" hidden>
+        <div class="page-heading"><div><div class="eyebrow">PHÂN TÍCH CHUYÊN SÂU</div><h1>Phân tích doanh nghiệp</h1><p>Đối chiếu số liệu báo cáo năm với dự báo kỳ tiếp theo.</p></div><span class="data-stamp">SEC 10-K</span></div>
+        <div id="company-overview" class="company-overview"></div>
+        <section class="card credit-card" aria-labelledby="fundamentals-title">
+          <div class="card-heading"><h2 id="fundamentals-title">Sức khỏe tài chính và chất lượng lợi nhuận</h2></div>
+          <div id="company-fundamentals"></div>
+        </section>
+        <section class="card credit-card" aria-labelledby="credit-title">
+          <div class="card-heading"><h2 id="credit-title">Thẩm định tín dụng</h2>
+            <button id="print-memo" class="credit-action" type="button" disabled>In / Xuất báo cáo rủi ro tín dụng</button>
+          </div>
+          <div id="credit-ratios" class="credit-ratios"></div>
+          <div class="card-heading"><h2>Phân vị so với nhóm đối chiếu</h2><span id="peer-cohort" class="muted"></span></div>
+          <div class="table-scroll"><table class="data-table">
+            <thead><tr><th>Chỉ tiêu</th><th class="numeric">Theo báo cáo</th><th class="numeric">Trung vị nhóm</th><th>Phân vị</th><th class="numeric">Số quan sát</th></tr></thead>
+            <tbody id="peer-table"></tbody>
+          </table></div>
+          <p class="card-footnote">Phân vị xếp chỉ tiêu từ thấp đến cao. Phân vị đòn bẩy cao tương ứng với tỷ lệ nợ phải trả trên tài sản cao hơn.</p>
+        </section>
+        <section class="card stress-card" aria-labelledby="stress-title">
+          <div class="card-heading"><h2 id="stress-title">Mô phỏng kịch bản căng thẳng</h2><span class="muted">Báo cáo năm mới nhất</span></div>
+          <div class="action-row scenario-presets" aria-label="Kịch bản căng thẳng">
+            <button class="credit-action" type="button" data-stress-preset="recession" disabled>Suy thoái nhẹ</button>
+            <button class="credit-action" type="button" data-stress-preset="disruption" disabled>Gián đoạn doanh thu</button>
+            <button class="credit-action" type="button" data-stress-preset="liquidity" disabled>Căng thẳng thanh khoản</button>
+          </div>
+          <form id="stress-form" aria-label="Giả định kịch bản">
+            <label>Thay đổi doanh thu <output for="stress-revenue">0%</output>
+              <input id="stress-revenue" name="revenue_shock_pct" type="range" min="-50" max="50" value="0"></label>
+            <label>Thay đổi biên lợi nhuận hoạt động <output for="stress-margin">0 điểm %</output>
+              <input id="stress-margin" name="operating_margin_delta_pct" type="range" min="-30" max="30" value="0"></label>
+            <label>Thay đổi nợ phải trả <output for="stress-debt">0%</output>
+              <input id="stress-debt" name="debt_change_pct" type="range" min="-50" max="100" value="0"></label>
+            <label>Thay đổi dòng tiền hoạt động <output for="stress-ocf">0%</output>
+              <input id="stress-ocf" name="ocf_shock_pct" type="range" min="-80" max="80" value="0"></label>
+            <button class="credit-action" type="reset">Đặt lại kịch bản</button>
+          </form>
+          <p id="stress-status" class="card-footnote" role="status"></p>
+          <div id="stress-result" class="stress-result"></div>
+        </section>
+        <section class="diagnostic-card" aria-labelledby="diagnostic-title"><div class="diagnostic-icon" aria-hidden="true">✧</div><div><div class="eyebrow">TÓM TẮT PHÂN TÍCH</div><h2 id="diagnostic-title">Các tín hiệu tài chính chính</h2><ul id="diagnostic-summary"></ul></div></section>
+        <div class="section-heading"><h2>Số liệu báo cáo và dự báo kỳ tới</h2><div class="chart-legend"><span><i class="line-solid"></i>Theo báo cáo</span><span><i class="line-dashed"></i>XGBoost t+1</span></div></div>
+        <div id="trajectory-charts" class="trajectory-grid"></div>
+        <section class="card"><div class="card-heading"><h2>So sánh kỳ hiện tại và kỳ tới</h2><span id="forecast-caption" class="muted"></span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Chỉ tiêu tài chính</th><th class="numeric">Số liệu báo cáo</th><th class="numeric">Dự báo kỳ tới</th><th class="numeric">Thay đổi</th></tr></thead><tbody id="forecast-table"></tbody></table></div></section>
+        <section class="card history-card"><div class="card-heading"><h2>Lịch sử tài chính theo năm</h2><button id="export-history" class="credit-action" type="button" disabled>Xuất lịch sử 10-K (CSV)</button></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Năm tài chính</th><th>Ngày nộp</th><th class="numeric">Tài sản</th><th class="numeric">Nợ phải trả</th><th class="numeric">Vốn chủ sở hữu</th><th class="numeric">Doanh thu</th><th class="numeric">Lợi nhuận ròng</th><th class="numeric">Dòng tiền hoạt động</th><th class="numeric">ROA</th><th class="numeric">ROE</th><th class="numeric">EPS ($)</th><th class="numeric">Nợ phải trả / tài sản</th><th class="numeric">Dòng tiền hoạt động / nợ phải trả</th><th class="numeric">Altman Z</th><th>Vùng Altman</th><th>Mã hồ sơ SEC</th></tr></thead><tbody id="history-table"></tbody></table></div></section>
+      </section>
+      <section id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+        <div class="page-heading"><div><h1>So sánh công ty<span>.</span></h1><p>Đối chiếu 2–4 công ty theo báo cáo năm mới nhất của từng công ty hoặc cùng một năm tài chính.</p></div></div>
+        <section class="card compare-controls" aria-label="Tùy chọn so sánh">
+          <div class="action-row">
+            <button class="credit-action" type="button" data-compare-preset="AAL,DAL,UAL">Hàng không</button>
+            <button class="credit-action" type="button" data-compare-preset="AAPL,MSFT,NVDA">Công nghệ lớn</button>
+            <button class="credit-action" type="button" data-compare-preset="WMT,TGT,COST">Bán lẻ</button>
+          </div>
+          <form id="compare-form">
+            <label for="compare-identifiers">Mã chứng khoán hoặc CIK<input id="compare-identifiers" maxlength="180" placeholder="AAL, DAL, UAL" required></label>
+            <label for="compare-company-list">Thêm công ty<select id="compare-company-list"><option value="">Chọn từ danh sách</option></select></label>
+            <label for="compare-year">Cùng năm tài chính <span class="muted">(không bắt buộc)</span><input id="compare-year" type="number" min="1990" max="2100" placeholder="Mới nhất"></label>
+            <button class="credit-action" type="submit">So sánh</button>
+          </form>
+          <p id="compare-status" class="muted" role="status"></p>
+        </section>
+        <section class="card compare-results" id="compare-results" hidden>
+          <div class="card-heading"><h2>So sánh theo năm</h2><span id="compare-context" class="muted"></span></div>
+          <div class="table-scroll"><table class="data-table"><thead id="compare-head"></thead><tbody id="compare-body"></tbody></table></div>
+          <div class="card-heading"><h2>Xu hướng tài chính</h2><label class="axis-switch">Chỉ tiêu
+            <select id="compare-metric">
+              <option value="roa">ROA</option><option value="operating_margin">Biên lợi nhuận hoạt động</option>
+              <option value="debt_ratio">Nợ phải trả / tài sản</option><option value="ocf_ratio">Dòng tiền hoạt động / nợ phải trả</option>
+            </select></label></div>
+          <div id="comparison-chart" class="chart comparison-chart"></div>
+          <p id="comparison-note" class="card-footnote"></p>
+        </section>
+      </section>
+      <section id="panel-explain" role="tabpanel" aria-labelledby="tab-explain" hidden>
+        <div class="page-heading"><div><div class="eyebrow">GIẢI THÍCH DỰ BÁO RỦI RO</div><h1>Yếu tố nào ảnh hưởng đến dự báo<span>.</span></h1><p id="explain-company">Chọn công ty để xem các yếu tố làm thay đổi dự báo rủi ro.</p></div></div>
+        <div class="explain-layout">
+          <section class="card risk-card"><div class="card-heading"><h2>Xác suất khó khăn tài chính kỳ tới</h2></div><div id="explain-gauge" class="gauge"></div><div id="gauge-context" class="card-footnote"></div></section>
+          <section class="card"><div class="card-heading"><h2>Các yếu tố ảnh hưởng đến dự báo</h2><span id="shap-scale-label" class="muted">Đóng góp có dấu theo mô hình hiện hành</span></div><div id="shap-chart" class="chart shap-chart"></div><div id="shap-reconciliation" class="reconciliation"></div></section>
+        </div>
+        <div class="details-grid">
+          <section class="card"><div class="card-heading"><h2>Đóng góp của từng đặc trưng</h2><span id="feature-count" class="muted"></span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Đặc trưng</th><th class="numeric">Giá trị báo cáo</th><th class="numeric">Đầu vào mô hình</th><th class="numeric">Mức ảnh hưởng</th><th>Tác động</th></tr></thead><tbody id="attribution-table"></tbody></table></div><div class="card-footnote">Đầu vào của mô hình được giới hạn theo ngưỡng học từ tập huấn luyện. Giá trị thiếu được điền bằng trung vị của tập đó. Các đóng góp giải thích chỉ báo khó khăn tài chính kỳ tới.</div></section>
+          <section class="card"><div class="card-heading"><h2>Các thành phần của Altman Z</h2><span id="altman-variant" class="muted"></span></div><div id="altman-score" class="altman-score"></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Thành phần</th><th class="numeric">Tỷ số</th><th class="numeric">Trọng số</th><th class="numeric">Giá trị có trọng số</th></tr></thead><tbody id="altman-table"></tbody></table></div><div class="card-footnote">X4 dùng giá trị sổ sách của vốn chủ sở hữu. X3 dùng lợi nhuận hoạt động làm đại diện cho EBIT. Altman Z là chỉ số tham chiếu độc lập.</div></section>
+        </div>
+      </section>
+      <section id="panel-manual" role="tabpanel" aria-labelledby="tab-manual" hidden>
+        <div class="page-heading"><div><div class="eyebrow">NHẬP LIỆU TRỰC TIẾP</div><h1>Dự báo rủi ro từ số liệu tài chính<span>.</span></h1><p>Nhập trực tiếp các chỉ tiêu báo cáo tài chính của một doanh nghiệp bất kỳ để tính tỷ số, điểm Altman Z, dự báo rủi ro và xem các yếu tố ảnh hưởng đến kết quả.</p></div><span class="data-stamp">Suy luận trực tiếp</span></div>
+        <section class="card">
+          <div class="card-heading"><div><h2>Thông tin &amp; số liệu báo cáo tài chính năm</h2><span class="muted">Đơn vị tiền tệ đồng nhất (ví dụ USD hoặc VND) · Các ô bỏ trống được giữ là thiếu dữ liệu</span></div>
+            <div class="action-row">
+              <button id="manual-fill-selected" class="credit-action" type="button">Nạp số liệu từ công ty đang chọn</button>
+            </div>
+          </div>
+          <details class="manual-examples">
+            <summary>Thử với số liệu ví dụ</summary>
+            <p>Các ví dụ Việt Nam chỉ phục vụ tham khảo. Kết quả cần được thận trọng diễn giải vì mô hình chưa được xác nhận là phù hợp với thị trường Việt Nam.</p>
+            <div class="action-row"><button class="credit-action" type="button" data-vn-preset="FPT">FPT · 2025</button>
+              <button class="credit-action" type="button" data-vn-preset="HPG">Hòa Phát · 2025</button></div>
+          </details>
+          <form id="manual-form">
+            <div class="manual-grid">
+              <label>Mục tiêu phân tích rủi ro<select id="manual-model-version" name="model_version"></select></label>
+              <label>Tên doanh nghiệp<input name="company_name" type="text" value="Doanh nghiệp tự nhập" maxlength="120" required></label>
+              <label>Năm tài chính<input name="fiscal_year" type="number" min="1990" max="2100" value="2025" required></label>
+              <label>Loại hình doanh nghiệp<select name="is_manufacturing"><option value="true">Sản xuất (Altman Z)</option><option value="false">Phi sản xuất / Dịch vụ / Bán lẻ (Altman Z″)</option></select></label>
+              <label>Tổng tài sản *<input name="total_assets" type="number" step="any" min="0.000001" placeholder="Bắt buộc (> 0)" required></label>
+              <label>Tài sản ngắn hạn<input name="current_assets" type="number" step="any" min="0" placeholder="Ví dụ: 143566000000"></label>
+              <label>Tổng nợ phải trả *<input name="total_liabilities" type="number" step="any" min="0" placeholder="Bắt buộc (>= 0)" required></label>
+              <label>Nợ ngắn hạn<input name="current_liabilities" type="number" step="any" min="0" placeholder="Ví dụ: 176392000000"></label>
+              <label>Vốn chủ sở hữu<input name="stockholders_equity" type="number" step="any" placeholder="Có thể âm"></label>
+              <label>Lợi nhuận giữ lại<input name="retained_earnings" type="number" step="any" placeholder="Có thể âm"></label>
+              <label>Doanh thu thuần<input name="revenues" type="number" step="any" min="0" placeholder="Ví dụ: 391035000000"></label>
+              <label>Lợi nhuận hoạt động (EBIT)<input name="operating_income" type="number" step="any" placeholder="Có thể âm"></label>
+              <label>Lợi nhuận ròng<input name="net_income" type="number" step="any" placeholder="Có thể âm"></label>
+              <label>Dòng tiền hoạt động (OCF)<input name="operating_cash_flow" type="number" step="any" placeholder="Có thể âm"></label>
+              <label>Tiền &amp; tương đương tiền<input name="cash_and_equivalents" type="number" step="any" min="0" placeholder="Tùy chọn"></label>
+              <label>Chi phí lãi vay<input name="interest_expense" type="number" step="any" min="0" placeholder="Tùy chọn"></label>
+              <label>Chi đầu tư TSCĐ (CapEx)<input name="capex" type="number" step="any" min="0" placeholder="Tùy chọn"></label>
+              <label>EPS pha loãng<input name="eps_diluted" type="number" step="any" placeholder="Tùy chọn"></label>
+            </div>
+            <details class="manual-prior">
+              <summary>Số liệu năm trước (tùy chọn — dùng để tính biến động YoY, DuPont &amp; Checklist 8 tín hiệu)</summary>
+              <div class="manual-grid">
+                <label>Tổng tài sản năm trước<input name="prior_total_assets" type="number" step="any" min="0.000001" placeholder="Tùy chọn"></label>
+                <label>Tài sản ngắn hạn năm trước<input name="prior_current_assets" type="number" step="any" min="0" placeholder="Tùy chọn"></label>
+                <label>Tổng nợ năm trước<input name="prior_total_liabilities" type="number" step="any" min="0" placeholder="Tùy chọn"></label>
+                <label>Nợ ngắn hạn năm trước<input name="prior_current_liabilities" type="number" step="any" min="0" placeholder="Tùy chọn"></label>
+                <label>Vốn chủ sở hữu năm trước<input name="prior_stockholders_equity" type="number" step="any" placeholder="Tùy chọn"></label>
+                <label>Doanh thu thuần năm trước<input name="prior_revenues" type="number" step="any" min="0" placeholder="Tùy chọn"></label>
+                <label>Lợi nhuận hoạt động (EBIT) năm trước<input name="prior_operating_income" type="number" step="any" placeholder="Tùy chọn"></label>
+                <label>Lợi nhuận ròng năm trước<input name="prior_net_income" type="number" step="any" placeholder="Tùy chọn"></label>
+                <label>Dòng tiền hoạt động năm trước<input name="prior_operating_cash_flow" type="number" step="any" placeholder="Tùy chọn"></label>
+              </div>
+            </details>
+            <div class="action-row" style="margin-top:1rem;">
+              <button id="manual-submit" class="credit-action" type="submit">Dự báo và giải thích kết quả</button>
+              <button id="manual-reset" class="text-button" type="reset">Xóa trắng</button>
+              <span id="manual-status" class="muted" role="status"></span>
+            </div>
+          </form>
+        </section>
+        <div id="manual-results" hidden>
+          <div class="explain-layout">
+            <section class="card risk-card"><div class="card-heading"><h2 id="manual-result-title">Kết quả dự báo rủi ro</h2></div><div id="manual-gauge" class="gauge"></div><div id="manual-summary-meta" class="card-footnote"></div></section>
+            <section class="card"><div class="card-heading"><h2>Các yếu tố ảnh hưởng đến dự báo</h2><span id="manual-shap-scale" class="muted"></span></div><div id="manual-shap-chart" class="chart shap-chart"></div><div id="manual-shap-reconciliation" class="reconciliation"></div></section>
+          </div>
+          <div class="details-grid">
+            <section class="card"><div class="card-heading"><h2>Đóng góp của từng đặc trưng</h2><span id="manual-feature-count" class="muted"></span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Đặc trưng</th><th class="numeric">Giá trị tính toán</th><th class="numeric">Đầu vào mô hình</th><th class="numeric">Mức ảnh hưởng</th><th>Tác động</th></tr></thead><tbody id="manual-attribution-table"></tbody></table></div></section>
+            <section class="card"><div class="card-heading"><h2>Chỉ số tài chính &amp; Dự báo kỳ tới</h2><span id="manual-altman-meta" class="muted"></span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Chỉ tiêu</th><th class="numeric">Năm báo cáo</th><th class="numeric">Dự báo kỳ tới (t+1)</th></tr></thead><tbody id="manual-ratios-table"></tbody></table></div></section>
+          </div>
+          <section class="card credit-card" style="margin-top:1rem;">
+            <div class="card-heading"><h2>Đánh giá sức khỏe 4 trụ cột &amp; Khuyến nghị quản trị rủi ro</h2></div>
+            <div id="manual-pillars-and-advice"></div>
+          </section>
+        </div>
+        <details class="card credit-card manual-batch" style="margin-top:1rem;">
+          <summary>Phân tích nhiều doanh nghiệp từ file CSV</summary>
+          <div class="card-heading">
+            <div>
+              <h2>Phân tích nhiều doanh nghiệp</h2>
+              <span class="muted">Tải lên danh sách báo cáo tài chính của nhiều doanh nghiệp/đối tác (tối đa 200 dòng) để sàng lọc xác suất rủi ro, điểm sức khỏe 4 trụ cột, Altman Z và các yếu tố ảnh hưởng và khuyến nghị.</span>
+            </div>
+            <div class="action-row">
+              <button id="download-batch-template" class="credit-action" type="button">Tải file CSV mẫu</button>
+              <label class="credit-action" style="cursor:pointer;margin:0;">
+                Chọn file CSV…
+                <input id="batch-csv-input" type="file" accept=".csv,text/csv" hidden>
+              </label>
+              <button id="export-batch-csv" class="credit-action" type="button" disabled>Xuất kết quả danh mục (CSV)</button>
+            </div>
+          </div>
+          <p id="batch-status" class="muted" role="status">Chưa chọn file CSV. Bạn có thể bấm "Tải file CSV mẫu" để lấy cấu trúc chuẩn (gồm FPT, Hòa Phát, Apple và doanh nghiệp mẫu).</p>
+          <div id="batch-results" hidden>
+            <div id="batch-kpis" class="credit-ratios" style="margin-bottom:0.75rem;"></div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Doanh nghiệp</th>
+                    <th class="numeric">Năm</th>
+                    <th class="numeric">Xác suất rủi ro</th>
+                    <th>Mức rủi ro</th>
+                    <th class="numeric">Điểm sức khỏe</th>
+                    <th class="numeric">Altman Z</th>
+                    <th>Nhóm sức khỏe</th>
+                    <th class="numeric">ROA</th>
+                    <th class="numeric">Nợ / Tài sản</th>
+                    <th>Yếu tố rủi ro chính</th>
+                    <th>Khuyến nghị ưu tiên</th>
+                  </tr>
+                </thead>
+                <tbody id="batch-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      </section>
+      <section id="panel-science" role="tabpanel" aria-labelledby="tab-science" hidden>
+        <div class="page-heading"><div><div class="eyebrow">NGHIÊN CỨU VÀ KIỂM ĐỊNH</div><h1>Bản đồ sức khỏe tài chính và kết quả kiểm định<span>.</span></h1><p>Các nhóm được xếp theo sức khỏe tài chính. Mô hình được kiểm định trên các kỳ sau giai đoạn huấn luyện.</p></div><div class="action-row"><label class="axis-switch">Gói kiểm định<select id="science-model-select" aria-label="Chọn gói mô hình kiểm định"></select></label><span id="science-model" class="data-stamp"></span></div></div>
+        <section class="card"><div class="card-heading"><div><h2>Bản đồ nhóm sức khỏe tài chính</h2><span class="muted">Kích thước điểm thể hiện xác suất khó khăn tài chính · Chọn một công ty để phân tích</span></div><label class="axis-switch">Trục tung<select id="pca-axis" aria-label="Trục tung của bản đồ PCA"><option value="pca_comp_2">PC2</option><option value="pca_comp_3">PC3</option></select></label></div><div id="pca-map" class="chart pca-chart"></div><div id="pca-legend" class="pca-legend"></div></section>
+        <div id="science-kpis" class="kpi-grid science-kpis"></div>
+        <section class="card"><div class="card-heading"><h2>Đặc trưng tâm cụm trên tập huấn luyện</h2><span id="cluster-diagnostics" class="muted"></span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nhóm</th><th class="numeric">Điểm sức khỏe tài chính</th><th class="numeric">ROA</th><th class="numeric">ROE</th><th class="numeric">Dòng tiền hoạt động / nợ phải trả</th><th class="numeric">Hệ số thanh toán hiện hành</th><th class="numeric">Nợ phải trả / tài sản</th></tr></thead><tbody id="centroid-table"></tbody></table></div></section>
+        <section class="card"><div class="card-heading"><h2>Đánh giá phân loại ngoài giai đoạn huấn luyện</h2><span id="classification-context" class="muted"></span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Mô hình</th><th class="numeric">Ngưỡng</th><th class="numeric">ROC-AUC</th><th class="numeric">PR-AUC</th><th class="numeric">Tỷ lệ dự báo dương đúng</th><th class="numeric">Độ nhạy</th><th class="numeric">F1</th><th class="numeric">F2</th><th class="numeric">Brier</th><th class="numeric">Mất mát logarit</th><th class="numeric">TN / FP / FN / TP</th></tr></thead><tbody id="benchmark-table"></tbody></table></div></section>
+        <section class="card"><div class="card-heading"><h2>Đánh giá dự báo kỳ tới (Đối chứng Persistence)</h2><span class="muted">Giá trị gốc trên tập kiểm định</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Chỉ tiêu dự báo</th><th class="numeric">R² (Mô hình)</th><th class="numeric">R² (Persistence)</th><th class="numeric">MAE (Mô hình)</th><th class="numeric">MAE (Persistence)</th><th class="numeric">RMSE</th><th class="numeric">Trọng số co cụm</th><th class="numeric">Số quan sát</th></tr></thead><tbody id="regression-table"></tbody></table></div></section>
+        <section class="card" id="validation-card" hidden><div class="card-heading"><h2>Chọn mô hình trên tập Validation &amp; Hiệu chuẩn xác suất</h2><span id="calibration-meta" class="muted"></span></div><div id="calibration-summary" class="credit-ratios"></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Mô hình ứng viên (Validation)</th><th class="numeric">Ngưỡng</th><th class="numeric">ROC-AUC</th><th class="numeric">PR-AUC</th><th class="numeric">F2</th><th class="numeric">Brier</th><th class="numeric">Mất mát logarit</th></tr></thead><tbody id="validation-table"></tbody></table></div></section>
+        <div class="section-heading"><h2>Biểu đồ nghiên cứu</h2><span class="muted">300 DPI · Chọn để xem chi tiết</span></div><div id="figure-gallery" class="figure-gallery"></div>
+      </section>
+      <section id="panel-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
+        <div class="page-heading"><div><h1>Kho báo cáo tài chính<span>.</span></h1><p>Xem bản công bố, nguồn từng dòng và số liệu theo quý.</p></div></div>
+        <section class="card compare-controls">
+          <form id="report-query" class="action-row">
+            <label>Công ty <select id="report-issuer"><option value="sec">Công ty SEC đang chọn</option><option value="VN:FPT">FPT · thí điểm Việt Nam</option><option value="VN:HPG">HPG · thí điểm Việt Nam</option></select></label>
+            <label>Công bố đến ngày <input id="report-cutoff" type="date"></label>
+            <button class="credit-action" type="submit">Tải báo cáo</button>
+          </form>
+          <p id="report-status" role="status" class="muted"></p>
+          <div id="report-alerts"></div>
+          <label>Phiên bản <select id="report-version"></select></label>
+        </section>
+        <section class="card" id="report-detail" hidden></section>
+        <section class="card" id="report-evidence" hidden></section>
+        <section class="card" id="report-quarters" hidden></section>
+        <section class="card" id="report-quality" hidden></section>
+      </section>
+<section id="panel-admin" role="tabpanel" aria-labelledby="tab-admin" hidden>
+          <div class="page-heading"><div><div class="eyebrow">VẬN HÀNH HỆ THỐNG</div><h1>Quản trị dữ liệu</h1><p>Theo dõi cập nhật, tài khoản và nhật ký quản trị.</p></div><button id="preview-admin-load" class="btn btn-primary">Tải dữ liệu quản trị</button></div>
+          <div id="preview-admin-workspace" class="admin-workspace card"><h2>Dữ liệu quản trị được bảo vệ</h2><p>Đăng nhập bằng tài khoản quản trị để xem các tác vụ thực tế.</p></div>
+        </section>
+      <footer class="workspace-footer"><span>FINHEALTH <span class="footer-divider">/</span> Phân tích tài chính dựa trên dữ liệu.</span><span>Chỉ báo khó khăn tài chính · Altman theo vốn chủ sổ sách · Dự báo năm tới</span></footer>
+    </main>
+  </div>
+  <dialog id="figure-lightbox" aria-labelledby="figure-title"><div class="lightbox-header"><h2 id="figure-title"></h2><div><a id="figure-download" target="_blank" rel="noopener">Mở ảnh gốc ↗</a><button id="close-figure" aria-label="Đóng biểu đồ">×</button></div></div><img id="figure-image" alt=""></dialog>
+  <article id="credit-memo" aria-label="Báo cáo rủi ro tín dụng"></article>
+  <noscript><p class="notice">Bật JavaScript để tải bảng phân tích tài chính từ API.</p></noscript>
+</body>
+</html>

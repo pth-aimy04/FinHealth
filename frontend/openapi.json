@@ -1,0 +1,4439 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "FinHealth", "version": "1.3.0" },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Health",
+        "description": "Execute an actual SQL probe and report degraded readiness when it fails.",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthCheckSchema" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies": {
+      "get": {
+        "tags": ["companies"],
+        "summary": "List Companies",
+        "description": "Return persisted company snapshots with bounded stable pagination.",
+        "operationId": "list_companies_api_v1_companies_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "maxLength": 120 },
+                { "type": "null" }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "sector",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "maxLength": 120 },
+                { "type": "null" }
+              ],
+              "title": "Sector"
+            }
+          },
+          {
+            "name": "risk_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+                  "type": "string"
+                },
+                { "type": "null" }
+              ],
+              "title": "Risk Level"
+            }
+          },
+          {
+            "name": "cluster_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "minimum": 0 },
+                { "type": "null" }
+              ],
+              "title": "Cluster Id"
+            }
+          },
+          {
+            "name": "fiscal_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 2100, "minimum": 1990 },
+                { "type": "null" }
+              ],
+              "title": "Fiscal Year"
+            }
+          },
+          {
+            "name": "min_roa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }],
+              "title": "Min Roa"
+            }
+          },
+          {
+            "name": "max_debt_ratio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }],
+              "title": "Max Debt Ratio"
+            }
+          },
+          {
+            "name": "min_current_ratio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }],
+              "title": "Min Current Ratio"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanySummarySchema"
+                  },
+                  "title": "Response List Companies Api V1 Companies Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/compare": {
+      "get": {
+        "tags": ["companies"],
+        "summary": "Compare Companies",
+        "description": "Compare two to four stored issuers with an optional common annual fiscal year.",
+        "operationId": "compare_companies_api_v1_companies_compare_get",
+        "parameters": [
+          {
+            "name": "identifiers",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 180,
+              "title": "Identifiers"
+            }
+          },
+          {
+            "name": "common_fiscal_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 2100, "minimum": 1990 },
+                { "type": "null" }
+              ],
+              "title": "Common Fiscal Year"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyComparisonResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{identifier}": {
+      "get": {
+        "tags": ["companies"],
+        "summary": "Get Company",
+        "description": "Read stored annual or quarterly analysis without performing ingestion.",
+        "operationId": "get_company_api_v1_companies__identifier__get",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Identifier" }
+          },
+          {
+            "name": "form_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["10-K", "10-Q"],
+              "type": "string",
+              "default": "10-K",
+              "title": "Form Type"
+            }
+          },
+          {
+            "name": "include_provenance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Provenance"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFullAnalysisSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{identifier}/analyze": {
+      "post": {
+        "tags": ["companies"],
+        "summary": "Analyze Company",
+        "description": "Run SEC ingestion, ETL, optional actual model inference, and atomic persistence.",
+        "operationId": "analyze_company_api_v1_companies__identifier__analyze_post",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Identifier" }
+          },
+          {
+            "name": "form_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["10-K", "10-Q"],
+              "type": "string",
+              "default": "10-K",
+              "title": "Form Type"
+            }
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Force Refresh"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFullAnalysisSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clusters/map": {
+      "get": {
+        "tags": ["companies"],
+        "summary": "Cluster Map",
+        "description": "Read real latest assigned PCA positions from the database.",
+        "operationId": "cluster_map_api_v1_clusters_map_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClusterPointSchema"
+                  },
+                  "type": "array",
+                  "title": "Response Cluster Map Api V1 Clusters Map Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{identifier}/simulate": {
+      "post": {
+        "tags": ["companies"],
+        "summary": "Simulate Company",
+        "description": "Evaluate a hypothetical scenario without persisting statements or predictions.",
+        "operationId": "simulate_company_api_v1_companies__identifier__simulate_post",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Identifier" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StressScenarioRequestSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StressSimulationResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/versions": {
+      "get": {
+        "tags": ["models"],
+        "summary": "List Model Versions",
+        "description": "List published model artifact bundles available for evaluation and manual scoring.",
+        "operationId": "list_model_versions_api_v1_models_versions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelVersionSummarySchema"
+                  },
+                  "type": "array",
+                  "title": "Response List Model Versions Api V1 Models Versions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/evaluation": {
+      "get": {
+        "tags": ["models"],
+        "summary": "Model Evaluation",
+        "description": "Return the active or requested fitted model's actual stored benchmark report.",
+        "operationId": "model_evaluation_api_v1_models_evaluation_get",
+        "parameters": [
+          {
+            "name": "model_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+                },
+                { "type": "null" }
+              ],
+              "title": "Model Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelEvaluationResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/train": {
+      "post": {
+        "tags": ["models"],
+        "summary": "Train Model",
+        "description": "Explicitly fit an annual model and calibrate on the eligible validation window.",
+        "operationId": "train_model_api_v1_models_train_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TrainModelRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelEvaluationResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/predict-manual": {
+      "post": {
+        "tags": ["models"],
+        "summary": "Predict Manual",
+        "description": "Score user-entered financial statement figures with the active or selected model.",
+        "operationId": "predict_manual_api_v1_models_predict_manual_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualStatementInputSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualPredictionResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/predict-batch": {
+      "post": {
+        "tags": ["models"],
+        "summary": "Predict Batch",
+        "description": "Score a batch portfolio of corporate financial statements in a single request.",
+        "operationId": "predict_batch_api_v1_models_predict_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchPredictionRequestSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchPredictionResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/overview": {
+      "get": {
+        "tags": ["dashboard"],
+        "summary": "Dashboard Overview",
+        "description": "Return actual company and annual-statement counts for the dashboard header.",
+        "operationId": "dashboard_overview_api_v1_dashboard_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": { "type": "integer" },
+                  "type": "object",
+                  "title": "Response Dashboard Overview Api V1 Dashboard Overview Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/{identifier}": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "List Reports",
+        "description": "Return stored disclosures available by the requested publication cutoff.",
+        "operationId": "list_reports_api_v1_reports__identifier__get",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Identifier" }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "name": "period_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "maxLength": 16 },
+                { "type": "null" }
+              ],
+              "title": "Period Kind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/report-alerts/{identifier}": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "Report Alerts",
+        "description": "Read source-linked changes between compatible published report versions.",
+        "operationId": "report_alerts_api_v1_report_alerts__identifier__get",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Identifier" }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ReportAlertSchema" },
+                  "title": "Response Report Alerts Api V1 Report Alerts  Identifier  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/filings/{filing_id}/forecasts": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "List Forecast Evidence",
+        "description": "Read archived inference inputs and outputs for the selected report.",
+        "operationId": "list_forecast_evidence_api_v1_filings__filing_id__forecasts_get",
+        "parameters": [
+          {
+            "name": "filing_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Filing Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ForecastEvidenceSchema"
+                  },
+                  "title": "Response List Forecast Evidence Api V1 Filings  Filing Id  Forecasts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/data-quality": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "Data Quality",
+        "description": "Count observed ratios in the latest annual company snapshots.",
+        "operationId": "data_quality_api_v1_data_quality_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DataQualitySchema" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/{identifier}": {
+      "post": {
+        "tags": ["ingestion"],
+        "summary": "Submit Ingestion",
+        "description": "Queue a refresh or return an already pending request for the same identifier.",
+        "operationId": "submit_ingestion_api_v1_ingestion__identifier__post",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9.-]{1,30}$",
+              "title": "Identifier"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Submit Ingestion Api V1 Ingestion  Identifier  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/{job_id}/retry": {
+      "post": {
+        "tags": ["ingestion"],
+        "summary": "Retry Ingestion",
+        "description": "Preserve failed history and link a new bounded retry request to its predecessor.",
+        "operationId": "retry_ingestion_api_v1_ingestion__job_id__retry_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Job Id" }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Retry Ingestion Api V1 Ingestion  Job Id  Retry Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/status/{job_id}": {
+      "get": {
+        "tags": ["ingestion"],
+        "summary": "Ingestion Status",
+        "description": "Get persisted progress without resubmitting the SEC job.",
+        "operationId": "ingestion_status_api_v1_ingestion_status__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Job Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Ingestion Status Api V1 Ingestion Status  Job Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Register",
+        "description": "Register an unverified normal user and require real email delivery.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Register Api V1 Auth Register Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Login",
+        "description": "Authenticate a verified account and rotate to fresh session and CSRF secrets.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Login Api V1 Auth Login Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": ["accounts"],
+        "summary": "Me",
+        "description": "Return the signed-in profile without exposing session secrets.",
+        "operationId": "me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Me Api V1 Auth Me Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Logout",
+        "description": "Revoke the presented session on the server, not just its browser cookie.",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": { "type": "string" },
+                  "type": "object",
+                  "title": "Response Logout Api V1 Auth Logout Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/profile": {
+      "patch": {
+        "tags": ["accounts"],
+        "summary": "Profile",
+        "description": "Update only the authenticated owner's display name.",
+        "operationId": "profile_api_v1_auth_profile_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProfileInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Profile Api V1 Auth Profile Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Change Password",
+        "description": "Require the current password and mailbox OTP before changing credentials.",
+        "operationId": "change_password_api_v1_auth_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChangePasswordInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Change Password Api V1 Auth Change Password Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/confirm-password-change": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Confirm Password Change",
+        "description": "Confirm OTP only for the authenticated account and the password-change purpose.",
+        "operationId": "confirm_password_change_api_v1_auth_confirm_password_change_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordCodeInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": { "type": "string" },
+                  "type": "object",
+                  "title": "Response Confirm Password Change Api V1 Auth Confirm Password Change Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Forgot",
+        "description": "Issue recovery OTPs without disclosing whether an account exists.",
+        "operationId": "forgot_api_v1_auth_forgot_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmailInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Forgot Api V1 Auth Forgot Password Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/resend-verification": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Resend",
+        "description": "Resend an OTP with per-address and per-peer quotas; replace the previous code.",
+        "operationId": "resend_api_v1_auth_resend_verification_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmailInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Resend Api V1 Auth Resend Verification Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify-email": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Verify Email",
+        "description": "Verify mailbox ownership without automatically logging a user in.",
+        "operationId": "verify_email_api_v1_auth_verify_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VerifyOtpInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": { "type": "string" },
+                  "type": "object",
+                  "title": "Response Verify Email Api V1 Auth Verify Email Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Reset",
+        "description": "Recover a password using an expiring single-use email OTP, never a URL token.",
+        "operationId": "reset_api_v1_auth_reset_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordCodeInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": { "type": "string" },
+                  "type": "object",
+                  "title": "Response Reset Api V1 Auth Reset Password Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/change-email": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Change Email",
+        "description": "Require a current credential, then send the replacement mailbox an OTP.",
+        "operationId": "change_email_api_v1_auth_change_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChangeEmailInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Change Email Api V1 Auth Change Email Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/confirm-email": {
+      "post": {
+        "tags": ["accounts"],
+        "summary": "Confirm Email",
+        "description": "Apply the OTP-bound mailbox only for the account that requested its replacement.",
+        "operationId": "confirm_email_api_v1_auth_confirm_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ActionCodeInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Confirm Email Api V1 Auth Confirm Email Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/overview": {
+      "get": {
+        "tags": ["administration"],
+        "summary": "Overview",
+        "description": "Report actual job counts and dispatcher configuration without connection strings.",
+        "operationId": "overview_api_v1_admin_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Overview Api V1 Admin Overview Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": ["administration"],
+        "summary": "Users",
+        "description": "List safe account metadata with bounded pagination.",
+        "operationId": "users_api_v1_admin_users_get",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "object", "additionalProperties": true },
+                  "title": "Response Users Api V1 Admin Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}": {
+      "patch": {
+        "tags": ["administration"],
+        "summary": "Account Status",
+        "description": "Lock normal accounts and revoke sessions; administrator recovery stays out of band.",
+        "operationId": "account_status_api_v1_admin_users__user_id__patch",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "User Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AccountStatusInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Account Status Api V1 Admin Users  User Id  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/ingestion": {
+      "get": {
+        "tags": ["administration"],
+        "summary": "Ingestion Runs",
+        "description": "List actual refresh history, including legacy jobs without an actor.",
+        "operationId": "ingestion_runs_api_v1_admin_ingestion_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "object", "additionalProperties": true },
+                  "title": "Response Ingestion Runs Api V1 Admin Ingestion Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/ingestion/{run_id}/events": {
+      "get": {
+        "tags": ["administration"],
+        "summary": "Events",
+        "description": "Return bounded operational transitions without SQL parameters or raw SEC payloads.",
+        "operationId": "events_api_v1_admin_ingestion__run_id__events_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Run Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "object", "additionalProperties": true },
+                  "title": "Response Events Api V1 Admin Ingestion  Run Id  Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit": {
+      "get": {
+        "tags": ["administration"],
+        "summary": "Audit",
+        "description": "Expose sanitized append-only audit entries to administrators only.",
+        "operationId": "audit_api_v1_admin_audit_get",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "object", "additionalProperties": true },
+                  "title": "Response Audit Api V1 Admin Audit Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/watchlist": {
+      "get": {
+        "tags": ["personal workspace"],
+        "summary": "Watchlist",
+        "description": "List only the authenticated owner's followed companies.",
+        "operationId": "watchlist_api_v1_me_watchlist_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "additionalProperties": true, "type": "object" },
+                  "type": "array",
+                  "title": "Response Watchlist Api V1 Me Watchlist Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/watchlist/{cik}": {
+      "post": {
+        "tags": ["personal workspace"],
+        "summary": "Follow",
+        "description": "Follow an existing company idempotently without accepting an owner from the client.",
+        "operationId": "follow_api_v1_me_watchlist__cik__post",
+        "parameters": [
+          {
+            "name": "cik",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Cik" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Follow Api V1 Me Watchlist  Cik  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/screeners": {
+      "get": {
+        "tags": ["personal workspace"],
+        "summary": "Screeners",
+        "description": "Return typed screening snapshots for the current owner.",
+        "operationId": "screeners_api_v1_me_screeners_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "additionalProperties": true, "type": "object" },
+                  "type": "array",
+                  "title": "Response Screeners Api V1 Me Screeners Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["personal workspace"],
+        "summary": "Save Screener",
+        "description": "Persist a validated filter configuration under the authenticated identity.",
+        "operationId": "save_screener_api_v1_me_screeners_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScreenerInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": { "type": "integer" },
+                  "type": "object",
+                  "title": "Response Save Screener Api V1 Me Screeners Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/analyses": {
+      "get": {
+        "tags": ["personal workspace"],
+        "summary": "Analyses",
+        "description": "List private prediction summaries, never another owner's input or output.",
+        "operationId": "analyses_api_v1_me_analyses_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "additionalProperties": true, "type": "object" },
+                  "type": "array",
+                  "title": "Response Analyses Api V1 Me Analyses Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["personal workspace"],
+        "summary": "Save Analysis",
+        "description": "Save only after explicit consent and recompute using a trusted server model.",
+        "operationId": "save_analysis_api_v1_me_analyses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnalysisInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": { "type": "integer" },
+                  "type": "object",
+                  "title": "Response Save Analysis Api V1 Me Analyses Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/analyses/{item_id}": {
+      "get": {
+        "tags": ["personal workspace"],
+        "summary": "Read Analysis",
+        "description": "Constrain private record lookup by owner to avoid ID enumeration leaks.",
+        "operationId": "read_analysis_api_v1_me_analyses__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Item Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Read Analysis Api V1 Me Analyses  Item Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/{collection}/{item_id}": {
+      "delete": {
+        "tags": ["personal workspace"],
+        "summary": "Delete Saved",
+        "description": "Delete only from a fixed collection and only under the authenticated owner.",
+        "operationId": "delete_saved_api_v1_me__collection___item_id__delete",
+        "parameters": [
+          {
+            "name": "collection",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Collection" }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Item Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccountStatusInput": {
+        "properties": { "active": { "type": "boolean", "title": "Active" } },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["active"],
+        "title": "AccountStatusInput",
+        "description": "Administrative account status changes cannot modify roles."
+      },
+      "AccountingChecklistSchema": {
+        "properties": {
+          "signals": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AccountingSignalSchema"
+            },
+            "type": "object",
+            "title": "Signals"
+          },
+          "observed_passes": { "type": "integer", "title": "Observed Passes" },
+          "observed_checks": { "type": "integer", "title": "Observed Checks" },
+          "pass_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pass Ratio"
+          },
+          "basis_note": { "type": "string", "title": "Basis Note" }
+        },
+        "type": "object",
+        "required": [
+          "signals",
+          "observed_passes",
+          "observed_checks",
+          "pass_ratio",
+          "basis_note"
+        ],
+        "title": "AccountingChecklistSchema",
+        "description": "Observed evidence for the eight accounting signals."
+      },
+      "AccountingSignalSchema": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PASS", "FAIL", "UNAVAILABLE"],
+            "title": "Status"
+          },
+          "current_value": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Value"
+          },
+          "prior_value": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Prior Value"
+          },
+          "reason": { "type": "string", "title": "Reason" }
+        },
+        "type": "object",
+        "required": ["status", "current_value", "prior_value", "reason"],
+        "title": "AccountingSignalSchema",
+        "description": "A strict comparison with a reported value or a disclosed comparator."
+      },
+      "ActionCodeInput": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "challenge": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 32,
+            "title": "Challenge"
+          },
+          "code": { "type": "string", "pattern": "^[0-9]{6}$", "title": "Code" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email", "challenge", "code"],
+        "title": "ActionCodeInput",
+        "description": "Confirm a purpose-specific OTP on the same screen where it was requested."
+      },
+      "ActionableRecommendationSchema": {
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": ["HIGH", "MEDIUM", "LOW"],
+            "title": "Priority"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["PROFITABILITY", "LIQUIDITY", "SOLVENCY", "CASH_FLOW"],
+            "title": "Category"
+          },
+          "feature": { "type": "string", "title": "Feature" },
+          "current_value": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Value"
+          },
+          "shap_impact": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Shap Impact"
+          },
+          "target_benchmark": { "type": "string", "title": "Target Benchmark" },
+          "action_vi": { "type": "string", "title": "Action Vi" }
+        },
+        "type": "object",
+        "required": [
+          "priority",
+          "category",
+          "feature",
+          "target_benchmark",
+          "action_vi"
+        ],
+        "title": "ActionableRecommendationSchema",
+        "description": "Concrete financial management recommendation derived from SHAP drivers and ratios."
+      },
+      "AnalysisInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/ManualStatementInputSchema"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["name", "inputs"],
+        "title": "AnalysisInput",
+        "description": "Recompute saved output on the server, never trust a client prediction."
+      },
+      "BatchPredictionItemSchema": {
+        "properties": {
+          "company_name": { "type": "string", "title": "Company Name" },
+          "fiscal_year": { "type": "integer", "title": "Fiscal Year" },
+          "is_manufacturing": {
+            "type": "boolean",
+            "title": "Is Manufacturing"
+          },
+          "distress_probability": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Distress Probability"
+          },
+          "risk_level": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Risk Level"
+          },
+          "overall_health_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Overall Health Score"
+          },
+          "overall_health_grade": {
+            "type": "string",
+            "title": "Overall Health Grade",
+            "default": "UNSCORED"
+          },
+          "altman_z_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Altman Z Score"
+          },
+          "altman_zone": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Altman Zone"
+          },
+          "cluster_id": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Cluster Id"
+          },
+          "cluster_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cluster Label"
+          },
+          "roa": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roa"
+          },
+          "roe": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roe"
+          },
+          "debt_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt Ratio"
+          },
+          "current_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Ratio"
+          },
+          "ocf_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ocf Ratio"
+          },
+          "top_risk_driver": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Top Risk Driver"
+          },
+          "top_recommendation_vi": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Top Recommendation Vi"
+          }
+        },
+        "type": "object",
+        "required": ["company_name", "fiscal_year", "is_manufacturing"],
+        "title": "BatchPredictionItemSchema",
+        "description": "Per-company summary row in a batch portfolio risk assessment."
+      },
+      "BatchPredictionRequestSchema": {
+        "properties": {
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Model Version"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ManualStatementInputSchema"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["items"],
+        "title": "BatchPredictionRequestSchema",
+        "description": "Batch portfolio prediction request for up to 200 corporate financial statements."
+      },
+      "BatchPredictionResponseSchema": {
+        "properties": {
+          "model_version": { "type": "string", "title": "Model Version" },
+          "classification_threshold": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Classification Threshold"
+          },
+          "total_companies": { "type": "integer", "title": "Total Companies" },
+          "risk_counts": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Risk Counts"
+          },
+          "average_distress_probability": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Average Distress Probability"
+          },
+          "average_health_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Average Health Score"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BatchPredictionItemSchema"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": ["model_version", "total_companies"],
+        "title": "BatchPredictionResponseSchema",
+        "description": "Aggregated portfolio risk distribution and per-company scoring results."
+      },
+      "ChangeEmailInput": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "current_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Current Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email", "current_password"],
+        "title": "ChangeEmailInput",
+        "description": "Require the current credential before issuing an email-change token."
+      },
+      "ChangePasswordInput": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 12,
+            "title": "New Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["current_password", "new_password"],
+        "title": "ChangePasswordInput",
+        "description": "An authenticated password change requires the current credential."
+      },
+      "ClusterPointSchema": {
+        "properties": {
+          "cik": { "type": "string", "title": "Cik" },
+          "ticker": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Ticker"
+          },
+          "name": { "type": "string", "title": "Name" },
+          "fiscal_year": { "type": "integer", "title": "Fiscal Year" },
+          "pca_comp_1": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 1"
+          },
+          "pca_comp_2": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 2"
+          },
+          "pca_comp_3": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 3"
+          },
+          "cluster_id": { "type": "integer", "title": "Cluster Id" },
+          "cluster_label": { "type": "string", "title": "Cluster Label" },
+          "distress_probability": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Distress Probability"
+          },
+          "altman_z_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Altman Z Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cik",
+          "name",
+          "fiscal_year",
+          "pca_comp_1",
+          "pca_comp_2",
+          "pca_comp_3",
+          "cluster_id",
+          "cluster_label"
+        ],
+        "title": "ClusterPointSchema",
+        "description": "Latest available assigned cluster position for a registrant."
+      },
+      "CompanyComparisonItemSchema": {
+        "properties": {
+          "composite_health_score": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              { "type": "null" }
+            ],
+            "title": "Composite Health Score"
+          },
+          "internal_research_grade": {
+            "type": "string",
+            "title": "Internal Research Grade",
+            "default": "UNSCORED"
+          },
+          "internal_research_grade_label": {
+            "type": "string",
+            "title": "Internal Research Grade Label",
+            "default": "Internal Research Grade (Not an Agency Credit Rating)"
+          },
+          "methodology_version": {
+            "type": "string",
+            "title": "Methodology Version",
+            "default": "internal_composite_v1.2"
+          },
+          "cohort_scope": {
+            "type": "string",
+            "enum": ["sector", "universe"],
+            "title": "Cohort Scope",
+            "default": "universe"
+          },
+          "cohort_size": {
+            "type": "integer",
+            "title": "Cohort Size",
+            "default": 0
+          },
+          "component_percentiles": {
+            "additionalProperties": { "type": "number" },
+            "type": "object",
+            "title": "Component Percentiles"
+          },
+          "fiscal_year": { "type": "integer", "title": "Fiscal Year" },
+          "fiscal_period": { "type": "string", "title": "Fiscal Period" },
+          "form_type": { "type": "string", "title": "Form Type" },
+          "period_end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End Date"
+          },
+          "accession_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Accession Number"
+          },
+          "filed_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Filed Date"
+          },
+          "total_assets": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Total Assets"
+          },
+          "total_liabilities": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Total Liabilities"
+          },
+          "stockholders_equity": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Stockholders Equity"
+          },
+          "revenues": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Revenues"
+          },
+          "operating_income": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Income"
+          },
+          "net_income": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Net Income"
+          },
+          "operating_cash_flow": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Cash Flow"
+          },
+          "current_assets": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Assets"
+          },
+          "current_liabilities": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Liabilities"
+          },
+          "retained_earnings": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Retained Earnings"
+          },
+          "cash_and_equivalents": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Cash And Equivalents"
+          },
+          "interest_expense": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Interest Expense"
+          },
+          "capex": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Capex"
+          },
+          "eps_basic": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Eps Basic"
+          },
+          "eps_diluted": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Eps Diluted"
+          },
+          "cash_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Cash Ratio"
+          },
+          "interest_coverage": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Interest Coverage"
+          },
+          "fcf_to_liabilities": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Fcf To Liabilities"
+          },
+          "field_provenance": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Field Provenance"
+          },
+          "roa": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roa"
+          },
+          "roe": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roe"
+          },
+          "eps": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Eps"
+          },
+          "debt_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt Ratio"
+          },
+          "debt_to_equity": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt To Equity"
+          },
+          "current_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Ratio"
+          },
+          "operating_margin": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Margin"
+          },
+          "ocf_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ocf Ratio"
+          },
+          "working_capital_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Working Capital Ratio"
+          },
+          "retained_earnings_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Retained Earnings Ratio"
+          },
+          "ebit_to_assets": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ebit To Assets"
+          },
+          "asset_turnover": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Asset Turnover"
+          },
+          "altman_z_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Altman Z Score"
+          },
+          "altman_zone": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Altman Zone"
+          },
+          "roa_yoy_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roa Yoy Delta"
+          },
+          "roe_yoy_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roe Yoy Delta"
+          },
+          "debt_ratio_yoy_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt Ratio Yoy Delta"
+          },
+          "ocf_ratio_yoy_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ocf Ratio Yoy Delta"
+          },
+          "negative_ocf_streak": {
+            "type": "integer",
+            "title": "Negative Ocf Streak",
+            "default": 0
+          },
+          "pca_comp_1": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 1"
+          },
+          "pca_comp_2": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 2"
+          },
+          "pca_comp_3": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 3"
+          },
+          "cluster_id": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Cluster Id"
+          },
+          "cluster_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cluster Label"
+          },
+          "cik": { "type": "string", "title": "Cik" },
+          "ticker": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Ticker"
+          },
+          "name": { "type": "string", "title": "Name" },
+          "sector": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Sector"
+          },
+          "altman_model_variant": {
+            "type": "string",
+            "title": "Altman Model Variant"
+          },
+          "model_version": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Model Version"
+          },
+          "target_fiscal_year": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Target Fiscal Year"
+          },
+          "distress_probability": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Distress Probability"
+          },
+          "pred_roa": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Roa"
+          },
+          "pred_roe": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Roe"
+          },
+          "pred_eps": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Eps"
+          },
+          "pred_debt_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Debt Ratio"
+          },
+          "pred_ocf_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Ocf Ratio"
+          },
+          "dupont": { "$ref": "#/components/schemas/DupontSchema" },
+          "quality_of_earnings": {
+            "$ref": "#/components/schemas/QualityOfEarningsSchema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fiscal_year",
+          "fiscal_period",
+          "form_type",
+          "period_end_date",
+          "cik",
+          "ticker",
+          "name",
+          "sector",
+          "altman_model_variant",
+          "model_version",
+          "target_fiscal_year",
+          "distress_probability",
+          "pred_roa",
+          "pred_roe",
+          "pred_eps",
+          "pred_debt_ratio",
+          "pred_ocf_ratio",
+          "dupont",
+          "quality_of_earnings"
+        ],
+        "title": "CompanyComparisonItemSchema",
+        "description": "An aligned annual comparison column with forecasts matched to the origin."
+      },
+      "CompanyComparisonResponseSchema": {
+        "properties": {
+          "requested_identifiers": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Requested Identifiers"
+          },
+          "period_policy": {
+            "type": "string",
+            "enum": ["latest_annual", "common_fiscal_year"],
+            "title": "Period Policy"
+          },
+          "common_fiscal_year": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Common Fiscal Year"
+          },
+          "active_model_version": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Active Model Version"
+          },
+          "companies": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyComparisonItemSchema"
+            },
+            "type": "array",
+            "title": "Companies"
+          },
+          "cohort_medians": {
+            "additionalProperties": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }]
+            },
+            "type": "object",
+            "title": "Cohort Medians"
+          },
+          "historical_series": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/HistoricalMetricPointSchema"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Historical Series"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requested_identifiers",
+          "period_policy",
+          "common_fiscal_year",
+          "active_model_version",
+          "companies",
+          "cohort_medians",
+          "historical_series"
+        ],
+        "title": "CompanyComparisonResponseSchema",
+        "description": "Selected issuers, their per-period observations, and descriptive cohort medians."
+      },
+      "CompanyFullAnalysisSchema": {
+        "properties": {
+          "company": { "$ref": "#/components/schemas/CompanySummarySchema" },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/HistoricalMetricPointSchema"
+            },
+            "type": "array",
+            "title": "History"
+          },
+          "latest_prediction": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/PredictionDetailSchema" },
+              { "type": "null" }
+            ]
+          },
+          "altman_components": {
+            "additionalProperties": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }]
+            },
+            "type": "object",
+            "title": "Altman Components"
+          },
+          "sector_peer_context": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/SectorPeerContextSchema" },
+              { "type": "null" }
+            ]
+          },
+          "dupont": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DupontSchema" },
+              { "type": "null" }
+            ]
+          },
+          "quality_of_earnings": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/QualityOfEarningsSchema" },
+              { "type": "null" }
+            ]
+          },
+          "accounting_checklist": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/AccountingChecklistSchema" },
+              { "type": "null" }
+            ]
+          },
+          "health_pillars": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/HealthPillarsSchema" },
+              { "type": "null" }
+            ]
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/ActionableRecommendationSchema"
+            },
+            "type": "array",
+            "title": "Recommendations"
+          }
+        },
+        "type": "object",
+        "required": ["company", "history"],
+        "title": "CompanyFullAnalysisSchema",
+        "description": "Company identity, chronological history, and latest forecast for the requested form."
+      },
+      "CompanyScreeningFilters": {
+        "properties": {
+          "q": {
+            "anyOf": [
+              { "type": "string", "maxLength": 120 },
+              { "type": "null" }
+            ],
+            "title": "Q"
+          },
+          "sector": {
+            "anyOf": [
+              { "type": "string", "maxLength": 120 },
+              { "type": "null" }
+            ],
+            "title": "Sector"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+              },
+              { "type": "null" }
+            ],
+            "title": "Risk Level"
+          },
+          "cluster_id": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0.0 },
+              { "type": "null" }
+            ],
+            "title": "Cluster Id"
+          },
+          "fiscal_year": {
+            "anyOf": [
+              { "type": "integer", "maximum": 2100.0, "minimum": 1990.0 },
+              { "type": "null" }
+            ],
+            "title": "Fiscal Year"
+          },
+          "min_roa": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Min Roa"
+          },
+          "max_debt_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Max Debt Ratio"
+          },
+          "min_current_ratio": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Min Current Ratio"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CompanyScreeningFilters",
+        "description": "Validated optional filters applied before snapshot pagination."
+      },
+      "CompanySummarySchema": {
+        "properties": {
+          "composite_health_score": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              { "type": "null" }
+            ],
+            "title": "Composite Health Score"
+          },
+          "internal_research_grade": {
+            "type": "string",
+            "title": "Internal Research Grade",
+            "default": "UNSCORED"
+          },
+          "internal_research_grade_label": {
+            "type": "string",
+            "title": "Internal Research Grade Label",
+            "default": "Internal Research Grade (Not an Agency Credit Rating)"
+          },
+          "methodology_version": {
+            "type": "string",
+            "title": "Methodology Version",
+            "default": "internal_composite_v1.2"
+          },
+          "cohort_scope": {
+            "type": "string",
+            "enum": ["sector", "universe"],
+            "title": "Cohort Scope",
+            "default": "universe"
+          },
+          "cohort_size": {
+            "type": "integer",
+            "title": "Cohort Size",
+            "default": 0
+          },
+          "component_percentiles": {
+            "additionalProperties": { "type": "number" },
+            "type": "object",
+            "title": "Component Percentiles"
+          },
+          "cik": { "type": "string", "title": "Cik" },
+          "ticker": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Ticker"
+          },
+          "name": { "type": "string", "title": "Name" },
+          "sic_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Sic Code"
+          },
+          "sector": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Sector"
+          },
+          "latest_fiscal_year": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Latest Fiscal Year"
+          },
+          "latest_period_end_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Latest Period End Date"
+          },
+          "filed_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Filed Date"
+          },
+          "accession_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Accession Number"
+          },
+          "model_version": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Model Version"
+          },
+          "roa": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roa"
+          },
+          "roe": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roe"
+          },
+          "debt_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt Ratio"
+          },
+          "ocf_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ocf Ratio"
+          },
+          "eps": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Eps"
+          },
+          "debt_to_equity": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt To Equity"
+          },
+          "current_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Ratio"
+          },
+          "operating_margin": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Margin"
+          },
+          "working_capital_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Working Capital Ratio"
+          },
+          "retained_earnings_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Retained Earnings Ratio"
+          },
+          "ebit_to_assets": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ebit To Assets"
+          },
+          "asset_turnover": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Asset Turnover"
+          },
+          "cash_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Cash Ratio"
+          },
+          "interest_coverage": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Interest Coverage"
+          },
+          "fcf_to_liabilities": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Fcf To Liabilities"
+          },
+          "altman_z_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Altman Z Score"
+          },
+          "altman_zone": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Altman Zone"
+          },
+          "cluster_id": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Cluster Id"
+          },
+          "cluster_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cluster Label"
+          },
+          "distress_probability": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Distress Probability"
+          },
+          "risk_level": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Risk Level"
+          }
+        },
+        "type": "object",
+        "required": ["cik", "name"],
+        "title": "CompanySummarySchema",
+        "description": "Identity plus the latest observed metric and prediction snapshot."
+      },
+      "DataQualitySchema": {
+        "properties": {
+          "report_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Report Count"
+          },
+          "observed": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Observed"
+          }
+        },
+        "type": "object",
+        "required": ["report_count", "observed"],
+        "title": "DataQualitySchema",
+        "description": "Actual annual snapshot denominator and observed metric counts."
+      },
+      "DupontBridgeSchema": {
+        "properties": {
+          "margin_contribution": {
+            "type": "number",
+            "title": "Margin Contribution"
+          },
+          "turnover_contribution": {
+            "type": "number",
+            "title": "Turnover Contribution"
+          },
+          "leverage_contribution": {
+            "type": "number",
+            "title": "Leverage Contribution"
+          },
+          "delta_roe_dupont_avg": {
+            "type": "number",
+            "title": "Delta Roe Dupont Avg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "margin_contribution",
+          "turnover_contribution",
+          "leverage_contribution",
+          "delta_roe_dupont_avg"
+        ],
+        "title": "DupontBridgeSchema",
+        "description": "Shapley contributions to the change in average equity ROE."
+      },
+      "DupontSchema": {
+        "properties": {
+          "net_profit_margin": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Net Profit Margin"
+          },
+          "asset_turnover_avg": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Asset Turnover Avg"
+          },
+          "equity_multiplier_avg": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Equity Multiplier Avg"
+          },
+          "roe_dupont_avg": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roe Dupont Avg"
+          },
+          "roe_ending_equity": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roe Ending Equity"
+          },
+          "prior_roe_dupont_avg": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Prior Roe Dupont Avg"
+          },
+          "bridge": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DupontBridgeSchema" },
+              { "type": "null" }
+            ]
+          },
+          "reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Reason"
+          },
+          "bridge_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Bridge Reason"
+          },
+          "basis_note": { "type": "string", "title": "Basis Note" }
+        },
+        "type": "object",
+        "required": [
+          "net_profit_margin",
+          "asset_turnover_avg",
+          "equity_multiplier_avg",
+          "roe_dupont_avg",
+          "roe_ending_equity",
+          "prior_roe_dupont_avg",
+          "bridge",
+          "reason",
+          "bridge_reason",
+          "basis_note"
+        ],
+        "title": "DupontSchema",
+        "description": "Three-factor characterization of unclipped average equity ROE."
+      },
+      "EmailInput": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email"],
+        "title": "EmailInput",
+        "description": "Normalize an ASCII email into a stable identity key."
+      },
+      "FilingVersionSchema": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "issuer_key": { "type": "string", "title": "Issuer Key" },
+          "accession": { "type": "string", "title": "Accession" },
+          "form_type": { "type": "string", "title": "Form Type" },
+          "scope": { "type": "string", "title": "Scope" },
+          "fiscal_year": { "type": "integer", "title": "Fiscal Year" },
+          "fiscal_period": { "type": "string", "title": "Fiscal Period" },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "published_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Published On"
+          },
+          "captured_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Captured At"
+          },
+          "capture_kind": { "type": "string", "title": "Capture Kind" },
+          "source_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Source Url"
+          },
+          "fingerprint": { "type": "string", "title": "Fingerprint" },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                { "type": "integer" },
+                { "type": "number" },
+                { "type": "null" }
+              ]
+            },
+            "type": "object",
+            "title": "Values"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Provenance"
+          },
+          "missing_reasons": {
+            "additionalProperties": { "type": "string" },
+            "type": "object",
+            "title": "Missing Reasons"
+          },
+          "ratios": {
+            "additionalProperties": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }]
+            },
+            "type": "object",
+            "title": "Ratios"
+          },
+          "accounting_framework": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Accounting Framework"
+          },
+          "audit_status": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Audit Status"
+          },
+          "issuer_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Issuer Name"
+          },
+          "disclosure_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Disclosure Url"
+          },
+          "ingestion_method": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Ingestion Method"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "issuer_key",
+          "accession",
+          "form_type",
+          "scope",
+          "fiscal_year",
+          "fiscal_period",
+          "period_end",
+          "published_on",
+          "captured_at",
+          "capture_kind",
+          "source_url",
+          "fingerprint",
+          "values",
+          "provenance",
+          "missing_reasons",
+          "ratios"
+        ],
+        "title": "FilingVersionSchema",
+        "description": "One stored observation with its publication date and per-field source evidence."
+      },
+      "ForecastEvidenceSchema": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "filing_version_id": {
+            "type": "integer",
+            "title": "Filing Version Id"
+          },
+          "model_version": { "type": "string", "title": "Model Version" },
+          "input_status": {
+            "type": "string",
+            "enum": ["verified_inputs", "legacy_unverified"],
+            "title": "Input Status"
+          },
+          "reported_inputs": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [{ "type": "number" }, { "type": "null" }]
+                },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Reported Inputs"
+          },
+          "fitted_inputs": {
+            "anyOf": [
+              {
+                "additionalProperties": { "type": "number" },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Fitted Inputs"
+          },
+          "outputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputs"
+          },
+          "fingerprint": { "type": "string", "title": "Fingerprint" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "filing_version_id",
+          "model_version",
+          "input_status",
+          "reported_inputs",
+          "fitted_inputs",
+          "outputs",
+          "fingerprint"
+        ],
+        "title": "ForecastEvidenceSchema",
+        "description": "Frozen original or explicitly unverified legacy inference evidence."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthCheckSchema": {
+        "properties": {
+          "status": { "type": "string", "title": "Status" },
+          "environment": { "type": "string", "title": "Environment" },
+          "database_connected": {
+            "type": "boolean",
+            "title": "Database Connected"
+          },
+          "active_model_version": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Active Model Version"
+          },
+          "ingestion_queue_enabled": {
+            "type": "boolean",
+            "title": "Ingestion Queue Enabled",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["status", "environment", "database_connected"],
+        "title": "HealthCheckSchema",
+        "description": "Live SQL connectivity and active model state."
+      },
+      "HealthPillarItemSchema": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "label_vi": { "type": "string", "title": "Label Vi" },
+          "score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Score"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["STRONG", "ADEQUATE", "WEAK", "CRITICAL", "UNAVAILABLE"],
+            "title": "Status",
+            "default": "UNAVAILABLE"
+          },
+          "observed_metrics": {
+            "type": "integer",
+            "title": "Observed Metrics",
+            "default": 0
+          },
+          "total_metrics": {
+            "type": "integer",
+            "title": "Total Metrics",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": ["name", "label_vi"],
+        "title": "HealthPillarItemSchema",
+        "description": "One 0-100 fundamental financial health pillar score and status."
+      },
+      "HealthPillarsSchema": {
+        "properties": {
+          "overall_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Overall Score"
+          },
+          "overall_grade": {
+            "type": "string",
+            "title": "Overall Grade",
+            "default": "UNSCORED"
+          },
+          "pillars": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/HealthPillarItemSchema"
+            },
+            "type": "object",
+            "title": "Pillars"
+          }
+        },
+        "type": "object",
+        "title": "HealthPillarsSchema",
+        "description": "Four-pillar fundamental health breakdown and overall score."
+      },
+      "HistoricalMetricPointSchema": {
+        "properties": {
+          "fiscal_year": { "type": "integer", "title": "Fiscal Year" },
+          "fiscal_period": { "type": "string", "title": "Fiscal Period" },
+          "form_type": { "type": "string", "title": "Form Type" },
+          "period_end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End Date"
+          },
+          "accession_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Accession Number"
+          },
+          "filed_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Filed Date"
+          },
+          "total_assets": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Total Assets"
+          },
+          "total_liabilities": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Total Liabilities"
+          },
+          "stockholders_equity": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Stockholders Equity"
+          },
+          "revenues": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Revenues"
+          },
+          "operating_income": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Income"
+          },
+          "net_income": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Net Income"
+          },
+          "operating_cash_flow": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Cash Flow"
+          },
+          "current_assets": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Assets"
+          },
+          "current_liabilities": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Liabilities"
+          },
+          "retained_earnings": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Retained Earnings"
+          },
+          "cash_and_equivalents": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Cash And Equivalents"
+          },
+          "interest_expense": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Interest Expense"
+          },
+          "capex": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Capex"
+          },
+          "eps_basic": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Eps Basic"
+          },
+          "eps_diluted": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Eps Diluted"
+          },
+          "cash_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Cash Ratio"
+          },
+          "interest_coverage": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Interest Coverage"
+          },
+          "fcf_to_liabilities": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Fcf To Liabilities"
+          },
+          "field_provenance": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Field Provenance"
+          },
+          "roa": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roa"
+          },
+          "roe": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roe"
+          },
+          "eps": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Eps"
+          },
+          "debt_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt Ratio"
+          },
+          "debt_to_equity": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt To Equity"
+          },
+          "current_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Ratio"
+          },
+          "operating_margin": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Margin"
+          },
+          "ocf_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ocf Ratio"
+          },
+          "working_capital_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Working Capital Ratio"
+          },
+          "retained_earnings_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Retained Earnings Ratio"
+          },
+          "ebit_to_assets": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ebit To Assets"
+          },
+          "asset_turnover": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Asset Turnover"
+          },
+          "altman_z_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Altman Z Score"
+          },
+          "altman_zone": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Altman Zone"
+          },
+          "roa_yoy_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roa Yoy Delta"
+          },
+          "roe_yoy_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Roe Yoy Delta"
+          },
+          "debt_ratio_yoy_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Debt Ratio Yoy Delta"
+          },
+          "ocf_ratio_yoy_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ocf Ratio Yoy Delta"
+          },
+          "negative_ocf_streak": {
+            "type": "integer",
+            "title": "Negative Ocf Streak",
+            "default": 0
+          },
+          "pca_comp_1": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 1"
+          },
+          "pca_comp_2": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 2"
+          },
+          "pca_comp_3": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pca Comp 3"
+          },
+          "cluster_id": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Cluster Id"
+          },
+          "cluster_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cluster Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fiscal_year",
+          "fiscal_period",
+          "form_type",
+          "period_end_date"
+        ],
+        "title": "HistoricalMetricPointSchema",
+        "description": "A statement period joined to its engineered ratios and optional cluster assignments."
+      },
+      "LoginInput": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email", "password"],
+        "title": "LoginInput",
+        "description": "Login accepts existing passwords without changing their whitespace."
+      },
+      "ManualPredictionResponseSchema": {
+        "properties": {
+          "company_name": { "type": "string", "title": "Company Name" },
+          "fiscal_year": { "type": "integer", "title": "Fiscal Year" },
+          "is_manufacturing": {
+            "type": "boolean",
+            "title": "Is Manufacturing"
+          },
+          "ratios": {
+            "additionalProperties": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }]
+            },
+            "type": "object",
+            "title": "Ratios"
+          },
+          "altman_z_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Altman Z Score"
+          },
+          "altman_zone": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Altman Zone"
+          },
+          "altman_components": {
+            "additionalProperties": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }]
+            },
+            "type": "object",
+            "title": "Altman Components"
+          },
+          "cluster_id": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Cluster Id"
+          },
+          "cluster_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cluster Label"
+          },
+          "prediction": {
+            "$ref": "#/components/schemas/PredictionDetailSchema"
+          },
+          "classification_threshold": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Classification Threshold"
+          },
+          "is_ood_scenario": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Ood Scenario"
+          },
+          "ood_features": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Ood Features"
+          },
+          "health_pillars": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/HealthPillarsSchema" },
+              { "type": "null" }
+            ]
+          },
+          "dupont": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DupontSchema" },
+              { "type": "null" }
+            ]
+          },
+          "quality_of_earnings": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/QualityOfEarningsSchema" },
+              { "type": "null" }
+            ]
+          },
+          "accounting_checklist": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/AccountingChecklistSchema" },
+              { "type": "null" }
+            ]
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/ActionableRecommendationSchema"
+            },
+            "type": "array",
+            "title": "Recommendations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_name",
+          "fiscal_year",
+          "is_manufacturing",
+          "ratios",
+          "prediction"
+        ],
+        "title": "ManualPredictionResponseSchema",
+        "description": "Stateless manual-input prediction, Altman breakdown, PCA regime and TreeSHAP output."
+      },
+      "ManualStatementInputSchema": {
+        "properties": {
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Model Version"
+          },
+          "company_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Company Name",
+            "default": "Doanh nghi\u1ec7p t\u1ef1 nh\u1eadp"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "maximum": 2100.0,
+            "minimum": 1990.0,
+            "title": "Fiscal Year",
+            "default": 2025
+          },
+          "is_manufacturing": {
+            "type": "boolean",
+            "title": "Is Manufacturing",
+            "default": true
+          },
+          "total_assets": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Total Assets"
+          },
+          "current_assets": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Current Assets"
+          },
+          "total_liabilities": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Total Liabilities"
+          },
+          "current_liabilities": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Current Liabilities"
+          },
+          "stockholders_equity": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Stockholders Equity"
+          },
+          "retained_earnings": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Retained Earnings"
+          },
+          "revenues": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Revenues"
+          },
+          "operating_income": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Income"
+          },
+          "net_income": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Net Income"
+          },
+          "operating_cash_flow": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Operating Cash Flow"
+          },
+          "cash_and_equivalents": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Cash And Equivalents"
+          },
+          "interest_expense": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Interest Expense"
+          },
+          "capex": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Capex"
+          },
+          "eps_diluted": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Eps Diluted"
+          },
+          "prior_total_assets": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "null" }
+            ],
+            "title": "Prior Total Assets"
+          },
+          "prior_current_assets": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Prior Current Assets"
+          },
+          "prior_total_liabilities": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Prior Total Liabilities"
+          },
+          "prior_current_liabilities": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Prior Current Liabilities"
+          },
+          "prior_stockholders_equity": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Prior Stockholders Equity"
+          },
+          "prior_revenues": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Prior Revenues"
+          },
+          "prior_operating_income": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Prior Operating Income"
+          },
+          "prior_net_income": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Prior Net Income"
+          },
+          "prior_operating_cash_flow": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Prior Operating Cash Flow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["total_assets", "total_liabilities"],
+        "title": "ManualStatementInputSchema",
+        "description": "User-supplied financial statement figures for stateless distress scoring and TreeSHAP."
+      },
+      "ModelEvaluationResponseSchema": {
+        "properties": {
+          "model_version": { "type": "string", "title": "Model Version" },
+          "created_at": { "type": "string", "title": "Created At" },
+          "evaluation_report": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evaluation Report"
+          }
+        },
+        "type": "object",
+        "required": ["model_version", "created_at", "evaluation_report"],
+        "title": "ModelEvaluationResponseSchema",
+        "description": "Stored evaluation results from a real fitted artifact bundle."
+      },
+      "ModelVersionSummarySchema": {
+        "properties": {
+          "model_version": { "type": "string", "title": "Model Version" },
+          "created_at": { "type": "string", "title": "Created At" },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "dataset": { "type": "string", "title": "Dataset" },
+          "selected_model_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Selected Model Name"
+          },
+          "imbalance_strategy": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Imbalance Strategy"
+          }
+        },
+        "type": "object",
+        "required": ["model_version", "created_at", "is_active", "dataset"],
+        "title": "ModelVersionSummarySchema",
+        "description": "Metadata summary for one persisted model artifact bundle."
+      },
+      "PasswordCodeInput": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "challenge": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 32,
+            "title": "Challenge"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$",
+            "title": "Code"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 12,
+            "title": "New Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email", "challenge", "code", "new_password"],
+        "title": "PasswordCodeInput",
+        "description": "Choose a new password only after verifying the mailbox OTP."
+      },
+      "PeerMetricSchema": {
+        "properties": {
+          "median": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Median"
+          },
+          "percentile": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              { "type": "null" }
+            ],
+            "title": "Percentile"
+          },
+          "n_observed": { "type": "integer", "title": "N Observed" }
+        },
+        "type": "object",
+        "required": ["median", "percentile", "n_observed"],
+        "title": "PeerMetricSchema",
+        "description": "Median and empirical midrank percentile of the reported metric."
+      },
+      "PredictionDetailSchema": {
+        "properties": {
+          "model_version": { "type": "string", "title": "Model Version" },
+          "target_fiscal_year": {
+            "type": "integer",
+            "title": "Target Fiscal Year"
+          },
+          "target_fiscal_period": {
+            "type": "string",
+            "title": "Target Fiscal Period"
+          },
+          "pred_roa": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Roa"
+          },
+          "pred_roe": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Roe"
+          },
+          "pred_eps": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Eps"
+          },
+          "pred_debt_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Debt Ratio"
+          },
+          "pred_ocf_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pred Ocf Ratio"
+          },
+          "distress_probability": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Distress Probability"
+          },
+          "risk_level": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Risk Level"
+          },
+          "base_value": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Base Value"
+          },
+          "top_drivers": {
+            "items": { "$ref": "#/components/schemas/ShapDriverSchema" },
+            "type": "array",
+            "title": "Top Drivers"
+          },
+          "contributions": {
+            "additionalProperties": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }]
+            },
+            "type": "object",
+            "title": "Contributions"
+          },
+          "feature_values": {
+            "additionalProperties": {
+              "anyOf": [{ "type": "number" }, { "type": "null" }]
+            },
+            "type": "object",
+            "title": "Feature Values"
+          },
+          "output_space": {
+            "type": "string",
+            "title": "Output Space",
+            "default": "log_odds"
+          },
+          "raw_margin": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Raw Margin"
+          },
+          "raw_probability": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Raw Probability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "target_fiscal_year",
+          "target_fiscal_period"
+        ],
+        "title": "PredictionDetailSchema",
+        "description": "Persisted next-period forecasts and complete raw-margin SHAP attributions."
+      },
+      "ProfileInput": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": ".*\\S.*",
+            "title": "Display Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["display_name"],
+        "title": "ProfileInput",
+        "description": "Only a display name may change without re-verifying email ownership."
+      },
+      "QualityOfEarningsSchema": {
+        "properties": {
+          "cash_conversion_qoe": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Cash Conversion Qoe"
+          },
+          "cash_conversion_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cash Conversion Reason"
+          },
+          "accrual_gap_usd": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Accrual Gap Usd"
+          },
+          "cash_flow_accruals_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Cash Flow Accruals Ratio"
+          },
+          "accruals_basis": {
+            "anyOf": [
+              { "type": "string", "enum": ["average_assets", "ending_assets"] },
+              { "type": "null" }
+            ],
+            "title": "Accruals Basis"
+          },
+          "accruals_flag": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "EARNINGS_AHEAD_OF_CASH_WARNING",
+                  "CASH_BACKED_EARNINGS"
+                ]
+              },
+              { "type": "null" }
+            ],
+            "title": "Accruals Flag"
+          },
+          "basis_note": { "type": "string", "title": "Basis Note" }
+        },
+        "type": "object",
+        "required": [
+          "cash_conversion_qoe",
+          "cash_conversion_reason",
+          "accrual_gap_usd",
+          "cash_flow_accruals_ratio",
+          "accruals_basis",
+          "accruals_flag",
+          "basis_note"
+        ],
+        "title": "QualityOfEarningsSchema",
+        "description": "Cash conversion and cash-flow accruals on the disclosed asset basis."
+      },
+      "QuarterFlowSchema": {
+        "properties": {
+          "value": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Value"
+          },
+          "reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Reason"
+          },
+          "unit": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Unit"
+          },
+          "start": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Start"
+          },
+          "end": { "type": "string", "format": "date", "title": "End" },
+          "sources": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Sources"
+          },
+          "yoy_change": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Yoy Change"
+          },
+          "qoq_change": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Qoq Change"
+          },
+          "yoy_growth": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Yoy Growth"
+          },
+          "qoq_growth": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Qoq Growth"
+          },
+          "ttm": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Ttm"
+          },
+          "ttm_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Ttm Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "reason",
+          "unit",
+          "start",
+          "end",
+          "sources",
+          "yoy_change",
+          "qoq_change",
+          "yoy_growth",
+          "qoq_growth",
+          "ttm",
+          "ttm_reason"
+        ],
+        "title": "QuarterFlowSchema",
+        "description": "A quarter flow and derived comparisons with explicit missingness and source inputs."
+      },
+      "QuarterlyReportSchema": {
+        "properties": {
+          "fiscal_year": { "type": "integer", "title": "Fiscal Year" },
+          "fiscal_period": {
+            "type": "string",
+            "enum": ["Q1", "Q2", "Q3", "Q4"],
+            "title": "Fiscal Period"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "flows": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/QuarterFlowSchema"
+            },
+            "type": "object",
+            "title": "Flows"
+          }
+        },
+        "type": "object",
+        "required": ["fiscal_year", "fiscal_period", "period_end", "flows"],
+        "title": "QuarterlyReportSchema",
+        "description": "Quarter-only observations keyed by the issuer's fiscal year and period."
+      },
+      "RegisterInput": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 12,
+            "title": "Password"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email", "password", "display_name"],
+        "title": "RegisterInput",
+        "description": "A registration can request only a normal user account."
+      },
+      "ReportAlertSchema": {
+        "properties": {
+          "rule": { "type": "string", "title": "Rule" },
+          "rule_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Rule Version"
+          },
+          "previous_filing_id": {
+            "type": "integer",
+            "title": "Previous Filing Id"
+          },
+          "filing_id": { "type": "integer", "title": "Filing Id" },
+          "published_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Published On"
+          },
+          "changed_fields": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Changed Fields"
+          },
+          "source_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Source Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule",
+          "rule_version",
+          "previous_filing_id",
+          "filing_id",
+          "published_on",
+          "changed_fields",
+          "source_url"
+        ],
+        "title": "ReportAlertSchema",
+        "description": "A versioned change rule with both source observation identifiers."
+      },
+      "ReportResponseSchema": {
+        "properties": {
+          "issuer_key": { "type": "string", "title": "Issuer Key" },
+          "as_of": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "As Of"
+          },
+          "versions": {
+            "items": { "$ref": "#/components/schemas/FilingVersionSchema" },
+            "type": "array",
+            "title": "Versions"
+          },
+          "quarterly_series": {
+            "items": { "$ref": "#/components/schemas/QuarterlyReportSchema" },
+            "type": "array",
+            "title": "Quarterly Series"
+          }
+        },
+        "type": "object",
+        "required": ["issuer_key", "as_of", "versions", "quarterly_series"],
+        "title": "ReportResponseSchema",
+        "description": "Available report versions and reporting-only quarterly series."
+      },
+      "ScreenerInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "filters": { "$ref": "#/components/schemas/CompanyScreeningFilters" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["name", "filters"],
+        "title": "ScreenerInput",
+        "description": "Store only filters accepted by the public screening service."
+      },
+      "SectorPeerContextSchema": {
+        "properties": {
+          "sector": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Sector"
+          },
+          "cohort": { "type": "string", "title": "Cohort" },
+          "cohort_size": { "type": "integer", "title": "Cohort Size" },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PeerMetricSchema"
+            },
+            "type": "object",
+            "title": "Metrics"
+          }
+        },
+        "type": "object",
+        "required": ["sector", "cohort", "cohort_size", "metrics"],
+        "title": "SectorPeerContextSchema",
+        "description": "Comparison cohort and metric-specific denominators of latest annual snapshots."
+      },
+      "ShapDriverSchema": {
+        "properties": {
+          "feature": { "type": "string", "title": "Feature" },
+          "feature_value": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Feature Value"
+          },
+          "shap_value": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Shap Value"
+          },
+          "direction": { "type": "string", "title": "Direction" }
+        },
+        "type": "object",
+        "required": ["feature", "shap_value", "direction"],
+        "title": "ShapDriverSchema",
+        "description": "One TreeSHAP driver; invalid numeric values are represented as JSON null."
+      },
+      "ShapShiftSchema": {
+        "properties": {
+          "feature": { "type": "string", "title": "Feature" },
+          "baseline": { "type": "number", "title": "Baseline" },
+          "stressed": { "type": "number", "title": "Stressed" },
+          "delta": { "type": "number", "title": "Delta" }
+        },
+        "type": "object",
+        "required": ["feature", "baseline", "stressed", "delta"],
+        "title": "ShapShiftSchema",
+        "description": "Scenario minus baseline attribution in raw XGBoost margin units."
+      },
+      "StressScenarioRequestSchema": {
+        "properties": {
+          "revenue_shock_pct": {
+            "type": "number",
+            "maximum": 0.5,
+            "minimum": -0.5,
+            "title": "Revenue Shock Pct",
+            "default": 0.0
+          },
+          "operating_margin_delta_pct": {
+            "type": "number",
+            "maximum": 0.3,
+            "minimum": -0.3,
+            "title": "Operating Margin Delta Pct",
+            "default": 0.0
+          },
+          "debt_change_pct": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": -0.5,
+            "title": "Debt Change Pct",
+            "default": 0.0
+          },
+          "ocf_shock_pct": {
+            "type": "number",
+            "maximum": 0.8,
+            "minimum": -0.8,
+            "title": "Ocf Shock Pct",
+            "default": 0.0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "StressScenarioRequestSchema",
+        "description": "Bounded fractional shocks to the selected annual statement."
+      },
+      "StressSimulationResponseSchema": {
+        "properties": {
+          "cik": { "type": "string", "title": "Cik" },
+          "baseline": { "$ref": "#/components/schemas/StressSnapshotSchema" },
+          "stressed": { "$ref": "#/components/schemas/StressSnapshotSchema" },
+          "probability_delta": {
+            "type": "number",
+            "title": "Probability Delta"
+          },
+          "altman_z_delta": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Altman Z Delta"
+          },
+          "cluster_shift": { "type": "boolean", "title": "Cluster Shift" },
+          "is_ood_scenario": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Ood Scenario"
+          },
+          "ood_features": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Ood Features"
+          },
+          "top_shifted_shap_drivers": {
+            "items": { "$ref": "#/components/schemas/ShapShiftSchema" },
+            "type": "array",
+            "title": "Top Shifted Shap Drivers"
+          },
+          "assumptions": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Assumptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cik",
+          "baseline",
+          "stressed",
+          "probability_delta",
+          "altman_z_delta",
+          "cluster_shift",
+          "is_ood_scenario",
+          "ood_features",
+          "top_shifted_shap_drivers",
+          "assumptions"
+        ],
+        "title": "StressSimulationResponseSchema",
+        "description": "Read-only sensitivity comparison and explicit assumptions."
+      },
+      "StressSnapshotSchema": {
+        "properties": {
+          "metrics": {
+            "$ref": "#/components/schemas/HistoricalMetricPointSchema"
+          },
+          "prediction": {
+            "$ref": "#/components/schemas/PredictionDetailSchema"
+          }
+        },
+        "type": "object",
+        "required": ["metrics", "prediction"],
+        "title": "StressSnapshotSchema",
+        "description": "A single statement, its computed metrics and the resulting model inference."
+      },
+      "TrainModelRequest": {
+        "properties": {
+          "train_end_year": {
+            "type": "integer",
+            "maximum": 2100.0,
+            "minimum": 1990.0,
+            "title": "Train End Year"
+          },
+          "model_version": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+            "title": "Model Version"
+          },
+          "validation_end_year": {
+            "anyOf": [
+              { "type": "integer", "maximum": 2100.0, "minimum": 1991.0 },
+              { "type": "null" }
+            ],
+            "title": "Validation End Year"
+          },
+          "imbalance_strategy": {
+            "type": "string",
+            "enum": ["class_weight", "smote"],
+            "title": "Imbalance Strategy",
+            "default": "class_weight"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["train_end_year", "model_version"],
+        "title": "TrainModelRequest",
+        "description": "Train on persisted panel data only, with an explicit time boundary and immutable version."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      },
+      "VerifyOtpInput": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "challenge": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 32,
+            "title": "Challenge"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$",
+            "title": "Code"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 12,
+            "title": "New Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email", "challenge", "code", "new_password"],
+        "title": "VerifyOtpInput",
+        "description": "A six-digit mailbox code bound to a browser challenge and an owner-chosen password."
+      }
+    }
+  }
+}

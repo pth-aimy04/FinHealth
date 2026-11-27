@@ -1,0 +1,4 @@
+PASS guest: live financial API, navigation, filtering, responsive menu, optional login/registration OTP/admin rejection; 15 requests
+PASS admin: live financial API, navigation, filtering, responsive menu, admin view and account actions; 38 requests
+PASS admin_logout: live financial API, navigation, filtering, responsive menu, admin view and account actions; 35 requests
+DOM checks passed. Visual layout and real admin sign-in still require browser review.

@@ -1,0 +1,332 @@
+{
+  "classification_baselines": {
+    "altman_z_baseline": {
+      "accuracy": 0.7391304347826086,
+      "confusion_matrix": {
+        "fn": 0,
+        "fp": 18,
+        "tn": 42,
+        "tp": 9
+      },
+      "f1_score": 0.5,
+      "f2_score": 0.7142857142857143,
+      "pr_auc": 0.9513888888888891,
+      "precision": 0.3333333333333333,
+      "recall": 1.0,
+      "roc_auc": 0.987037037037037,
+      "threshold": 0.5000000000000001
+    },
+    "logistic_regression": {
+      "accuracy": 0.6956521739130435,
+      "confusion_matrix": {
+        "fn": 0,
+        "fp": 21,
+        "tn": 39,
+        "tp": 9
+      },
+      "f1_score": 0.46153846153846156,
+      "f2_score": 0.6818181818181818,
+      "pr_auc": 0.8558641975308642,
+      "precision": 0.3,
+      "recall": 1.0,
+      "roc_auc": 0.9611111111111111,
+      "threshold": 0.5
+    }
+  },
+  "classification_xgboost": {
+    "accuracy": 0.8985507246376812,
+    "confusion_matrix": {
+      "fn": 1,
+      "fp": 6,
+      "tn": 54,
+      "tp": 8
+    },
+    "f1_score": 0.6956521739130435,
+    "f2_score": 0.8,
+    "pr_auc": 0.8336847103513771,
+    "precision": 0.5714285714285714,
+    "recall": 0.8888888888888888,
+    "roc_auc": 0.9537037037037037,
+    "threshold": 0.36
+  },
+  "clustering": {
+    "cluster_profiles": {
+      "0": {
+        "centroid": {
+          "asset_turnover": 0.6647475557493024,
+          "current_ratio": 2.8149568243736796,
+          "debt_ratio": 0.46477261112336743,
+          "debt_to_equity": 0.9690078084173042,
+          "ebit_to_assets": 0.17209262490780308,
+          "eps": 4.350633540372672,
+          "ocf_ratio": 0.41285577314330263,
+          "operating_margin": 0.27438306215744523,
+          "retained_earnings_ratio": 0.4470988887098825,
+          "roa": 0.13078208524955978,
+          "roe": 0.2487881516157196,
+          "working_capital_ratio": 0.3211100503506094
+        },
+        "health_score": 5.979848514109799,
+        "scaled_centroid": {
+          "asset_turnover": -0.377421744982438,
+          "current_ratio": 1.5366511904512175,
+          "debt_ratio": -1.0760144495755624,
+          "debt_to_equity": -0.7654061329259702,
+          "ebit_to_assets": 0.916181189827705,
+          "eps": 0.24781837289017628,
+          "ocf_ratio": 1.3384785320595907,
+          "operating_margin": 1.243046507618887,
+          "retained_earnings_ratio": 0.30651369480903706,
+          "roa": 0.9980696050110004,
+          "roe": 0.26522860408645754,
+          "working_capital_ratio": 1.4007670548881777
+        }
+      },
+      "1": {
+        "centroid": {
+          "asset_turnover": 1.0305478535771995,
+          "current_ratio": 1.2889781738895216,
+          "debt_ratio": 0.593361807831436,
+          "debt_to_equity": 1.578244941420987,
+          "ebit_to_assets": 0.10456899721540559,
+          "eps": 3.9173806451612925,
+          "ocf_ratio": 0.2205507890761822,
+          "operating_margin": 0.11399571621563154,
+          "retained_earnings_ratio": 0.4322903678077194,
+          "roa": 0.0725722664980296,
+          "roe": 0.17961919111295427,
+          "working_capital_ratio": 0.05859614934491294
+        },
+        "health_score": 0.301770914359836,
+        "scaled_centroid": {
+          "asset_turnover": 0.3239207187803816,
+          "current_ratio": -0.3071992256455664,
+          "debt_ratio": -0.3628847497566698,
+          "debt_to_equity": -0.41378931097179417,
+          "ebit_to_assets": -0.038235268896155486,
+          "eps": 0.1108053151155161,
+          "ocf_ratio": -0.018364444129752754,
+          "operating_margin": -0.23814293538491504,
+          "retained_earnings_ratio": 0.26000366913153555,
+          "roa": 0.012250539491519434,
+          "roe": -0.16159001608482818,
+          "working_capital_ratio": -0.30310328034106954
+        }
+      },
+      "2": {
+        "centroid": {
+          "asset_turnover": 0.9603676847170568,
+          "current_ratio": 1.269117872105636,
+          "debt_ratio": 0.8366173633369329,
+          "debt_to_equity": 4.159884221036615,
+          "ebit_to_assets": 0.1515390662570461,
+          "eps": 5.942658536585369,
+          "ocf_ratio": 0.19102724796101236,
+          "operating_margin": 0.17707608452155546,
+          "retained_earnings_ratio": 0.4476080145132121,
+          "roa": 0.10639546735892746,
+          "roe": 0.3952385756365947,
+          "working_capital_ratio": 0.06283578650700923
+        },
+        "health_score": -0.8662237160610415,
+        "scaled_centroid": {
+          "asset_turnover": 0.18936551795651335,
+          "current_ratio": -0.3311965638104278,
+          "debt_ratio": 0.9861614043362227,
+          "debt_to_equity": 1.0761851993721736,
+          "ebit_to_assets": 0.6256657757123391,
+          "eps": 0.7512846282705833,
+          "ocf_ratio": -0.2266731865613768,
+          "operating_margin": 0.3444091047830339,
+          "retained_earnings_ratio": 0.30811273730236877,
+          "roa": 0.5850672391602766,
+          "roe": 1.1689253988588828,
+          "working_capital_ratio": -0.2755855299859196
+        }
+      },
+      "3": {
+        "centroid": {
+          "asset_turnover": 0.7005585985137589,
+          "current_ratio": 1.1895781100260427,
+          "debt_ratio": 0.7564364047548952,
+          "debt_to_equity": 2.862757134472694,
+          "ebit_to_assets": 0.03366421060556945,
+          "eps": 0.8404017467248911,
+          "ocf_ratio": 0.11631308966172484,
+          "operating_margin": 0.05335047139963011,
+          "retained_earnings_ratio": 0.09857272132543202,
+          "roa": 0.004695548361471567,
+          "roe": 0.07537295828512995,
+          "working_capital_ratio": 0.04718910910376079
+        },
+        "health_score": -3.9923314619616384,
+        "scaled_centroid": {
+          "asset_turnover": -0.30876186386294285,
+          "current_ratio": -0.427305001081268,
+          "debt_ratio": 0.5414940108956021,
+          "debt_to_equity": 0.32755764674804044,
+          "ebit_to_assets": -1.0404429057697642,
+          "eps": -0.8622667456659567,
+          "ocf_ratio": -0.7538325912022025,
+          "operating_margin": -0.7982064233263516,
+          "retained_earnings_ratio": -0.7881237170856739,
+          "roa": -1.1372834099188958,
+          "roe": -0.8048588021156298,
+          "working_capital_ratio": -0.3771417118496685
+        }
+      }
+    },
+    "cumulative_variance_ratio": 0.6972758595647573,
+    "explained_variance_ratio": [
+      0.3833533304193984,
+      0.20314171723404134,
+      0.11078081191131757
+    ],
+    "silhouette_score": 0.30071711971264786,
+    "standardized_feature_variance": {
+      "asset_turnover": 1.0000000000000002,
+      "current_ratio": 1.0000000000000002,
+      "debt_ratio": 0.9999999999999999,
+      "debt_to_equity": 1.0,
+      "ebit_to_assets": 1.0,
+      "eps": 1.0000000000000002,
+      "ocf_ratio": 1.0,
+      "operating_margin": 0.9999999999999999,
+      "retained_earnings_ratio": 0.9999999999999999,
+      "roa": 1.0,
+      "roe": 1.0,
+      "working_capital_ratio": 0.9999999999999996
+    }
+  },
+  "data_provenance": {
+    "annual_selection": "first-observed filing per annual period; later revisions excluded",
+    "database": "data\\processed\\parquet\\finhealth.sqlite3",
+    "labels": "operational, cash-flow, and solvency distress rules applied to SEC financials",
+    "live_ingestion": "not attempted (offline or no monitored SEC contact)",
+    "mode": "benchmark",
+    "purpose": "software benchmark; not validated real-world bankruptcy performance",
+    "random_seed": 42,
+    "source_counts": {
+      "cached_sec": 1239
+    }
+  },
+  "forecast_target_bounds": {
+    "next_debt_ratio": [
+      0.23750396067285753,
+      1.1093369782648825
+    ],
+    "next_eps": [
+      -5.959999999999999,
+      15.485000000000033
+    ],
+    "next_ocf_ratio": [
+      -0.09704111611969411,
+      0.9309717479091125
+    ],
+    "next_roa": [
+      -0.15426088265325116,
+      0.2189267492218731
+    ],
+    "next_roe": [
+      -0.40781228270264297,
+      1.0289831913509488
+    ]
+  },
+  "forecasting": {
+    "debt_ratio": {
+      "mae": 0.060063980498432125,
+      "n_samples": 67,
+      "r2": 0.8783590017946393,
+      "rmse": 0.08443363671623376
+    },
+    "eps": {
+      "mae": 2.4440063868419215,
+      "n_samples": 68,
+      "r2": 0.6789614558852208,
+      "rmse": 3.588483616575114
+    },
+    "ocf_ratio": {
+      "mae": 0.05571844480362238,
+      "n_samples": 67,
+      "r2": 0.7209033947843282,
+      "rmse": 0.11221039726014899
+    },
+    "roa": {
+      "mae": 0.06358917333461624,
+      "n_samples": 66,
+      "r2": 0.20964534778695443,
+      "rmse": 0.17806369524949997
+    },
+    "roe": {
+      "mae": 0.15668639032108161,
+      "n_samples": 47,
+      "r2": 0.3397398925170043,
+      "rmse": 0.426400684155868
+    }
+  },
+  "forecasting_winsorized": {
+    "debt_ratio": {
+      "mae": 0.05037638865176849,
+      "n_samples": 67,
+      "r2": 0.9177994525323281,
+      "rmse": 0.0640151979399231
+    },
+    "eps": {
+      "mae": 2.0291534456654543,
+      "n_samples": 68,
+      "r2": 0.7316219373154085,
+      "rmse": 2.824301113884526
+    },
+    "ocf_ratio": {
+      "mae": 0.041581687379550744,
+      "n_samples": 67,
+      "r2": 0.8926839799025691,
+      "rmse": 0.05779387512956561
+    },
+    "roa": {
+      "mae": 0.03501169934258968,
+      "n_samples": 66,
+      "r2": 0.46286645415258276,
+      "rmse": 0.05549146684185449
+    },
+    "roe": {
+      "mae": 0.09552370434155526,
+      "n_samples": 47,
+      "r2": 0.7353149833500605,
+      "rmse": 0.1319471610833476
+    }
+  },
+  "global_shap_importance": {
+    "asset_turnover": 0.3791479170322418,
+    "current_ratio": 0.20352157950401306,
+    "debt_ratio": 0.15817327797412872,
+    "debt_ratio_yoy_delta": 0.417646199464798,
+    "debt_to_equity": 0.15992382168769836,
+    "ebit_to_assets": 0.7573493719100952,
+    "eps": 0.1430661678314209,
+    "negative_ocf_streak": 0.02032846212387085,
+    "ocf_ratio": 0.6887410283088684,
+    "ocf_ratio_yoy_delta": 0.25345274806022644,
+    "operating_margin": 0.9279834032058716,
+    "retained_earnings_ratio": 0.291853129863739,
+    "roa": 0.44812870025634766,
+    "roa_yoy_delta": 0.09026149660348892,
+    "roe": 0.1323777139186859,
+    "roe_yoy_delta": 0.07398758083581924,
+    "working_capital_ratio": 0.2631063461303711
+  },
+  "split_summary": {
+    "label_kind": "observed_when_supplied_otherwise_fundamental_distress_v1",
+    "max_train_target_year": 2021,
+    "min_test_feature_year": 2023,
+    "test_classification_rows": 69,
+    "test_rows": 150,
+    "test_rows_before_publication_embargo": 242,
+    "threshold_calibration_asof": "2024-04-01T00:00:00",
+    "threshold_source": "validation_fiscal_years_2022_2022",
+    "train_end_year": 2021,
+    "train_feature_rows": 864,
+    "train_supervised_rows": 778,
+    "validation_rows": 80
+  }
+}

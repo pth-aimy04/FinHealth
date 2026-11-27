@@ -1,0 +1,54 @@
+{
+  "baseline": "D:\\DATN\\.venv\\ui-baselines\\20261123_203953",
+  "original_files": {
+    ".gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    "account.html": {
+      "sha256": "3c0e3b40df5d0b81add06a0aa4193de90d020f28053e6dfb7929179ec636c1a4",
+      "unchanged": true
+    },
+    "index.html": {
+      "sha256": "147dc9b229a57a4c686b231dcdbf4715bc24d1672863add4ed21110c63b1fc73",
+      "unchanged": true
+    },
+    "styles.css": {
+      "sha256": "d01421982023d4f80736a4c3d0ff824be806a9757371240c653a733790eb9db7",
+      "unchanged": true
+    },
+    "js\\account-page.js": {
+      "sha256": "43abbf0c4b187216c0fc1880b56524c50551c4093eca5d26afed78796c78c184",
+      "unchanged": true
+    },
+    "js\\accounts.js": {
+      "sha256": "560336727da3ef37d955d7629b39de3bf5260e38f0b1d3f176d127f2206b6781",
+      "unchanged": true
+    },
+    "js\\api.js": {
+      "sha256": "8697dc9c240b9050c214e6868e64ee48fd32c0bffed4768d1385b83d6a1182f2",
+      "unchanged": true
+    },
+    "js\\app.js": {
+      "sha256": "0388eaa90e1a73f1aa4412ab8cd4a41a70f9e9c267622c79570722823040c3b2",
+      "unchanged": true
+    },
+    "js\\charts.js": {
+      "sha256": "aa9b4df1bd6696b6f0c3d8aeeede1d552ce4b262abec44fcb0acdfcc1a0d0749",
+      "unchanged": true
+    },
+    "js\\csv.js": {
+      "sha256": "2fbe8443eb741d7726898b8effe710b48f3e1f17fc3a87706bf6157235284916",
+      "unchanged": true
+    },
+    "js\\reports.js": {
+      "sha256": "7819b762823ddcb63e73131c9e6b503e76b33f5391ca37e27a339aeaada63f80",
+      "unchanged": true
+    },
+    "js\\vi.js": {
+      "sha256": "c123889a8f032c3cb8c7d7fa41c4bab54e29747c7cf674df0f24660dd9346c12",
+      "unchanged": true
+    }
+  },
+  "all_unchanged": true
+}
