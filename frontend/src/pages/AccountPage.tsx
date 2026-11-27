@@ -40,7 +40,7 @@ export function AccountPage() {
   });
 
   const verifyMutation = useMutation({
-    mutationFn: () => api.verifyEmail(email, challenge, otpCode),
+    mutationFn: () => api.verifyEmail(email, challenge, otpCode, newPassword || password),
     onSuccess: (res) => {
       setErrorMessage(null);
       setStatusMessage(res.message);

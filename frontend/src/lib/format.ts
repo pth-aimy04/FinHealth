@@ -36,6 +36,141 @@ export function formatCompactUsd(value: number | null | undefined): string {
   return `${sign}$${abs.toFixed(0)}`;
 }
 
+export function formatCompactVnd(value: number | null | undefined): string {
+  if (!isFiniteNumber(value)) return '—';
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(2)} nghìn tỷ ₫`;
+  if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(2)} tỷ ₫`;
+  if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)} triệu ₫`;
+  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)} nghìn ₫`;
+  return `${sign}${Math.round(abs).toLocaleString('vi-VN')} ₫`;
+}
+
+export function formatMoney(
+  value: number | null | undefined,
+  currency: 'VND' | 'USD' | string = 'VND',
+  unitScale: number = 1,
+): string {
+  if (!isFiniteNumber(value)) return '—';
+  const baseValue = value * unitScale;
+  if (currency.toUpperCase() === 'USD') {
+    return formatCompactUsd(baseValue);
+  }
+  return formatCompactVnd(baseValue);
+}
+
+export function formatScaledVnd(
+  valueInBaseVnd: number | null | undefined,
+  unitScale: 1 | 1_000 | 1_000_000 | 1_000_000_000 = 1_000_000,
+): string {
+  if (!isFiniteNumber(valueInBaseVnd)) return '—';
+  const scaled = valueInBaseVnd / unitScale;
+  const unitLabels: Record<number, string> = {
+    1: 'đồng',
+    1_000: 'nghìn đồng',
+    1_000_000: 'triệu đồng',
+    1_000_000_000: 'tỷ đồng',
+  };
+  const digits = unitScale >= 1_000_000_000 ? 2 : unitScale >= 1_000_000 ? 1 : 0;
+  return `${scaled.toLocaleString('vi-VN', { maximumFractionDigits: digits })} ${unitLabels[unitScale] ?? 'đồng'}`;
+}
+
+export const RISK_TIER_META = {
+  STRONG: {
+    label: 'Vững mạnh',
+    tone: 'low',
+    fg: 'var(--risk-low-fg)',
+    bg: 'var(--risk-low-bg)',
+    description: 'Nền tảng tài chính vững chắc, khả năng chịu đựng biến động tốt.',
+  },
+  STABLE: {
+    label: 'Ổn định',
+    tone: 'info',
+    fg: 'var(--accent-primary)',
+    bg: 'var(--accent-soft)',
+    description: 'Hoạt động tài chính ổn định, rủi ro mất cân đối trong 12 tháng ở mức kiểm soát.',
+  },
+  WATCH: {
+    label: 'Cần theo dõi sát',
+    tone: 'medium',
+    fg: 'var(--risk-medium-fg)',
+    bg: 'var(--risk-medium-bg)',
+    description: 'Xuất hiện dấu hiệu áp lực dòng tiền hoặc đòn bẩy, cần rà soát định kỳ.',
+  },
+  CRITICAL: {
+    label: 'Nguy cơ khủng hoảng cao',
+    tone: 'critical',
+    fg: 'var(--risk-critical-fg)',
+    bg: 'var(--risk-critical-bg)',
+    description: 'Rủi ro mất khả năng thanh toán cao trong 12 tháng tới, cần hành động ngay.',
+  },
+} as const;
+
+export type RiskTierKey = keyof typeof RISK_TIER_META;
+
+export function getRiskTierMeta(tier: string | null | undefined) {
+  if (!tier) return null;
+  const key = tier.toUpperCase() as RiskTierKey;
+  return RISK_TIER_META[key] ?? null;
+}
+
+export const CONFIDENCE_LEVEL_META = {
+  HIGH: {
+    label: 'Độ tin cậy Cao',
+    shortLabel: 'Cao',
+    fg: 'var(--risk-low-fg)',
+    bg: 'var(--risk-low-bg)',
+  },
+  MODERATE: {
+    label: 'Độ tin cậy Khá',
+    shortLabel: 'Khá',
+    fg: 'var(--risk-medium-fg)',
+    bg: 'var(--risk-medium-bg)',
+  },
+  LOW: {
+    label: 'Cần lưu ý dữ liệu',
+    shortLabel: 'Cần lưu ý',
+    fg: 'var(--risk-high-fg)',
+    bg: 'var(--risk-high-bg)',
+  },
+} as const;
+
+export const ORG_ROLE_LABELS: Record<'org_admin' | 'analyst' | 'viewer', string> = {
+  org_admin: 'Quản trị tổ chức',
+  analyst: 'Chuyên viên phân tích',
+  viewer: 'Người xem',
+};
+
+export const RELATIONSHIP_TAG_LABELS: Record<string, string> = {
+  own_company: 'Doanh nghiệp của tôi',
+  customer: 'Khách hàng',
+  supplier: 'Nhà cung cấp',
+  competitor: 'Đối thủ cạnh tranh',
+  portfolio: 'Danh mục đầu tư / Tín dụng',
+  other: 'Khác',
+};
+
+export const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  manufacturing: 'Sản xuất & Công nghiệp',
+  trade_service: 'Thương mại & Dịch vụ',
+  financial_institution: 'Tổ chức tài chính (Loại trừ chấm điểm)',
+};
+
+export const ACCOUNTING_STANDARD_LABELS: Record<string, string> = {
+  TT99_2025: 'TT99/2025/TT-BTC',
+  TT200_2014: 'TT200/2014/TT-BTC',
+  TT133_2016: 'TT133/2016/TT-BTC',
+  IFRS_USGAAP: 'IFRS / US GAAP',
+};
+
+export const AUDIT_STATUS_LABELS: Record<string, string> = {
+  audited_unqualified: 'Kiểm toán — Chấp nhận toàn phần',
+  audited_qualified: 'Kiểm toán — Ý kiến ngoại trừ',
+  audited_adverse_disclaimer: 'Kiểm toán — Từ chối / Trái ngược',
+  unaudited: 'Chưa kiểm toán (Tự lập)',
+};
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   const parsed = new Date(value);

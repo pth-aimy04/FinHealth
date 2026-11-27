@@ -461,9 +461,580 @@ export interface PublicUser {
   id: number;
   email: string;
   display_name: string;
+  job_title?: string | null;
   role: 'user' | 'admin' | string;
   active: boolean;
   email_verified: boolean;
+}
+
+export type OrgRole = 'viewer' | 'analyst' | 'org_admin';
+
+export interface OrganizationSummary {
+  id: number;
+  name: string;
+  slug: string;
+  is_personal: boolean;
+  role: OrgRole;
+  member_count: number;
+  is_active_workspace: boolean;
+  created_at: string;
+}
+
+export interface OrganizationDetail {
+  id: number;
+  name: string;
+  slug: string;
+  is_personal: boolean;
+  role: OrgRole;
+  member_count: number;
+  created_at: string;
+}
+
+export interface OrganizationSwitchResponse {
+  active_org_id: number;
+  organization: {
+    id: number;
+    name: string;
+    slug: string;
+    is_personal: boolean;
+    role: OrgRole;
+  };
+}
+
+export interface OrganizationMember {
+  user_id: number;
+  email: string;
+  display_name: string;
+  job_title: string | null;
+  role: OrgRole;
+  joined_at: string;
+}
+
+export interface OrganizationInvite {
+  id: number;
+  organization_id: number;
+  email: string;
+  role: OrgRole;
+  invited_by: number | null;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface OrganizationInviteCreated {
+  id: number;
+  organization_id: number;
+  email: string;
+  role: OrgRole;
+  token: string;
+  email_sent: boolean;
+  expires_at: string;
+}
+
+export interface OrganizationInviteAcceptResponse {
+  organization_id: number;
+  organization_name: string;
+  role: OrgRole;
+}
+
+export interface OrganizationAuditEntry {
+  id: number;
+  organization_id: number;
+  actor_id: number | null;
+  action: string;
+  target: string;
+  outcome: string;
+  created_at: string;
+}
+
+export interface UserDataExport {
+  exported_at: string;
+  profile: PublicUser & { created_at: string; updated_at: string };
+  organizations: Array<{
+    organization_id: number;
+    name: string;
+    slug: string;
+    is_personal: boolean;
+    role: OrgRole;
+    joined_at: string;
+  }>;
+  sessions: Array<{
+    id: number;
+    active_org_id: number | null;
+    created_at: string;
+    expires_at: string;
+    revoked_at: string | null;
+  }>;
+  workspace: {
+    watchlist: Array<{
+      id: number;
+      organization_id: number;
+      company_id: number;
+      created_at: string;
+    }>;
+    screeners: Array<{
+      id: number;
+      organization_id: number;
+      name: string;
+      filters: Record<string, unknown>;
+    }>;
+    analyses: Array<{
+      id: number;
+      organization_id: number;
+      name: string;
+      model_version: string;
+      created_at: string;
+    }>;
+  };
+  activity_logs: {
+    organization_audit_logs: Array<{
+      id: number;
+      organization_id: number;
+      action: string;
+      target: string;
+      outcome: string;
+      created_at: string;
+    }>;
+    admin_audit_logs: Array<{
+      id: number;
+      action: string;
+      target: string;
+      outcome: string;
+      created_at: string;
+    }>;
+  };
+}
+
+// =============================================================================
+// V1.0 Organization Companies & Multi-Standard VN Financial Statements
+// =============================================================================
+
+export type BusinessType = 'manufacturing' | 'trade_service' | 'financial_institution';
+export type ListingStatus = 'listed' | 'unlisted';
+export type RelationshipTag =
+  | 'own_company'
+  | 'customer'
+  | 'supplier'
+  | 'competitor'
+  | 'portfolio'
+  | 'other';
+export type AccountingStandard = 'TT99_2025' | 'TT200_2014' | 'TT133_2016' | 'IFRS_USGAAP';
+export type CurrencyCode = 'VND' | 'USD';
+export type UnitScale = 1 | 1_000 | 1_000_000 | 1_000_000_000;
+export type AuditStatus =
+  | 'audited_unqualified'
+  | 'audited_qualified'
+  | 'audited_adverse_disclaimer'
+  | 'unaudited';
+export type StatementStatus = 'draft' | 'finalized';
+export type SourceChannel = 'web_form' | 'excel_upload' | 'htkk_xml' | 'sample';
+
+export interface OrgCompany {
+  id: number;
+  organization_id: number;
+  name: string;
+  tax_code: string | null;
+  ticker: string | null;
+  sector_code: string | null;
+  sector_name: string | null;
+  business_type: BusinessType;
+  listing_status: ListingStatus;
+  relationship_tag: RelationshipTag;
+  archived: boolean;
+  is_sample: boolean;
+  scoring_eligible: boolean;
+  scoring_exclusion_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrgCompanyCreateInput {
+  name: string;
+  tax_code?: string | null;
+  ticker?: string | null;
+  sector_code?: string | null;
+  sector_name?: string | null;
+  business_type?: BusinessType;
+  listing_status?: ListingStatus;
+  relationship_tag?: RelationshipTag;
+}
+
+export interface OrgCompanyUpdateInput {
+  name?: string | null;
+  tax_code?: string | null;
+  ticker?: string | null;
+  sector_code?: string | null;
+  sector_name?: string | null;
+  business_type?: BusinessType | null;
+  listing_status?: ListingStatus | null;
+  relationship_tag?: RelationshipTag | null;
+  archived?: boolean | null;
+}
+
+export interface FieldCheckIssue {
+  code: string;
+  severity: 'error' | 'warning';
+  field: string;
+  message: string;
+  related_fields: string[];
+  expected?: number | null;
+  actual?: number | null;
+  discrepancy?: number | null;
+}
+
+export interface ValidationReport {
+  is_balanced: boolean;
+  errors: FieldCheckIssue[];
+  warnings: FieldCheckIssue[];
+}
+
+export interface OrgStatementNumericFields {
+  total_assets?: number | null;
+  current_assets?: number | null;
+  cash_and_equivalents?: number | null;
+  accounts_receivable?: number | null;
+  inventory?: number | null;
+  total_liabilities?: number | null;
+  current_liabilities?: number | null;
+  short_term_debt?: number | null;
+  long_term_debt?: number | null;
+  accounts_payable?: number | null;
+  stockholders_equity?: number | null;
+  retained_earnings?: number | null;
+  revenues?: number | null;
+  cost_of_goods_sold?: number | null;
+  gross_profit?: number | null;
+  operating_expenses?: number | null;
+  operating_income?: number | null;
+  depreciation_amortization?: number | null;
+  ebitda?: number | null;
+  interest_expense?: number | null;
+  net_income?: number | null;
+  operating_cash_flow?: number | null;
+  capex?: number | null;
+  market_value_equity?: number | null;
+  eps_basic?: number | null;
+  eps_diluted?: number | null;
+}
+
+export interface OrgStatementInput extends OrgStatementNumericFields {
+  fiscal_year: number;
+  fiscal_period?: string;
+  period_end_date?: string | null;
+  accounting_standard?: AccountingStandard;
+  currency?: CurrencyCode;
+  unit_scale?: UnitScale;
+  display_unit?: string | null;
+  audit_status?: AuditStatus;
+  status?: StatementStatus;
+}
+
+export interface OrgStatementUpdateInput extends OrgStatementNumericFields {
+  period_end_date?: string | null;
+  accounting_standard?: AccountingStandard | null;
+  currency?: CurrencyCode | null;
+  unit_scale?: UnitScale | null;
+  display_unit?: string | null;
+  audit_status?: AuditStatus | null;
+  status?: StatementStatus | null;
+}
+
+export interface OrgStatement extends Required<{ [K in keyof OrgStatementNumericFields]: number | null }> {
+  id: number;
+  organization_id: number;
+  org_company_id: number;
+  fiscal_year: number;
+  fiscal_period: string;
+  period_end_date: string | null;
+  accounting_standard: AccountingStandard | string;
+  currency: CurrencyCode | string;
+  unit_scale: UnitScale | number;
+  display_unit: string;
+  audit_status: AuditStatus | string;
+  status: StatementStatus | string;
+  source_channel: SourceChannel | string;
+  validation: ValidationReport;
+  ratios: Record<string, number | boolean | null>;
+  raw_source_meta?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SampleCompanySummary {
+  id: number;
+  name: string;
+  tax_code: string | null;
+  business_type: string;
+  is_sample: boolean;
+}
+
+export interface SampleSeedResponse {
+  created_companies: number;
+  existing_companies: number;
+  created_statements: number;
+  companies: SampleCompanySummary[];
+}
+
+// =============================================================================
+// V1.0 Corporate Risk Analytics, 5 Pillars, Drivers & Org Comparison
+// =============================================================================
+
+export type RiskTier = 'STRONG' | 'STABLE' | 'WATCH' | 'CRITICAL';
+export type ConfidenceLevel = 'HIGH' | 'MODERATE' | 'LOW';
+export type AltmanVariant = 'Z' | 'Z_PRIME' | 'Z_DOUBLE_PRIME';
+export type AltmanZone = 'SAFE' | 'GREY' | 'DISTRESS';
+export type PillarKey = 'liquidity' | 'solvency' | 'profitability' | 'cash_flow' | 'efficiency';
+export type PillarStatus = 'STRONG' | 'ADEQUATE' | 'WEAK' | 'CRITICAL' | 'UNAVAILABLE';
+export type MetricStatus = 'GOOD' | 'WARNING' | 'CRITICAL' | 'UNAVAILABLE';
+export type MetricUnit = 'percent' | 'ratio' | 'days' | 'multiple';
+export type GoodDirection = 'higher' | 'lower';
+export type DriverSide = 'strength' | 'bottleneck';
+export type ImpactStrength = 'high' | 'medium' | 'low';
+export type BenchmarkScope = 'sector' | 'universe' | 'unavailable';
+
+export interface ConfidenceView {
+  level: ConfidenceLevel;
+  input_completeness: number;
+  is_ood: boolean;
+  ood_features: string[];
+  ensemble_spread: number | null;
+  audit_status: string;
+  reasons_vi: string[];
+}
+
+export interface CashFlowOverlayView {
+  triggered: boolean;
+  flags: string[];
+  reasons_vi: string[];
+  original_tier: RiskTier | null;
+  adjusted_tier: RiskTier | null;
+}
+
+export interface AssessmentSummaryView {
+  scoring_eligible: boolean;
+  scoring_mode: 'single_period' | 'multi_period' | 'excluded';
+  model_version: string;
+  health_score: number | null;
+  risk_tier: RiskTier | null;
+  risk_label_vi: string;
+  pd_12m: number | null;
+  confidence: ConfidenceView | null;
+  cash_flow_overlay: CashFlowOverlayView | null;
+  top_3_takeaways_vi: string[];
+  unavailable_reason_vi: string | null;
+  legal_disclaimer_vi: string;
+}
+
+export interface AltmanView {
+  applicable: boolean;
+  variant: AltmanVariant | null;
+  score: number | null;
+  zone: AltmanZone | null;
+  zone_label_vi: string | null;
+  cutoff_low: number | null;
+  cutoff_high: number | null;
+  components: Record<string, number | null>;
+  fallback_note_vi: string | null;
+  unavailable_reason_vi: string | null;
+}
+
+export interface PeerMetricPositionView {
+  metric_key: string;
+  peer_median: number | null;
+  percentile: number | null;
+  n_observed: number;
+  benchmark_scope: BenchmarkScope;
+  position_label_vi: string;
+}
+
+export interface ContextualMetricView {
+  key: string;
+  pillar: PillarKey;
+  label_vi: string;
+  value: number | null;
+  formatted_value_vi: string;
+  unit: MetricUnit;
+  good_direction: GoodDirection;
+  reference_range_vi: string;
+  tooltip_vi: string;
+  status: MetricStatus;
+  score: number | null;
+  yoy_change: number | null;
+  peer_position: PeerMetricPositionView | null;
+}
+
+export interface PillarView {
+  key: PillarKey;
+  label_vi: string;
+  description_vi: string;
+  weight: number;
+  score: number | null;
+  status: PillarStatus;
+  observed_metrics: number;
+  total_metrics: number;
+  metrics: ContextualMetricView[];
+}
+
+export interface PillarsOverviewView {
+  overall_score: number | null;
+  overall_status: PillarStatus;
+  is_negative_equity: boolean;
+  pillars: PillarView[];
+}
+
+export interface BusinessDriverView {
+  factor_code: string;
+  label_vi: string;
+  pillar: PillarKey;
+  side: DriverSide;
+  observed_value: number | null;
+  formatted_value_vi: string;
+  reference_range_vi: string;
+  impact_share_pct: number;
+  impact_strength: ImpactStrength;
+  impact_strength_label_vi: string;
+  headline_vi: string;
+  detail_vi: string;
+}
+
+export interface DriversSplitView {
+  strengths: BusinessDriverView[];
+  bottlenecks: BusinessDriverView[];
+  total_impact_share_pct: number;
+}
+
+export interface DiagnosticsView {
+  dupont: Record<string, unknown>;
+  quality_of_earnings: Record<string, unknown>;
+  accounting_checklist: Record<string, unknown>;
+}
+
+export interface MultiPeriodHistoryPointView {
+  statement_id: number;
+  fiscal_year: number;
+  fiscal_period: string;
+  accounting_standard: string;
+  currency: string;
+  audit_status: string;
+  revenues: number | null;
+  net_income: number | null;
+  operating_cash_flow: number | null;
+  total_assets: number | null;
+  total_liabilities: number | null;
+  stockholders_equity: number | null;
+  debt_ratio: number | null;
+  roa: number | null;
+  current_ratio: number | null;
+  altman_variant: AltmanVariant | null;
+  altman_z_score: number | null;
+  altman_zone: AltmanZone | null;
+  health_score: number | null;
+  pd_12m: number | null;
+  risk_tier: RiskTier | null;
+}
+
+export interface PeerContextView {
+  benchmark_scope: BenchmarkScope;
+  mapped_sector: string | null;
+  cohort_size: number;
+  summary_label_vi: string;
+  metrics: Record<string, PeerMetricPositionView>;
+}
+
+export interface OrgCompanyMetaView {
+  id: number;
+  organization_id: number;
+  name: string;
+  tax_code: string | null;
+  ticker: string | null;
+  sector_code: string | null;
+  sector_name: string | null;
+  business_type: string;
+  listing_status: string;
+  relationship_tag: string;
+  is_sample: boolean;
+  fiscal_year: number | null;
+  accounting_standard: string | null;
+  currency: string | null;
+}
+
+export interface CompanyAssessmentView {
+  company: OrgCompanyMetaView;
+  summary: AssessmentSummaryView;
+  altman: AltmanView;
+  pillars: PillarsOverviewView;
+  drivers: DriversSplitView;
+  diagnostics: DiagnosticsView;
+  history: MultiPeriodHistoryPointView[];
+  peer_context: PeerContextView;
+  legal_disclaimer_vi: string;
+}
+
+export interface OrgCompareCompanyItemView {
+  company: OrgCompanyMetaView;
+  fiscal_year: number;
+  accounting_standard: string;
+  health_score: number | null;
+  risk_tier: RiskTier | null;
+  risk_label_vi: string;
+  pd_12m: number | null;
+  altman: AltmanView;
+  pillar_scores: Record<string, number | null>;
+  core_metrics: Record<string, number | null>;
+}
+
+export interface OrgCompareResponseView {
+  organization_id: number;
+  requested_ids: number[];
+  period_policy: 'latest_finalized' | 'common_fiscal_year';
+  common_fiscal_year: number | null;
+  active_model_version: string;
+  companies: OrgCompareCompanyItemView[];
+  historical_series: Record<string, MultiPeriodHistoryPointView[]>;
+  cohort_medians: Record<string, number | null>;
+  legal_disclaimer_vi: string;
+}
+
+// =============================================================================
+// V1.0 Asynchronous Batch Excel Jobs (S03)
+// =============================================================================
+
+export type BatchJobStatus = 'queued' | 'running' | 'completed' | 'failed';
+export type BatchRowStatus = 'pending' | 'succeeded' | 'failed' | 'excluded';
+
+export interface BatchJobSummary {
+  id: number;
+  organization_id: number;
+  filename: string;
+  status: BatchJobStatus;
+  model_version: string | null;
+  total_rows: number;
+  processed_rows: number;
+  succeeded_rows: number;
+  failed_rows: number;
+  error_message: string | null;
+  summary: Record<string, unknown> | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface BatchJobRowResult {
+  id: number;
+  row_index: number;
+  company_name: string;
+  tax_code: string | null;
+  fiscal_year: number | null;
+  status: BatchRowStatus;
+  pd_12m: number | null;
+  health_score: number | null;
+  risk_tier: RiskTier | null;
+  confidence_level: ConfidenceLevel | null;
+  top_bottleneck_vi: string | null;
+  error_message: string | null;
+}
+
+export interface BatchJobDetail extends BatchJobSummary {
+  rows: BatchJobRowResult[];
 }
 
 export interface WatchlistEntry {

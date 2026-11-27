@@ -1,13 +1,19 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
-import type { PublicUser } from '@/types/api';
+import type { OrgRole, OrganizationSummary, PublicUser } from '@/types/api';
 
 interface AuthContextValue {
   user: PublicUser | null;
   isLoading: boolean;
   isAdmin: boolean;
+  organizations: OrganizationSummary[];
+  activeOrg: OrganizationSummary | null;
+  activeOrgRole: OrgRole | null;
+  isOrgsLoading: boolean;
   refreshAuth: () => Promise<void>;
+  refreshOrganizations: () => Promise<void>;
+  switchOrg: (organizationId: number) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -34,8 +40,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const user = data ?? null;
 
+  const { data: organizationsData, isLoading: isOrgsLoading } = useQuery({
+    queryKey: ['auth', 'organizations', user?.id],
+    queryFn: async () => {
+      try {
+        return await api.getOrganizations();
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          return [];
+        }
+        throw error;
+      }
+    },
+    enabled: Boolean(user),
+    retry: false,
+    staleTime: 30_000,
+  });
+
+  const organizations = user ? (organizationsData ?? []) : [];
+  const activeOrg =
+    organizations.find((org) => org.is_active_workspace) ?? organizations[0] ?? null;
+  const activeOrgRole: OrgRole | null = activeOrg?.role ?? null;
+
   async function refreshAuth() {
     await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    await queryClient.invalidateQueries({ queryKey: ['auth', 'organizations'] });
+  }
+
+  async function refreshOrganizations() {
+    await queryClient.invalidateQueries({ queryKey: ['auth', 'organizations'] });
+  }
+
+  async function switchOrg(organizationId: number) {
+    await api.switchOrganization(organizationId);
+    // Invalidate and clear all cached workspace/org queries to prevent cross-tenant display leaks
+    queryClient.removeQueries({
+      predicate: (query) => {
+        const rootKey = query.queryKey[0];
+        return rootKey !== 'auth' && rootKey !== 'health';
+      },
+    });
+    await queryClient.invalidateQueries();
   }
 
   async function logout() {
@@ -43,8 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.logout();
     } finally {
       queryClient.setQueryData(['auth', 'me'], null);
-      queryClient.removeQueries({ queryKey: ['workspace'] });
-      queryClient.removeQueries({ queryKey: ['admin'] });
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== 'auth',
+      });
+      queryClient.removeQueries({ queryKey: ['auth', 'organizations'] });
     }
   }
 
@@ -54,7 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAdmin: user?.role === 'admin',
+        organizations,
+        activeOrg,
+        activeOrgRole,
+        isOrgsLoading: Boolean(user) && isOrgsLoading,
         refreshAuth,
+        refreshOrganizations,
+        switchOrg,
         logout,
       }}
     >
