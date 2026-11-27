@@ -1,7 +1,7 @@
-"""Next-period distress XGBoost, validation-only threshold selection, and real baselines."""
+"""Next-period distress classifiers (LR/RF/XGB/LGBM), Platt calibration, and ensembles."""
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
 import numpy as np
@@ -22,13 +22,19 @@ from finhealth.etl.financial_ratios import (
     ALTMAN_NON_MANUFACTURING_CUTOFF,
 )
 from finhealth.ingestion.schemas import is_manufacturing_sic
+from finhealth.ml.confidence import (
+    classify_bankruptcy_tier as classify_bankruptcy_tier,
+)
+from finhealth.ml.confidence import (
+    map_pd_to_health_score as map_pd_to_health_score,
+)
 from finhealth.ml.evaluator import binary_labels, evaluate_binary_classification
 from finhealth.ml.preprocessing import FinancialPreprocessor
 from finhealth.ml.splitter import ML_FEATURE_COLUMNS, training_horizon_rows
 
 
 def classify_risk_level(probability: float) -> str:
-    """Map a valid distress probability to the specified fixed communication bands."""
+    """Map a valid distress probability to the legacy fixed communication bands."""
     if not math.isfinite(probability) or not 0 <= probability <= 1:
         raise ValueError("Probability must be finite and in [0,1]")
     return (
@@ -44,7 +50,11 @@ def classify_risk_level(probability: float) -> str:
 
 def _classification_training(df: pd.DataFrame, target_col: str) -> tuple[pd.DataFrame, np.ndarray]:
     """Keep observed labels and reject single-class training rather than inventing examples."""
-    train = training_horizon_rows(df) if target_col.startswith("next_") else df.copy()
+    train = (
+        training_horizon_rows(df)
+        if target_col.startswith("next_") and "next_fiscal_year" in df.columns
+        else df.copy()
+    )
     if target_col not in train:
         raise ModelPipelineError(f"Missing classification target: {target_col}")
     train = train.loc[train[target_col].notna()]
@@ -54,8 +64,16 @@ def _classification_training(df: pd.DataFrame, target_col: str) -> tuple[pd.Data
     return train, labels
 
 
-ModelType = Literal["xgboost", "lightgbm", "random_forest"]
+ModelType = Literal["xgboost", "lightgbm", "random_forest", "logistic_regression"]
 ImbalanceStrategy = Literal["class_weight", "smote"]
+
+CANDIDATE_MODEL_TYPES: tuple[ModelType, ...] = ("xgboost", "lightgbm", "random_forest")
+ALL_MODEL_TYPES: tuple[ModelType, ...] = (
+    "logistic_regression",
+    "random_forest",
+    "xgboost",
+    "lightgbm",
+)
 
 
 def _apply_smote(
@@ -86,7 +104,7 @@ def _apply_smote(
 
 
 class DistressClassifier:
-    """Predict a binary distress target with explicit class imbalance and fixed preprocessing."""
+    """Predict a binary distress target with explicit class imbalance and Platt calibration."""
 
     def __init__(
         self,
@@ -98,8 +116,8 @@ class DistressClassifier:
         smote_sampling_strategy: float | str = "auto",
         **model_params: Any,
     ) -> None:
-        """Initialize training-only preprocessing and deterministic tree-model parameters."""
-        if model_type not in ("xgboost", "lightgbm", "random_forest"):
+        """Initialize training-only preprocessing and deterministic estimator parameters."""
+        if model_type not in ALL_MODEL_TYPES:
             raise ModelPipelineError(f"Unsupported distress classifier model_type: {model_type}")
         if imbalance_strategy not in ("class_weight", "smote"):
             raise ModelPipelineError(f"Unsupported imbalance_strategy: {imbalance_strategy}")
@@ -139,7 +157,7 @@ class DistressClassifier:
                 "verbose": -1,
                 **model_params,
             }
-        else:
+        elif model_type == "random_forest":
             self.params = {
                 "n_estimators": 200,
                 "max_depth": 8,
@@ -149,7 +167,16 @@ class DistressClassifier:
                 "n_jobs": 1,
                 **model_params,
             }
-        self.model_: XGBClassifier | LGBMClassifier | RandomForestClassifier | None = None
+        else:
+            self.params = {
+                "class_weight": "balanced" if imbalance_strategy == "class_weight" else None,
+                "max_iter": 1000,
+                "random_state": random_seed,
+                **model_params,
+            }
+        self.model_: (
+            XGBClassifier | LGBMClassifier | RandomForestClassifier | Pipeline | None
+        ) = None
         self.optimal_threshold_ = 0.5
         self.calibration_: tuple[float, float] | None = None
         self.train_class_counts_before_: dict[int, int] | None = None
@@ -185,8 +212,15 @@ class DistressClassifier:
         elif self.model_type == "lightgbm":
             params = {**self.params, "scale_pos_weight": self.scale_pos_weight_}
             self.model_ = LGBMClassifier(**params).fit(features, labels)
-        else:
+        elif self.model_type == "random_forest":
             self.model_ = RandomForestClassifier(**self.params).fit(features, labels)
+        else:
+            self.model_ = Pipeline(
+                [
+                    ("scaler", RobustScaler()),
+                    ("clf", LogisticRegression(**self.params)),
+                ]
+            ).fit(features, labels)
         self.optimal_threshold_ = 0.5
         self.calibration_ = None
         return self
@@ -210,9 +244,14 @@ class DistressClassifier:
             raise ModelPipelineError("Classifier must be fitted before prediction")
         model_type = getattr(self, "model_type", "xgboost")
         if model_type == "xgboost":
+            assert isinstance(self.model_, XGBClassifier)
             return np.asarray(self.model_.predict(inputs, output_margin=True), dtype=np.float64)
         if model_type == "lightgbm":
+            assert isinstance(self.model_, LGBMClassifier)
             return np.asarray(self.model_.predict(inputs, raw_score=True), dtype=np.float64)
+        if model_type == "logistic_regression":
+            assert isinstance(self.model_, Pipeline)
+            return np.asarray(self.model_.decision_function(inputs), dtype=np.float64)
         proba_matrix = np.asarray(self.model_.predict_proba(inputs), dtype=np.float64)
         proba = np.clip(proba_matrix[:, 1], 1e-7, 1.0 - 1e-7)
         return np.asarray(logit(proba), dtype=np.float64)
@@ -228,14 +267,17 @@ class DistressClassifier:
     def fit_calibration(
         self, validation: pd.DataFrame, labels: Sequence[int] | pd.Series | np.ndarray
     ) -> None:
-        """Fit a regularized sigmoid on a separate publication-eligible validation window."""
+        """Fit a regularized Platt sigmoid on a separate publication-eligible validation window."""
         y = binary_labels(labels)
         margin = self.predict_raw_margin(validation)
         if len(y) != len(margin):
             raise ModelPipelineError("Calibration requires one observed label per feature row")
         offset = math.log(self.scale_pos_weight_)
         if len(np.unique(y)) == 2:
-            calibrator = LogisticRegression(random_state=self.params["random_state"])
+            calibrator = LogisticRegression(
+                max_iter=1000,
+                random_state=self.params["random_state"],
+            )
             calibrator.fit((margin - offset).reshape(-1, 1), y)
             slope = float(calibrator.coef_[0, 0])
             if slope > 0:
@@ -259,33 +301,42 @@ class DistressClassifier:
         labels, probabilities = binary_labels(y_true), self.predict_proba(X_df)
         if len(labels) != len(probabilities):
             raise ModelPipelineError("Validation labels and feature rows must have the same length")
-        candidates = []
         thresholds = np.linspace(0.15, 0.85, 71)
         if getattr(self, "calibration_", None) is not None:
             thresholds = np.unique(np.r_[probabilities, thresholds])
-        for threshold in thresholds:
-            predicted = probabilities >= threshold
-            # Labels/probabilities were already validated above. Reusing the binary
-            # counts avoids repeatedly validating the same arrays in sklearn metrics.
-            positives = int(labels.sum())
-            predicted_positives = int(predicted.sum())
-            true_positives = int(np.count_nonzero(predicted & (labels == 1)))
-            f2_denominator = 4 * positives + predicted_positives
-            f1_denominator = positives + predicted_positives
-            candidates.append(
-                (
-                    5 * true_positives / f2_denominator if f2_denominator else 0.0,
-                    2 * true_positives / f1_denominator if f1_denominator else 0.0,
-                    true_positives / predicted_positives if predicted_positives else 0.0,
-                    threshold,
-                )
-            )
-        best_f2 = max(row[0] for row in candidates)
-        _, _, _, best = max(
-            (row for row in candidates if row[0] >= best_f2 - 0.02),
-            key=lambda row: (row[1], row[2], row[0], -abs(row[3] - 0.5), -row[3]),
+        # Vectorized O((N + T) log N) evaluation over all candidate thresholds.
+        order = np.argsort(probabilities, kind="mergesort")
+        sorted_probs = probabilities[order]
+        sorted_labels = labels[order]
+        total_n = len(sorted_labels)
+        positives = int(sorted_labels.sum())
+        cum_pos = np.r_[0, np.cumsum(sorted_labels)]
+        indices = np.searchsorted(sorted_probs, thresholds, side="left")
+        predicted_positives = total_n - indices
+        true_positives = positives - cum_pos[indices]
+
+        f2_den = 4 * positives + predicted_positives
+        f1_den = positives + predicted_positives
+        f2 = np.where(f2_den > 0, 5.0 * true_positives / np.maximum(f2_den, 1), 0.0)
+        f1 = np.where(f1_den > 0, 2.0 * true_positives / np.maximum(f1_den, 1), 0.0)
+        prec = np.where(
+            predicted_positives > 0,
+            true_positives / np.maximum(predicted_positives, 1),
+            0.0,
         )
-        self.optimal_threshold_ = float(best)
+        best_f2 = float(np.max(f2))
+        eligible = np.flatnonzero(f2 >= best_f2 - 0.02)
+        best_idx = max(
+            eligible,
+            key=lambda i: (
+                float(f1[i]),
+                float(prec[i]),
+                float(f2[i]),
+                -abs(float(thresholds[i]) - 0.5),
+                -float(thresholds[i]),
+            ),
+        )
+        self.optimal_threshold_ = float(thresholds[best_idx])
         return self.optimal_threshold_
 
     def predict_with_risk_level(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -338,11 +389,13 @@ class BaselineComparisonSuite:
             ]
         )
         self.fitted_ = False
+        self.scale_pos_weight_ = 1.0
+        self.calibration_: tuple[float, float] | None = None
 
     def fit(
         self, df_train: pd.DataFrame, target_col: str = "next_is_distressed"
     ) -> "BaselineComparisonSuite":
-        """Train logistic regression on exactly the same observed target horizon as XGBoost."""
+        """Train logistic regression on exactly the same observed target horizon as tree models."""
         train, labels = _classification_training(df_train, target_col)
         frame = self._schema.frame(train)
         if self.imbalance_strategy == "smote":
@@ -358,10 +411,36 @@ class BaselineComparisonSuite:
                 random_seed=self.random_seed,
             )
             clf.fit(resampled_x, resampled_y)
+            self.scale_pos_weight_ = 1.0
         else:
             self.logistic_regression.fit(frame, labels)
+            self.scale_pos_weight_ = float((labels == 0).sum() / max((labels == 1).sum(), 1))
+        self.calibration_ = None
         self.fitted_ = True
         return self
+
+    def fit_calibration(
+        self, validation: pd.DataFrame, labels: Sequence[int] | pd.Series | np.ndarray
+    ) -> None:
+        """Fit Platt calibration on the logistic regression baseline using validation labels."""
+        if not self.fitted_:
+            raise ModelPipelineError("Baselines must be fitted before calibration")
+        y = binary_labels(labels)
+        margin = np.asarray(
+            self.logistic_regression.decision_function(self._schema.frame(validation)),
+            dtype=np.float64,
+        )
+        if len(y) != len(margin):
+            raise ModelPipelineError("Calibration requires one observed label per feature row")
+        offset = math.log(max(self.scale_pos_weight_, 1e-9))
+        if len(np.unique(y)) == 2:
+            calibrator = LogisticRegression(max_iter=1000, random_state=self.random_seed)
+            calibrator.fit((margin - offset).reshape(-1, 1), y)
+            slope = float(calibrator.coef_[0, 0])
+            if slope > 0:
+                self.calibration_ = (slope, float(calibrator.intercept_[0]) - slope * offset)
+                return
+        self.calibration_ = (1.0, -offset)
 
     def predict_probabilities(self, df: pd.DataFrame) -> dict[str, np.ndarray]:
         """Return both continuous risk scores, using numerically stable Altman logistic mapping."""
@@ -386,10 +465,18 @@ class BaselineComparisonSuite:
         altman = expit(margin)
         # Preserve the strict rule even when expit rounds a positive margin to 0.5.
         altman = np.where(margin > 0, np.maximum(altman, np.nextafter(0.5, 1)), altman)
+        frame = self._schema.frame(df)
+        affine = getattr(self, "calibration_", None)
+        if affine is not None:
+            slope, intercept = affine
+            lr_margin = np.asarray(
+                self.logistic_regression.decision_function(frame), dtype=np.float64
+            )
+            lr_probs = expit(slope * lr_margin + intercept)
+        else:
+            lr_probs = self.logistic_regression.predict_proba(frame)[:, 1]
         return {
-            "logistic_regression": self.logistic_regression.predict_proba(self._schema.frame(df))[
-                :, 1
-            ],
+            "logistic_regression": lr_probs,
             "altman_z_baseline": altman,
         }
 
@@ -408,13 +495,13 @@ class BaselineComparisonSuite:
         }
 
 
-CANDIDATE_MODEL_TYPES: tuple[ModelType, ...] = ("xgboost", "lightgbm", "random_forest")
-
-
 def select_best_classifier(
-    candidates: dict[str, DistressClassifier],
+    candidates: Mapping[str, DistressClassifier],
     eval_df: pd.DataFrame,
     eval_labels: Sequence[int] | pd.Series | np.ndarray,
+    *,
+    tree_only: bool = False,
+    boosted_tree_only: bool = False,
 ) -> tuple[str, DistressClassifier, dict[str, dict[str, Any]]]:
     """Evaluate fitted candidates on identical rows and return the highest-scoring model."""
     if not candidates:
@@ -425,6 +512,17 @@ def select_best_classifier(
         probs = clf.predict_proba(eval_df)
         metrics[name] = evaluate_binary_classification(y, probs, clf.optimal_threshold_)
 
+    allowed_types = (
+        ("xgboost", "lightgbm")
+        if boosted_tree_only
+        else ("xgboost", "lightgbm", "random_forest")
+        if tree_only
+        else ALL_MODEL_TYPES
+    )
+    eligible = [name for name, clf in candidates.items() if clf.model_type in allowed_types]
+    if not eligible:
+        raise ModelPipelineError("No eligible candidate classifier matched selection criteria")
+
     def _score_key(name: str) -> tuple[float, float, float, float]:
         row = metrics[name]
         roc = float(row["roc_auc"]) if row["roc_auc"] is not None else -1.0
@@ -433,5 +531,46 @@ def select_best_classifier(
         brier = float(row["brier_score"]) if row["brier_score"] is not None else 1.0
         return (roc, pr, f2, -brier)
 
-    best_name = max(candidates, key=_score_key)
+    best_name = max(eligible, key=_score_key)
     return best_name, candidates[best_name], metrics
+
+
+def compute_ensemble_weights(
+    validation_metrics: Mapping[str, Mapping[str, Any]],
+) -> dict[str, float]:
+    """Compute inverse-Brier normalized validation weights across calibrated models."""
+    if not validation_metrics:
+        raise ModelPipelineError("Validation metrics are required to compute ensemble weights")
+    raw_weights: dict[str, float] = {}
+    for name, row in validation_metrics.items():
+        brier = row.get("brier_score")
+        score = float(brier) if brier is not None and math.isfinite(float(brier)) else 0.25
+        raw_weights[name] = 1.0 / max(score, 1e-4)
+    total = sum(raw_weights.values())
+    return {name: weight / total for name, weight in raw_weights.items()}
+
+
+def predict_ensemble_probabilities(
+    candidates: Mapping[str, DistressClassifier],
+    df: pd.DataFrame,
+    weights: Mapping[str, float] | None = None,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    """Return weighted calibrated ensemble probabilities plus per-model probabilities."""
+    if not candidates:
+        raise ModelPipelineError("At least one fitted candidate is required for ensemble scoring")
+    per_model = {name: clf.predict_proba(df) for name, clf in candidates.items()}
+    if weights:
+        active = {name: float(weights[name]) for name in per_model if name in weights}
+        total = sum(active.values())
+        norm_weights = (
+            {name: w / total for name, w in active.items()}
+            if total > 0
+            else {name: 1.0 / len(per_model) for name in per_model}
+        )
+    else:
+        norm_weights = {name: 1.0 / len(per_model) for name in per_model}
+    ensemble = np.zeros(len(df), dtype=np.float64)
+    for name, weight in norm_weights.items():
+        ensemble += weight * per_model[name]
+    ensemble = np.clip(ensemble, 0.0, 1.0)
+    return ensemble, per_model

@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-11-27T10:46:21.500230+00:00",
+  "dependencies": {
+    "joblib": "1.6.0",
+    "lightgbm": "4.7.0",
+    "numpy": "2.4.6",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "shap": "0.51.0",
+    "xgboost": "3.2.0"
+  },
+  "model_version": "v2.0.0-kaggle",
+  "scoring_contract": "scale_free_v2",
+  "sha256": "c904a930e55e2ebb14bf110b31c4c678a0c62e774fbf20dd6cd56f1919ea18d8"
+}

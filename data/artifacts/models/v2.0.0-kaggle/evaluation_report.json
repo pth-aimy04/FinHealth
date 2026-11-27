@@ -1,0 +1,1328 @@
+{
+  "calibration_all_models_multi": {
+    "lightgbm": [
+      0.7466181853414862,
+      -4.076280039851471
+    ],
+    "logistic_regression": [
+      0.5401085252953036,
+      -4.615633230422613
+    ],
+    "random_forest": [
+      1.1762321236178417,
+      -3.944190951301176
+    ],
+    "xgboost": [
+      0.9974694743757795,
+      -4.181691922560789
+    ]
+  },
+  "calibration_all_models_single": {
+    "lightgbm": [
+      0.816237849826259,
+      -4.105380700676447
+    ],
+    "logistic_regression": [
+      0.5326289883291602,
+      -4.593243963327105
+    ],
+    "random_forest": [
+      1.1081054622263993,
+      -3.973317494161882
+    ],
+    "xgboost": [
+      0.9952226767037375,
+      -4.172868923024906
+    ]
+  },
+  "classification_baselines": {
+    "altman_z_baseline": {
+      "accuracy": 0.6079832665156005,
+      "brier_score": 0.30500170762719897,
+      "confusion_matrix": {
+        "fn": 6,
+        "fp": 2243,
+        "tn": 3437,
+        "tp": 51
+      },
+      "f1_score": 0.04338579327945555,
+      "f2_score": 0.10111022997620936,
+      "log_loss": 3.1184163865411727,
+      "mean_probability": 0.4191864713157652,
+      "pr_auc": 0.026606472720914254,
+      "precision": 0.022231909328683522,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.8947368421052632,
+      "roc_auc": 0.8106344205584384,
+      "threshold": 0.5000000000000001
+    },
+    "logistic_regression": {
+      "accuracy": 0.9900644936377898,
+      "brier_score": 0.009750554751048966,
+      "confusion_matrix": {
+        "fn": 57,
+        "fp": 0,
+        "tn": 5680,
+        "tp": 0
+      },
+      "f1_score": 0.0,
+      "f2_score": 0.0,
+      "log_loss": 0.051791456626093496,
+      "mean_probability": 0.009331076417273832,
+      "pr_auc": 0.03964734822367241,
+      "precision": 0.0,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.0,
+      "roc_auc": 0.8117340004941933,
+      "threshold": 0.5
+    }
+  },
+  "classification_candidates": {
+    "altman_z_baseline": {
+      "accuracy": 0.6079832665156005,
+      "brier_score": 0.30500170762719897,
+      "confusion_matrix": {
+        "fn": 6,
+        "fp": 2243,
+        "tn": 3437,
+        "tp": 51
+      },
+      "f1_score": 0.04338579327945555,
+      "f2_score": 0.10111022997620936,
+      "log_loss": 3.1184163865411727,
+      "mean_probability": 0.4191864713157652,
+      "pr_auc": 0.026606472720914254,
+      "precision": 0.022231909328683522,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.8947368421052632,
+      "roc_auc": 0.8106344205584384,
+      "threshold": 0.5000000000000001
+    },
+    "calibrated_ensemble": {
+      "accuracy": 0.9883214223461739,
+      "brier_score": 0.00936985766747298,
+      "confusion_matrix": {
+        "fn": 47,
+        "fp": 20,
+        "tn": 5660,
+        "tp": 10
+      },
+      "f1_score": 0.22988505747126436,
+      "f2_score": 0.1937984496124031,
+      "log_loss": 0.04409474586881115,
+      "mean_probability": 0.008704115538202602,
+      "pr_auc": 0.1589580794081901,
+      "precision": 0.3333333333333333,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.17543859649122806,
+      "roc_auc": 0.8903076352853966,
+      "threshold": 0.08
+    },
+    "lightgbm": {
+      "accuracy": 0.9721108593341468,
+      "brier_score": 0.009425076839295724,
+      "confusion_matrix": {
+        "fn": 45,
+        "fp": 115,
+        "tn": 5565,
+        "tp": 12
+      },
+      "f1_score": 0.13043478260869565,
+      "f2_score": 0.16901408450704225,
+      "log_loss": 0.045381792531839354,
+      "mean_probability": 0.008924079207640587,
+      "pr_auc": 0.14210638088634076,
+      "precision": 0.09448818897637795,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.21052631578947367,
+      "roc_auc": 0.8600382999752904,
+      "threshold": 0.055161309236757286
+    },
+    "logistic_regression": {
+      "accuracy": 0.9691476381383999,
+      "brier_score": 0.009717146604772428,
+      "confusion_matrix": {
+        "fn": 46,
+        "fp": 131,
+        "tn": 5549,
+        "tp": 11
+      },
+      "f1_score": 0.11055276381909548,
+      "f2_score": 0.14864864864864866,
+      "log_loss": 0.05031005784343791,
+      "mean_probability": 0.008842760507324823,
+      "pr_auc": 0.04860342853454775,
+      "precision": 0.07746478873239436,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.19298245614035087,
+      "roc_auc": 0.8446040276748208,
+      "threshold": 0.027176719062002735
+    },
+    "random_forest": {
+      "accuracy": 0.9701934809133693,
+      "brier_score": 0.009321974932577077,
+      "confusion_matrix": {
+        "fn": 42,
+        "fp": 129,
+        "tn": 5551,
+        "tp": 15
+      },
+      "f1_score": 0.14925373134328357,
+      "f2_score": 0.20161290322580644,
+      "log_loss": 0.04366805837459509,
+      "mean_probability": 0.008439712151732778,
+      "pr_auc": 0.1242620371034215,
+      "precision": 0.10416666666666667,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.2631578947368421,
+      "roc_auc": 0.8873764516926117,
+      "threshold": 0.06569091250697319
+    },
+    "xgboost": {
+      "accuracy": 0.978734530242287,
+      "brier_score": 0.00926621491336025,
+      "confusion_matrix": {
+        "fn": 40,
+        "fp": 82,
+        "tn": 5598,
+        "tp": 17
+      },
+      "f1_score": 0.21794871794871795,
+      "f2_score": 0.2599388379204893,
+      "log_loss": 0.042994564730849553,
+      "mean_probability": 0.008614982065744842,
+      "pr_auc": 0.17840924184109663,
+      "precision": 0.1717171717171717,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.2982456140350877,
+      "roc_auc": 0.8910736347912034,
+      "threshold": 0.07532718920518298
+    }
+  },
+  "classification_multi_period": {
+    "calibrated_ensemble": {
+      "accuracy": 0.9883214223461739,
+      "brier_score": 0.00936985766747298,
+      "confusion_matrix": {
+        "fn": 47,
+        "fp": 20,
+        "tn": 5660,
+        "tp": 10
+      },
+      "f1_score": 0.22988505747126436,
+      "f2_score": 0.1937984496124031,
+      "log_loss": 0.04409474586881115,
+      "mean_probability": 0.008704115538202602,
+      "pr_auc": 0.1589580794081901,
+      "precision": 0.3333333333333333,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.17543859649122806,
+      "roc_auc": 0.8903076352853966,
+      "threshold": 0.08
+    },
+    "lightgbm": {
+      "accuracy": 0.9721108593341468,
+      "brier_score": 0.009425076839295724,
+      "confusion_matrix": {
+        "fn": 45,
+        "fp": 115,
+        "tn": 5565,
+        "tp": 12
+      },
+      "f1_score": 0.13043478260869565,
+      "f2_score": 0.16901408450704225,
+      "log_loss": 0.045381792531839354,
+      "mean_probability": 0.008924079207640587,
+      "pr_auc": 0.14210638088634076,
+      "precision": 0.09448818897637795,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.21052631578947367,
+      "roc_auc": 0.8600382999752904,
+      "threshold": 0.055161309236757286
+    },
+    "logistic_regression": {
+      "accuracy": 0.9691476381383999,
+      "brier_score": 0.009717146604772428,
+      "confusion_matrix": {
+        "fn": 46,
+        "fp": 131,
+        "tn": 5549,
+        "tp": 11
+      },
+      "f1_score": 0.11055276381909548,
+      "f2_score": 0.14864864864864866,
+      "log_loss": 0.05031005784343791,
+      "mean_probability": 0.008842760507324823,
+      "pr_auc": 0.04860342853454775,
+      "precision": 0.07746478873239436,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.19298245614035087,
+      "roc_auc": 0.8446040276748208,
+      "threshold": 0.027176719062002735
+    },
+    "random_forest": {
+      "accuracy": 0.9701934809133693,
+      "brier_score": 0.009321974932577077,
+      "confusion_matrix": {
+        "fn": 42,
+        "fp": 129,
+        "tn": 5551,
+        "tp": 15
+      },
+      "f1_score": 0.14925373134328357,
+      "f2_score": 0.20161290322580644,
+      "log_loss": 0.04366805837459509,
+      "mean_probability": 0.008439712151732778,
+      "pr_auc": 0.1242620371034215,
+      "precision": 0.10416666666666667,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.2631578947368421,
+      "roc_auc": 0.8873764516926117,
+      "threshold": 0.06569091250697319
+    },
+    "xgboost": {
+      "accuracy": 0.978734530242287,
+      "brier_score": 0.00926621491336025,
+      "confusion_matrix": {
+        "fn": 40,
+        "fp": 82,
+        "tn": 5598,
+        "tp": 17
+      },
+      "f1_score": 0.21794871794871795,
+      "f2_score": 0.2599388379204893,
+      "log_loss": 0.042994564730849553,
+      "mean_probability": 0.008614982065744842,
+      "pr_auc": 0.17840924184109663,
+      "precision": 0.1717171717171717,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.2982456140350877,
+      "roc_auc": 0.8910736347912034,
+      "threshold": 0.07532718920518298
+    }
+  },
+  "classification_selected": {
+    "accuracy": 0.978734530242287,
+    "brier_score": 0.00926621491336025,
+    "confusion_matrix": {
+      "fn": 40,
+      "fp": 82,
+      "tn": 5598,
+      "tp": 17
+    },
+    "f1_score": 0.21794871794871795,
+    "f2_score": 0.2599388379204893,
+    "log_loss": 0.042994564730849553,
+    "mean_probability": 0.008614982065744842,
+    "pr_auc": 0.17840924184109663,
+    "precision": 0.1717171717171717,
+    "prevalence": 0.009935506362210215,
+    "recall": 0.2982456140350877,
+    "roc_auc": 0.8910736347912034,
+    "threshold": 0.07532718920518298
+  },
+  "classification_single_period": {
+    "calibrated_ensemble": {
+      "accuracy": 0.9890186508628203,
+      "brier_score": 0.009406314973093882,
+      "confusion_matrix": {
+        "fn": 52,
+        "fp": 11,
+        "tn": 5669,
+        "tp": 5
+      },
+      "f1_score": 0.136986301369863,
+      "f2_score": 0.10245901639344263,
+      "log_loss": 0.04381513799898022,
+      "mean_probability": 0.008980775216809624,
+      "pr_auc": 0.14496145444709474,
+      "precision": 0.3125,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.08771929824561403,
+      "roc_auc": 0.9008926365208796,
+      "threshold": 0.08
+    },
+    "lightgbm": {
+      "accuracy": 0.9689733310092383,
+      "brier_score": 0.009440273459234094,
+      "confusion_matrix": {
+        "fn": 44,
+        "fp": 134,
+        "tn": 5546,
+        "tp": 13
+      },
+      "f1_score": 0.12745098039215685,
+      "f2_score": 0.17333333333333334,
+      "log_loss": 0.04478492041829589,
+      "mean_probability": 0.009042631605090366,
+      "pr_auc": 0.11805141376774969,
+      "precision": 0.08843537414965986,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.22807017543859648,
+      "roc_auc": 0.8741289844329132,
+      "threshold": 0.058612310553644464
+    },
+    "logistic_regression": {
+      "accuracy": 0.953634303643019,
+      "brier_score": 0.009710506554474254,
+      "confusion_matrix": {
+        "fn": 44,
+        "fp": 222,
+        "tn": 5458,
+        "tp": 13
+      },
+      "f1_score": 0.08904109589041095,
+      "f2_score": 0.14038876889848811,
+      "log_loss": 0.05042917345020436,
+      "mean_probability": 0.009040121813163358,
+      "pr_auc": 0.04638817185809018,
+      "precision": 0.05531914893617021,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.22807017543859648,
+      "roc_auc": 0.8369440326167532,
+      "threshold": 0.023235027874182457
+    },
+    "random_forest": {
+      "accuracy": 0.9721108593341468,
+      "brier_score": 0.00937615567659992,
+      "confusion_matrix": {
+        "fn": 45,
+        "fp": 115,
+        "tn": 5565,
+        "tp": 12
+      },
+      "f1_score": 0.13043478260869565,
+      "f2_score": 0.16901408450704225,
+      "log_loss": 0.04361642239893425,
+      "mean_probability": 0.008853670167405556,
+      "pr_auc": 0.11098939702320768,
+      "precision": 0.09448818897637795,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.21052631578947367,
+      "roc_auc": 0.889340869780084,
+      "threshold": 0.06683932968062944
+    },
+    "xgboost": {
+      "accuracy": 0.9740282377549242,
+      "brier_score": 0.009327938285576593,
+      "confusion_matrix": {
+        "fn": 42,
+        "fp": 107,
+        "tn": 5573,
+        "tp": 15
+      },
+      "f1_score": 0.16759776536312848,
+      "f2_score": 0.21428571428571427,
+      "log_loss": 0.04259374669908547,
+      "mean_probability": 0.008988792303037698,
+      "pr_auc": 0.1524166380434081,
+      "precision": 0.12295081967213115,
+      "prevalence": 0.009935506362210215,
+      "recall": 0.2631578947368421,
+      "roc_auc": 0.8999907338769458,
+      "threshold": 0.06733013876054277
+    }
+  },
+  "classification_xgboost": {
+    "accuracy": 0.978734530242287,
+    "brier_score": 0.00926621491336025,
+    "confusion_matrix": {
+      "fn": 40,
+      "fp": 82,
+      "tn": 5598,
+      "tp": 17
+    },
+    "f1_score": 0.21794871794871795,
+    "f2_score": 0.2599388379204893,
+    "log_loss": 0.042994564730849553,
+    "mean_probability": 0.008614982065744842,
+    "pr_auc": 0.17840924184109663,
+    "precision": 0.1717171717171717,
+    "prevalence": 0.009935506362210215,
+    "recall": 0.2982456140350877,
+    "roc_auc": 0.8910736347912034,
+    "threshold": 0.07532718920518298
+  },
+  "classification_xgboost_raw": {
+    "accuracy": 0.8539306257625937,
+    "brier_score": 0.09905335669210864,
+    "confusion_matrix": {
+      "fn": 15,
+      "fp": 823,
+      "tn": 4857,
+      "tp": 42
+    },
+    "f1_score": 0.0911062906724512,
+    "f2_score": 0.19213174748398903,
+    "log_loss": 0.3138433879889247,
+    "mean_probability": 0.21778270708848904,
+    "pr_auc": 0.17840924184109663,
+    "precision": 0.048554913294797684,
+    "prevalence": 0.009935506362210215,
+    "recall": 0.7368421052631579,
+    "roc_auc": 0.8910736347912034,
+    "threshold": 0.5
+  },
+  "classifier_scale_pos_weight": 134.51020408163265,
+  "clustering": {
+    "cluster_profiles": {
+      "0": {
+        "centroid": {
+          "asset_turnover": 1.0064385790751387,
+          "current_ratio": 4.0872708086006915,
+          "debt_ratio": 0.2873939912947748,
+          "debt_to_equity": 0.4564789459038345,
+          "ebit_to_assets": 0.05115386519933731,
+          "eps": 0.0,
+          "ocf_ratio": 0.0,
+          "operating_margin": -0.023324103027200303,
+          "retained_earnings_ratio": -0.298677212614024,
+          "roa": 0.023795274608331533,
+          "roe": 0.04080180217850462,
+          "working_capital_ratio": 0.43871418678718965
+        },
+        "health_score": 2.7923093456442927,
+        "scaled_centroid": {
+          "asset_turnover": -0.10074085815880823,
+          "current_ratio": 0.7088574836742815,
+          "debt_ratio": -0.7367746281056072,
+          "debt_to_equity": -0.6505548104878329,
+          "ebit_to_assets": 0.35872146131957067,
+          "eps": 0.0,
+          "ocf_ratio": 0.0,
+          "operating_margin": 0.2904027293452838,
+          "retained_earnings_ratio": 0.3097366585520122,
+          "roa": 0.4024510024057876,
+          "roe": 0.2936714209707837,
+          "working_capital_ratio": 0.7296358228146017
+        }
+      },
+      "1": {
+        "centroid": {
+          "asset_turnover": 1.2584276036540774,
+          "current_ratio": 1.4065043317639259,
+          "debt_ratio": 0.680026228657435,
+          "debt_to_equity": 1.8730687733694724,
+          "ebit_to_assets": 0.048449978881290726,
+          "eps": 0.0,
+          "ocf_ratio": 0.0,
+          "operating_margin": 0.041296458495768906,
+          "retained_earnings_ratio": -0.444315786191449,
+          "roa": -0.010917824236936907,
+          "roe": -0.018640654590219238,
+          "working_capital_ratio": 0.08627875939643564
+        },
+        "health_score": -1.0548792048841755,
+        "scaled_centroid": {
+          "asset_turnover": 0.22579383191308042,
+          "current_ratio": -0.5711369480454044,
+          "debt_ratio": 0.35513143582577644,
+          "debt_to_equity": 0.5830750653455117,
+          "ebit_to_assets": 0.3499452054314873,
+          "eps": 0.0,
+          "ocf_ratio": 0.0,
+          "operating_margin": 0.3338632786203775,
+          "retained_earnings_ratio": 0.2693190304140896,
+          "roa": 0.3054428582471418,
+          "roe": 0.14902138608537513,
+          "working_capital_ratio": -0.460316348733006
+        }
+      },
+      "2": {
+        "centroid": {
+          "asset_turnover": 0.4456321081577222,
+          "current_ratio": 3.9020597823297787,
+          "debt_ratio": 0.41098627166683016,
+          "debt_to_equity": 1.0392277792586762,
+          "ebit_to_assets": -0.5781158195512814,
+          "eps": 0.0,
+          "ocf_ratio": 0.0,
+          "operating_margin": -3.248194407586354,
+          "retained_earnings_ratio": -4.830668687614019,
+          "roa": -0.6921352899447656,
+          "roe": -0.9518308717404544,
+          "working_capital_ratio": 0.39677165718661606
+        },
+        "health_score": -2.5635522669156403,
+        "scaled_centroid": {
+          "asset_turnover": -0.827450156221749,
+          "current_ratio": 0.6204241626937756,
+          "debt_ratio": -0.3930658147391063,
+          "debt_to_equity": -0.1430710230179609,
+          "ebit_to_assets": -1.683757817163884,
+          "eps": 0.0,
+          "ocf_ratio": 0.0,
+          "operating_margin": -1.8784833260206113,
+          "retained_earnings_ratio": -0.947981964072453,
+          "roa": -1.5982662404806056,
+          "roe": -2.121847026885878,
+          "working_capital_ratio": 0.5880223518082851
+        }
+      },
+      "3": {
+        "centroid": {
+          "asset_turnover": 1.1890766771812287,
+          "current_ratio": 0.5397818964008053,
+          "debt_ratio": 1.4887695449882836,
+          "debt_to_equity": 0.8805729925183525,
+          "ebit_to_assets": -0.8542736511275663,
+          "eps": 0.0,
+          "ocf_ratio": 0.0,
+          "operating_margin": -2.941392940365612,
+          "retained_earnings_ratio": -11.42032754874176,
+          "roa": -1.0650311886250046,
+          "roe": 0.020520480708264708,
+          "working_capital_ratio": -0.368544414698498
+        },
+        "health_score": -5.704008613958519,
+        "scaled_centroid": {
+          "asset_turnover": 0.13592688901804667,
+          "current_ratio": -0.9849737744520026,
+          "debt_ratio": 2.6042379717467563,
+          "debt_to_equity": -0.2812347180213234,
+          "ebit_to_assets": -2.5801090354956817,
+          "eps": 0.0,
+          "ocf_ratio": 0.0,
+          "operating_margin": -1.6721440437616792,
+          "retained_earnings_ratio": -2.776744597917143,
+          "roa": -2.6403494971954435,
+          "roe": 0.24431791141436077,
+          "working_capital_ratio": -1.9959673690953565
+        }
+      }
+    },
+    "cumulative_variance_ratio": 0.7551639252601217,
+    "explained_variance_ratio": [
+      0.3921273449681671,
+      0.2593839890446237,
+      0.10365259124733094
+    ],
+    "silhouette_score": 0.3712651925818071,
+    "standardized_feature_variance": {
+      "asset_turnover": 1.0,
+      "current_ratio": 1.0,
+      "debt_ratio": 0.9999999999999998,
+      "debt_to_equity": 1.0,
+      "ebit_to_assets": 1.0000000000000002,
+      "eps": 0.0,
+      "ocf_ratio": 0.0,
+      "operating_margin": 1.0000000000000002,
+      "retained_earnings_ratio": 1.0,
+      "roa": 1.0000000000000002,
+      "roe": 1.0000000000000002,
+      "working_capital_ratio": 1.0
+    }
+  },
+  "data_provenance": {
+    "annual_selection": "1-year-ahead bankruptcy event on final observed fiscal year (year == max_year); all prior years labeled 0",
+    "database": null,
+    "dataset": "kaggle",
+    "excluded_ciks": [
+      "0001826011"
+    ],
+    "labels": "observed 1-year-ahead US corporate bankruptcy outcomes (Chapter 7/11, year == max_year only)",
+    "live_ingestion": "not applicable (Kaggle US Company Bankruptcy dataset)",
+    "mode": "benchmark",
+    "purpose": "out-of-time US corporate bankruptcy validation (Kaggle 1999-2018)",
+    "random_seed": 42,
+    "source_counts": {
+      "kaggle_us_bankruptcy": 78682
+    }
+  },
+  "ensemble_weights_multi": {
+    "lightgbm": 0.2510426031485519,
+    "logistic_regression": 0.24454107608326822,
+    "random_forest": 0.2519785790447996,
+    "xgboost": 0.2524377417233803
+  },
+  "ensemble_weights_single": {
+    "lightgbm": 0.2516662080220365,
+    "logistic_regression": 0.24401623000333003,
+    "random_forest": 0.2523039811908779,
+    "xgboost": 0.25201358078375563
+  },
+  "feature_columns_multi_period": [
+    "roa",
+    "ebit_to_assets",
+    "ebitda_to_assets",
+    "gross_margin",
+    "operating_margin",
+    "opex_to_revenue",
+    "asset_turnover",
+    "current_ratio",
+    "quick_ratio",
+    "working_capital_ratio",
+    "debt_ratio",
+    "short_term_debt_share",
+    "long_term_debt_to_assets",
+    "retained_earnings_ratio",
+    "equity_to_assets",
+    "is_negative_equity",
+    "inventory_to_assets",
+    "receivables_to_revenue",
+    "depreciation_to_assets",
+    "roa_yoy_delta",
+    "gross_margin_yoy_delta",
+    "debt_ratio_yoy_delta",
+    "working_capital_yoy_delta",
+    "revenue_growth_yoy"
+  ],
+  "feature_columns_single_period": [
+    "roa",
+    "ebit_to_assets",
+    "ebitda_to_assets",
+    "gross_margin",
+    "operating_margin",
+    "opex_to_revenue",
+    "asset_turnover",
+    "current_ratio",
+    "quick_ratio",
+    "working_capital_ratio",
+    "debt_ratio",
+    "short_term_debt_share",
+    "long_term_debt_to_assets",
+    "retained_earnings_ratio",
+    "equity_to_assets",
+    "is_negative_equity",
+    "inventory_to_assets",
+    "receivables_to_revenue",
+    "depreciation_to_assets"
+  ],
+  "feature_ood_bounds": {
+    "asset_turnover": [
+      0.008447763217563187,
+      4.982973823101123
+    ],
+    "current_ratio": [
+      0.03741009122777867,
+      19.6271557013547
+    ],
+    "debt_ratio": [
+      0.04757070623261146,
+      10.194060704296552
+    ],
+    "debt_ratio_yoy_delta": [
+      -1.4247560113236015,
+      3.159421501086804
+    ],
+    "depreciation_to_assets": [
+      0.0006633210748314697,
+      0.30126498013592906
+    ],
+    "ebit_to_assets": [
+      -5.733760203737435,
+      0.3731769530926538
+    ],
+    "ebitda_to_assets": [
+      -5.475769164513349,
+      0.4247570778653691
+    ],
+    "equity_to_assets": [
+      -9.194060704296588,
+      0.9524292937673878
+    ],
+    "gross_margin": [
+      -40.63392955974843,
+      0.9485663261784503
+    ],
+    "gross_margin_yoy_delta": [
+      -8.410219179135312,
+      9.848226486809144
+    ],
+    "inventory_to_assets": [
+      0.0,
+      0.6025322346893147
+    ],
+    "is_negative_equity": [
+      0.0,
+      1.0
+    ],
+    "long_term_debt_to_assets": [
+      0.0,
+      1.3906021871080585
+    ],
+    "operating_margin": [
+      -86.5867260794243,
+      0.4461753290801686
+    ],
+    "opex_to_revenue": [
+      0.3743193793477647,
+      82.78247690014905
+    ],
+    "quick_ratio": [
+      0.026012887427818362,
+      18.453042258421167
+    ],
+    "receivables_to_revenue": [
+      0.0,
+      1.2682188527584983
+    ],
+    "retained_earnings_ratio": [
+      -87.0964010989011,
+      0.9301454941488818
+    ],
+    "revenue_growth_yoy": [
+      -0.8191283432976875,
+      6.140570147850763
+    ],
+    "roa": [
+      -7.822967545638946,
+      0.37227807940284396
+    ],
+    "roa_yoy_delta": [
+      -3.4358462921679913,
+      2.6150427030315813
+    ],
+    "short_term_debt_share": [
+      0.07266316216467265,
+      1.0
+    ],
+    "working_capital_ratio": [
+      -7.669784011220196,
+      0.8716341844945079
+    ],
+    "working_capital_yoy_delta": [
+      -2.741410466716755,
+      1.1688044716518802
+    ]
+  },
+  "forecast_shrinkage": {
+    "debt_ratio": [
+      "level",
+      0.05
+    ],
+    "roa": [
+      "level",
+      0.39999999999999997
+    ],
+    "roe": [
+      "level",
+      0.7999999999999999
+    ]
+  },
+  "forecast_target_bounds": {
+    "next_debt_ratio": [
+      0.08094130389400993,
+      2.787267933913064
+    ],
+    "next_roa": [
+      -2.3980940580098324,
+      0.23300513960701252
+    ],
+    "next_roe": [
+      -2.6252094162311312,
+      0.4829023688670172
+    ]
+  },
+  "forecasting": {
+    "debt_ratio": {
+      "mae": 0.790464494813605,
+      "n_samples": 2643,
+      "r2": 0.4962859380031579,
+      "rmse": 12.581748682661305
+    },
+    "eps": {
+      "mae": null,
+      "n_samples": 0,
+      "r2": null,
+      "rmse": null
+    },
+    "ocf_ratio": {
+      "mae": null,
+      "n_samples": 0,
+      "r2": null,
+      "rmse": null
+    },
+    "roa": {
+      "mae": 0.49625466829139186,
+      "n_samples": 2643,
+      "r2": 0.4417203916655167,
+      "rmse": 4.471756991384951
+    },
+    "roe": {
+      "mae": 0.24758724998295653,
+      "n_samples": 2339,
+      "r2": 0.5133232163805868,
+      "rmse": 0.49809915058310605
+    }
+  },
+  "forecasting_paired": {
+    "model": {
+      "debt_ratio": {
+        "mae": 0.790464494813605,
+        "n_samples": 2643,
+        "r2": 0.4962859380031579,
+        "rmse": 12.581748682661305
+      },
+      "eps": {
+        "mae": null,
+        "n_samples": 0,
+        "r2": null,
+        "rmse": null
+      },
+      "ocf_ratio": {
+        "mae": null,
+        "n_samples": 0,
+        "r2": null,
+        "rmse": null
+      },
+      "roa": {
+        "mae": 0.49625466829139186,
+        "n_samples": 2643,
+        "r2": 0.4417203916655167,
+        "rmse": 4.471756991384951
+      },
+      "roe": {
+        "mae": 0.22540661830544256,
+        "n_samples": 2277,
+        "r2": 0.5422374331553461,
+        "rmse": 0.4490921738989234
+      }
+    },
+    "persistence": {
+      "debt_ratio": {
+        "mae": 0.7938865844985037,
+        "n_samples": 2643,
+        "r2": 0.497654093818487,
+        "rmse": 12.564650195069175
+      },
+      "eps": {
+        "mae": null,
+        "n_samples": 0,
+        "r2": null,
+        "rmse": null
+      },
+      "ocf_ratio": {
+        "mae": null,
+        "n_samples": 0,
+        "r2": null,
+        "rmse": null
+      },
+      "roa": {
+        "mae": 0.5901540418279343,
+        "n_samples": 2643,
+        "r2": 0.10845221829514873,
+        "rmse": 5.650991108604646
+      },
+      "roe": {
+        "mae": 0.2478182890353544,
+        "n_samples": 2277,
+        "r2": 0.3358386030212358,
+        "rmse": 0.5409438202849604
+      }
+    }
+  },
+  "forecasting_winsorized": {
+    "debt_ratio": {
+      "mae": 0.7830314376451794,
+      "n_samples": 2643,
+      "r2": -568.5906301810883,
+      "rmse": 11.735027987261539
+    },
+    "eps": {
+      "mae": null,
+      "n_samples": 0,
+      "r2": null,
+      "rmse": null
+    },
+    "ocf_ratio": {
+      "mae": null,
+      "n_samples": 0,
+      "r2": null,
+      "rmse": null
+    },
+    "roa": {
+      "mae": 0.4120037510822099,
+      "n_samples": 2643,
+      "r2": -76.41933630466882,
+      "rmse": 4.400602637433757
+    },
+    "roe": {
+      "mae": 0.22013555361262316,
+      "n_samples": 2339,
+      "r2": 0.5550845478710764,
+      "rmse": 0.42622405424668564
+    }
+  },
+  "global_shap_importance": {
+    "asset_turnover": 0.11151963230562557,
+    "current_ratio": 0.07467391907841979,
+    "debt_ratio": 0.2560102937598325,
+    "debt_ratio_yoy_delta": 0.2427770808379632,
+    "depreciation_to_assets": 0.06096286068910242,
+    "ebit_to_assets": 0.06776688697376176,
+    "ebitda_to_assets": 0.14654506806656994,
+    "equity_to_assets": 0.3521560061025273,
+    "gross_margin": 0.18323830639056435,
+    "gross_margin_yoy_delta": 0.0858135151600145,
+    "inventory_to_assets": 0.09569048903761336,
+    "is_negative_equity": 0.0015787766258884806,
+    "long_term_debt_to_assets": 0.05524380138150091,
+    "operating_margin": 0.2424348828550037,
+    "opex_to_revenue": 0.07879732004158074,
+    "quick_ratio": 0.3279408802908123,
+    "receivables_to_revenue": 0.1605796843129956,
+    "retained_earnings_ratio": 0.1495213221838083,
+    "revenue_growth_yoy": 0.13288187121860445,
+    "roa": 0.3763976781848687,
+    "roa_yoy_delta": 0.11929946431115847,
+    "short_term_debt_share": 0.08111738999945756,
+    "working_capital_ratio": 0.10159058804583686,
+    "working_capital_yoy_delta": 0.09737891672083
+  },
+  "imbalance_strategy": "class_weight",
+  "probability_calibration": [
+    0.9974694743757795,
+    -4.181691922560789
+  ],
+  "scoring_contract": "scale_free_v2",
+  "selected_model_multi_period": "xgboost",
+  "selected_model_name": "xgboost",
+  "selected_model_single_period": "xgboost",
+  "shap_margin_max_abs_error": 3.1976960599422455e-06,
+  "shap_model_name": "xgboost",
+  "shap_output_space": "log_odds",
+  "shap_single_period_max_abs_error": 3.917724825441837e-06,
+  "split_summary": {
+    "entity_leakage_positive_overlap": 0,
+    "label_kind": "observed_1y_bankruptcy_year_eq_max_year",
+    "max_train_target_year": 2014,
+    "min_test_feature_year": 2017,
+    "non_forward_supervised_rows": 0,
+    "test_classification_rows": 5737,
+    "test_positive_rows": 57,
+    "test_rows": 5737,
+    "test_rows_before_publication_embargo": 5737,
+    "threshold_calibration_asof": "2016-12-31",
+    "threshold_source": "validation_fiscal_years_2015_2016",
+    "total_positive_rows": 609,
+    "train_end_year": 2014,
+    "train_feature_rows": 66400,
+    "train_positive_rows": 490,
+    "train_supervised_rows": 66400,
+    "validation_positive_rows": 62,
+    "validation_rows": 6545
+  },
+  "test_reliability_bins": [
+    {
+      "lower": 0.0,
+      "mean_probability": 0.04527321054021297,
+      "model": "raw",
+      "n": 2648,
+      "observed_prevalence": 0.00037764350453172205,
+      "positives": 1,
+      "upper": 0.1
+    },
+    {
+      "lower": 0.1,
+      "mean_probability": 0.14317233901752957,
+      "model": "raw",
+      "n": 1024,
+      "observed_prevalence": 0.0029296875,
+      "positives": 3,
+      "upper": 0.2
+    },
+    {
+      "lower": 0.2,
+      "mean_probability": 0.24589980118047805,
+      "model": "raw",
+      "n": 555,
+      "observed_prevalence": 0.005405405405405406,
+      "positives": 3,
+      "upper": 0.3
+    },
+    {
+      "lower": 0.3,
+      "mean_probability": 0.3484777457949604,
+      "model": "raw",
+      "n": 388,
+      "observed_prevalence": 0.01288659793814433,
+      "positives": 5,
+      "upper": 0.4
+    },
+    {
+      "lower": 0.4,
+      "mean_probability": 0.446278198582956,
+      "model": "raw",
+      "n": 257,
+      "observed_prevalence": 0.011673151750972763,
+      "positives": 3,
+      "upper": 0.5
+    },
+    {
+      "lower": 0.5,
+      "mean_probability": 0.5478242370505213,
+      "model": "raw",
+      "n": 236,
+      "observed_prevalence": 0.025423728813559324,
+      "positives": 6,
+      "upper": 0.6
+    },
+    {
+      "lower": 0.6,
+      "mean_probability": 0.6449755624085098,
+      "model": "raw",
+      "n": 219,
+      "observed_prevalence": 0.0319634703196347,
+      "positives": 7,
+      "upper": 0.7
+    },
+    {
+      "lower": 0.7,
+      "mean_probability": 0.7495329104435816,
+      "model": "raw",
+      "n": 221,
+      "observed_prevalence": 0.04072398190045249,
+      "positives": 9,
+      "upper": 0.8
+    },
+    {
+      "lower": 0.8,
+      "mean_probability": 0.8429893946776272,
+      "model": "raw",
+      "n": 175,
+      "observed_prevalence": 0.07428571428571429,
+      "positives": 13,
+      "upper": 0.9
+    },
+    {
+      "lower": 0.9,
+      "mean_probability": 0.9174368896282034,
+      "model": "raw",
+      "n": 14,
+      "observed_prevalence": 0.5,
+      "positives": 7,
+      "upper": 1.0
+    },
+    {
+      "lower": 0.0,
+      "mean_probability": 0.00791316803824162,
+      "model": "calibrated",
+      "n": 5702,
+      "observed_prevalence": 0.008418098912662224,
+      "positives": 48,
+      "upper": 0.1
+    },
+    {
+      "lower": 0.1,
+      "mean_probability": 0.12295051306069832,
+      "model": "calibrated",
+      "n": 35,
+      "observed_prevalence": 0.2571428571428571,
+      "positives": 9,
+      "upper": 0.2
+    }
+  ],
+  "train_class_counts_after": {
+    "0": 65910,
+    "1": 490
+  },
+  "train_class_counts_before": {
+    "0": 65910,
+    "1": 490
+  },
+  "validation_candidates": {
+    "calibrated_ensemble": {
+      "accuracy": 0.9859434682964094,
+      "brier_score": 0.008980879541590008,
+      "confusion_matrix": {
+        "fn": 53,
+        "fp": 39,
+        "tn": 6444,
+        "tp": 9
+      },
+      "f1_score": 0.16363636363636364,
+      "f2_score": 0.15202702702702703,
+      "log_loss": 0.043116278209630536,
+      "mean_probability": 0.009491717426734696,
+      "pr_auc": 0.09529508489332553,
+      "precision": 0.1875,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.14516129032258066,
+      "roc_auc": 0.8703706468033019,
+      "threshold": 0.08
+    },
+    "lightgbm": {
+      "accuracy": 0.9726508785332315,
+      "brier_score": 0.009016297521578502,
+      "confusion_matrix": {
+        "fn": 40,
+        "fp": 139,
+        "tn": 6344,
+        "tp": 22
+      },
+      "f1_score": 0.19730941704035873,
+      "f2_score": 0.26894865525672373,
+      "log_loss": 0.04475364508723306,
+      "mean_probability": 0.00948166281450866,
+      "pr_auc": 0.09961047043243072,
+      "precision": 0.13664596273291926,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.3548387096774194,
+      "roc_auc": 0.8413244565190349,
+      "threshold": 0.055161309236757286
+    },
+    "logistic_regression": {
+      "accuracy": 0.9570664629488159,
+      "brier_score": 0.009256010633600766,
+      "confusion_matrix": {
+        "fn": 46,
+        "fp": 235,
+        "tn": 6248,
+        "tp": 16
+      },
+      "f1_score": 0.10223642172523961,
+      "f2_score": 0.16032064128256512,
+      "log_loss": 0.05069544467825114,
+      "mean_probability": 0.009523864667317894,
+      "pr_auc": 0.045820416273988404,
+      "precision": 0.06374501992031872,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.25806451612903225,
+      "roc_auc": 0.7790126036830818,
+      "threshold": 0.027176719062002735
+    },
+    "random_forest": {
+      "accuracy": 0.9695951107715813,
+      "brier_score": 0.008982806432035948,
+      "confusion_matrix": {
+        "fn": 43,
+        "fp": 156,
+        "tn": 6327,
+        "tp": 19
+      },
+      "f1_score": 0.16033755274261605,
+      "f2_score": 0.22458628841607564,
+      "log_loss": 0.04238018828906851,
+      "mean_probability": 0.009480389220433288,
+      "pr_auc": 0.0843885972861503,
+      "precision": 0.10857142857142857,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.3064516129032258,
+      "roc_auc": 0.8822005941096566,
+      "threshold": 0.06569091250697319
+    },
+    "xgboost": {
+      "accuracy": 0.974637127578304,
+      "brier_score": 0.008966467474816844,
+      "confusion_matrix": {
+        "fn": 45,
+        "fp": 121,
+        "tn": 6362,
+        "tp": 17
+      },
+      "f1_score": 0.17,
+      "f2_score": 0.22020725388601037,
+      "log_loss": 0.04298699727260776,
+      "mean_probability": 0.009481882449466463,
+      "pr_auc": 0.09568599238268702,
+      "precision": 0.12318840579710146,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.27419354838709675,
+      "roc_auc": 0.8656535952590647,
+      "threshold": 0.07532718920518298
+    }
+  },
+  "validation_single_period": {
+    "calibrated_ensemble": {
+      "accuracy": 0.9883880825057295,
+      "brier_score": 0.009013041343710327,
+      "confusion_matrix": {
+        "fn": 57,
+        "fp": 19,
+        "tn": 6464,
+        "tp": 5
+      },
+      "f1_score": 0.11627906976744186,
+      "f2_score": 0.09191176470588236,
+      "log_loss": 0.04400663930119693,
+      "mean_probability": 0.009494006556358311,
+      "pr_auc": 0.11430102830518749,
+      "precision": 0.20833333333333334,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.08064516129032258,
+      "roc_auc": 0.8603618396501023,
+      "threshold": 0.08
+    },
+    "lightgbm": {
+      "accuracy": 0.9729564553093965,
+      "brier_score": 0.009012345377089,
+      "confusion_matrix": {
+        "fn": 40,
+        "fp": 137,
+        "tn": 6346,
+        "tp": 22
+      },
+      "f1_score": 0.19909502262443438,
+      "f2_score": 0.2702702702702703,
+      "log_loss": 0.044670681378046376,
+      "mean_probability": 0.009524780786202116,
+      "pr_auc": 0.11844222782176106,
+      "precision": 0.13836477987421383,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.3548387096774194,
+      "roc_auc": 0.844920710742239,
+      "threshold": 0.058612310553644464
+    },
+    "logistic_regression": {
+      "accuracy": 0.9404125286478228,
+      "brier_score": 0.00929488496075022,
+      "confusion_matrix": {
+        "fn": 40,
+        "fp": 350,
+        "tn": 6133,
+        "tp": 22
+      },
+      "f1_score": 0.10138248847926268,
+      "f2_score": 0.1774193548387097,
+      "log_loss": 0.05125010056035746,
+      "mean_probability": 0.009489831481242423,
+      "pr_auc": 0.034995303180150886,
+      "precision": 0.05913978494623656,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.3548387096774194,
+      "roc_auc": 0.7560144895085409,
+      "threshold": 0.023235027874182457
+    },
+    "random_forest": {
+      "accuracy": 0.9744843391902216,
+      "brier_score": 0.008989564000264468,
+      "confusion_matrix": {
+        "fn": 43,
+        "fp": 124,
+        "tn": 6359,
+        "tp": 19
+      },
+      "f1_score": 0.18536585365853658,
+      "f2_score": 0.24296675191815856,
+      "log_loss": 0.04335908425423911,
+      "mean_probability": 0.00948011360411463,
+      "pr_auc": 0.10127872744212178,
+      "precision": 0.13286713286713286,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.3064516129032258,
+      "roc_auc": 0.8648674200016918,
+      "threshold": 0.06683932968062944
+    },
+    "xgboost": {
+      "accuracy": 0.9761650114591292,
+      "brier_score": 0.008999922858852205,
+      "confusion_matrix": {
+        "fn": 43,
+        "fp": 113,
+        "tn": 6370,
+        "tp": 19
+      },
+      "f1_score": 0.1958762886597938,
+      "f2_score": 0.25,
+      "log_loss": 0.04383950145345023,
+      "mean_probability": 0.009481226290833585,
+      "pr_auc": 0.10774882372365287,
+      "precision": 0.14393939393939395,
+      "prevalence": 0.009472880061115355,
+      "recall": 0.3064516129032258,
+      "roc_auc": 0.8579759470177586,
+      "threshold": 0.06733013876054277
+    }
+  }
+}
