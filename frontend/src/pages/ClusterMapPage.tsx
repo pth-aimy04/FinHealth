@@ -24,7 +24,13 @@ import {
   Skeleton,
 } from '@/components/ui/Primitives';
 
-const CLUSTER_COLORS = ['#0F766E', '#1D4ED8', '#D97706', '#DC2626', '#475569'];
+const CLUSTER_COLORS = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+];
 
 export function ClusterMapPage() {
   const [selected, setSelected] = useState<ClusterPoint | null>(null);
@@ -69,24 +75,24 @@ export function ClusterMapPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
+          <h2 className="font-editorial text-xl font-bold text-[var(--text-primary)] m-0">
             Bản đồ Phân cụm Ngang hàng (PCA)
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+          </h2>
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5 m-0">
             Phép chiếu thành phần chính 2 chiều từ hồ sơ báo cáo năm 10-K mới nhất. Bấm vào từng
             điểm để xem chi tiết doanh nghiệp.
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <label htmlFor="cluster-filter" className="text-[var(--text-secondary)]">
+          <label htmlFor="cluster-filter" className="font-semibold text-[var(--text-secondary)]">
             Lọc cụm:
           </label>
           <select
             id="cluster-filter"
             value={clusterFilter}
             onChange={(e) => setClusterFilter(e.target.value)}
-            className="h-8 px-2.5 bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-[4px]"
+            className="field-control !h-8 !w-auto"
           >
             <option value="ALL">Tất cả cụm ({points.length})</option>
             {clusters.map((c) => (
@@ -99,7 +105,7 @@ export function ClusterMapPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <Panel className="lg:col-span-8">
+        <Panel ruled className="lg:col-span-8 overflow-hidden">
           <PanelHeader
             title="Không gian Trạng thái Tài chính (PC1 vs PC2)"
             description="Màu sắc thể hiện cụm sức khỏe tài chính; bấm vào từng điểm để kiểm tra."
@@ -115,7 +121,7 @@ export function ClusterMapPage() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 12, right: 20, bottom: 12, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <CartesianGrid strokeDasharray="2 2" stroke="var(--border-subtle)" />
                   <XAxis
                     type="number"
                     dataKey="pca_comp_1"
@@ -128,15 +134,15 @@ export function ClusterMapPage() {
                     name="PC2"
                     tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
                   />
-                  <ZAxis range={[55, 55]} />
+                  <ZAxis range={[52, 52]} />
                   <Tooltip
-                    cursor={{ strokeDasharray: '3 3' }}
+                    cursor={{ strokeDasharray: '2 2' }}
                     content={({ payload }) => {
                       const pt = payload?.[0]?.payload as ClusterPoint | undefined;
                       if (!pt) return null;
                       return (
-                        <div className="surface p-2.5 text-xs space-y-1">
-                          <div className="font-mono font-semibold text-[var(--accent-primary)]">
+                        <div className="surface-popover p-2.5 text-xs space-y-1">
+                          <div className="font-mono font-bold text-[var(--accent-primary)]">
                             {pt.ticker ?? pt.cik} · {pt.name}
                           </div>
                           <div className="text-[var(--text-secondary)]">
@@ -155,6 +161,7 @@ export function ClusterMapPage() {
                       name={`#${group.id} ${group.label}`}
                       data={group.rows}
                       fill={CLUSTER_COLORS[group.id % CLUSTER_COLORS.length]}
+                      isAnimationActive={false}
                       onClick={(node) => {
                         if (node?.payload) setSelected(node.payload as ClusterPoint);
                       }}
@@ -167,60 +174,70 @@ export function ClusterMapPage() {
           </div>
         </Panel>
 
-        <Panel className="lg:col-span-4 flex flex-col">
+        <Panel ruled className="lg:col-span-4 flex flex-col overflow-hidden">
           <PanelHeader
             title="Chi tiết Doanh nghiệp Chọn"
             description="Tọa độ thành phần chính và tóm tắt rủi ro."
           />
-          <div className="p-4 flex-1 space-y-4">
+          <div className="flex-1 flex flex-col justify-between">
             {selected ? (
-              <div className="space-y-3 text-xs">
-                <div>
-                  <div className="font-mono text-base font-semibold text-[var(--accent-primary)]">
+              <div className="divide-y divide-[var(--border-subtle)] text-xs">
+                <div className="p-4">
+                  <div className="font-mono text-base font-bold text-[var(--accent-primary)]">
                     {selected.ticker ?? selected.cik}
                   </div>
-                  <div className="text-sm font-medium text-[var(--text-primary)]">
+                  <div className="text-[14px] font-bold text-[var(--text-primary)] mt-0.5">
                     {selected.name}
                   </div>
-                  <div className="text-[var(--text-secondary)] mt-0.5">
+                  <div className="text-[var(--text-secondary)] mt-0.5 num">
                     CIK {selected.cik} · Năm tài chính FY{selected.fiscal_year}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="surface-subtle p-2.5">
-                    <div className="text-[var(--text-secondary)]">XS Kiệt quệ</div>
-                    <div className="mt-0.5 text-sm font-semibold num">
+                <div className="grid grid-cols-2 divide-x divide-y divide-[var(--border-subtle)]">
+                  <div className="p-3.5">
+                    <div className="text-[11px] uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                      XS Kiệt quệ
+                    </div>
+                    <div className="mt-1 text-sm font-bold num">
                       {formatPct(selected.distress_probability)}
                     </div>
                   </div>
-                  <div className="surface-subtle p-2.5">
-                    <div className="text-[var(--text-secondary)]">Altman Z</div>
-                    <div className="mt-0.5 text-sm font-semibold num">
+                  <div className="p-3.5">
+                    <div className="text-[11px] uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                      Altman Z
+                    </div>
+                    <div className="mt-1 text-sm font-bold num">
                       {formatRatio(selected.altman_z_score)}
                     </div>
                   </div>
-                  <div className="surface-subtle p-2.5">
-                    <div className="text-[var(--text-secondary)]">Tọa độ PC1 / PC2</div>
-                    <div className="mt-0.5 font-mono">
+                  <div className="p-3.5">
+                    <div className="text-[11px] uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                      PC1 / PC2
+                    </div>
+                    <div className="mt-1 font-mono font-semibold">
                       {formatRatio(selected.pca_comp_1)} / {formatRatio(selected.pca_comp_2)}
                     </div>
                   </div>
-                  <div className="surface-subtle p-2.5">
-                    <div className="text-[var(--text-secondary)]">Nhóm cụm</div>
-                    <div className="mt-0.5 font-medium truncate">{selected.cluster_label}</div>
+                  <div className="p-3.5">
+                    <div className="text-[11px] uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                      Nhóm cụm
+                    </div>
+                    <div className="mt-1 font-semibold truncate">{selected.cluster_label}</div>
                   </div>
                 </div>
 
-                <Link
-                  to={`/companies/${encodeURIComponent(selected.ticker || selected.cik)}`}
-                  className="no-underline block"
-                >
-                  <Button variant="primary" size="sm" className="w-full">
-                    Mở Hồ sơ Phân tích Chi tiết
-                    <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  </Button>
-                </Link>
+                <div className="p-4">
+                  <Link
+                    to={`/us-market/${encodeURIComponent(selected.ticker || selected.cik)}`}
+                    className="no-underline block"
+                  >
+                    <Button variant="primary" size="sm" className="w-full">
+                      Mở Hồ sơ Phân tích Chi tiết
+                      <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             ) : (
               <EmptyState
@@ -229,18 +246,20 @@ export function ClusterMapPage() {
               />
             )}
 
-            <div className="pt-3 border-t border-[var(--border-subtle)] space-y-2">
-              <h3 className="text-xs font-semibold text-[var(--text-primary)]">Chú giải Cụm PCA</h3>
+            <div className="p-4 bg-[var(--bg-header)] border-t border-[var(--border-subtle)] space-y-2">
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.05em] text-[var(--text-secondary)] m-0">
+                Chú giải Cụm PCA
+              </h3>
               {clusters.map((c) => (
                 <div key={c.id} className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-2 text-[var(--text-secondary)]">
                     <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                      className="h-2.5 w-2.5 rounded-[1px] shrink-0"
                       style={{ backgroundColor: CLUSTER_COLORS[c.id % CLUSTER_COLORS.length] }}
                     />
                     <span>{c.label}</span>
                   </span>
-                  <span className="num text-[var(--text-primary)] font-medium">{c.rows.length}</span>
+                  <span className="num text-[var(--text-primary)] font-bold">{c.rows.length}</span>
                 </div>
               ))}
             </div>

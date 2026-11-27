@@ -5,10 +5,10 @@ import {
   AlertTriangle,
   Archive,
   Building2,
+  Database,
   ExternalLink,
   Plus,
   Search,
-  Sparkles,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -33,6 +33,7 @@ import {
   Button,
   EmptyState,
   ErrorState,
+  PageHeader,
   Panel,
   PanelHeader,
   TableSkeleton,
@@ -139,7 +140,7 @@ export function PortfolioPage() {
 
   if (!user) {
     return (
-      <Panel>
+      <Panel ruled>
         <EmptyState
           title="Đăng nhập để quản lý Danh bạ Doanh nghiệp"
           description="Lưu trữ hồ sơ khách hàng, nhà cung cấp, nhập BCTC chuẩn TT99/TT200/TT133 và đánh giá sức khỏe tài chính nội bộ."
@@ -156,45 +157,44 @@ export function PortfolioPage() {
   const companies = companiesQuery.data ?? [];
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
-            Danh bạ Doanh nghiệp Tổ chức
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Không gian: <span className="font-medium text-[var(--text-primary)]">{activeOrg?.name}</span>{' '}
-            · Dữ liệu BCTC nội bộ (VND/USD), cô lập tuyệt đối theo tổ chức.
-          </p>
-        </div>
-
-        {canEdit ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => seedSamplesMutation.mutate()}
-              disabled={seedSamplesMutation.isPending}
-            >
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              Nạp 3 DN mẫu VN
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowCreateForm((v) => !v)}
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-              Thêm doanh nghiệp
-            </Button>
-          </div>
-        ) : null}
-      </div>
+    <div className="space-y-5 animate-view">
+      <PageHeader
+        title="Danh bạ Doanh nghiệp Tổ chức"
+        description={`Không gian: ${activeOrg?.name ?? '—'} · Quản lý hồ sơ đối tác & khách hàng nội bộ (VND/USD), cô lập tuyệt đối theo tổ chức.`}
+        actions={
+          canEdit ? (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => seedSamplesMutation.mutate()}
+                disabled={seedSamplesMutation.isPending}
+              >
+                <Database className="h-3.5 w-3.5" aria-hidden="true" />
+                Nạp 3 DN mẫu VN
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowCreateForm((v) => !v)}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                Thêm doanh nghiệp
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
 
       {statusMessage ? (
         <div
           role="status"
-          className="p-3 rounded-[6px] text-xs bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]"
+          className="px-4 py-2.5 rounded-[3px] border text-xs font-semibold"
+          style={{
+            backgroundColor: 'var(--risk-low-bg)',
+            color: 'var(--risk-low-fg)',
+            borderColor: 'var(--risk-low-border)',
+          }}
         >
           {statusMessage}
         </div>
@@ -202,18 +202,23 @@ export function PortfolioPage() {
       {errorMessage ? (
         <div
           role="alert"
-          className="p-3 rounded-[6px] text-xs bg-[var(--risk-critical-bg)] text-[var(--risk-critical-fg)]"
+          className="px-4 py-2.5 rounded-[3px] border text-xs font-semibold"
+          style={{
+            backgroundColor: 'var(--risk-critical-bg)',
+            color: 'var(--risk-critical-fg)',
+            borderColor: 'var(--risk-critical-border)',
+          }}
         >
           {errorMessage}
         </div>
       ) : null}
 
-      {/* Create Company Form (Analyst & Org Admin only) */}
+      {/* Inline Create Company Drawer Panel */}
       {canEdit && showCreateForm ? (
-        <Panel>
+        <Panel ruled>
           <PanelHeader
             title="Thêm hồ sơ Doanh nghiệp mới"
-            description="Nhập thông tin cơ bản (Tên, MST, loại hình) để bắt đầu nhập BCTC và thẩm định."
+            description="Nhập thông tin pháp lý cơ bản (Tên, MST, loại hình) để bắt đầu nhập BCTC và thẩm định."
           />
           <form
             onSubmit={(e) => {
@@ -228,11 +233,11 @@ export function PortfolioPage() {
                 relationship_tag: formRelationship,
               });
             }}
-            className="p-4 space-y-3 text-xs"
+            className="p-5 space-y-4 text-xs"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2">
-                <label htmlFor="co-name" className="block font-medium mb-1">
+                <label htmlFor="co-name" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Tên doanh nghiệp *
                 </label>
                 <input
@@ -242,12 +247,12 @@ export function PortfolioPage() {
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="VD: Công ty Cổ phần Sản xuất Minh An"
-                  className="w-full h-9 px-3 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control"
                 />
               </div>
 
               <div>
-                <label htmlFor="co-tax-code" className="block font-medium mb-1">
+                <label htmlFor="co-tax-code" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Mã số thuế (MST 10 hoặc 13 số)
                 </label>
                 <input
@@ -256,12 +261,12 @@ export function PortfolioPage() {
                   value={formTaxCode}
                   onChange={(e) => setFormTaxCode(e.target.value)}
                   placeholder="0101234567"
-                  className="w-full h-9 px-3 font-mono bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control font-mono"
                 />
               </div>
 
               <div>
-                <label htmlFor="co-ticker" className="block font-medium mb-1">
+                <label htmlFor="co-ticker" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Mã chứng khoán (nếu có)
                 </label>
                 <input
@@ -270,12 +275,12 @@ export function PortfolioPage() {
                   value={formTicker}
                   onChange={(e) => setFormTicker(e.target.value)}
                   placeholder="VD: HPG, VNM"
-                  className="w-full h-9 px-3 font-mono uppercase bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control font-mono uppercase"
                 />
               </div>
 
               <div>
-                <label htmlFor="co-sector" className="block font-medium mb-1">
+                <label htmlFor="co-sector" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Ngành nghề kinh doanh
                 </label>
                 <input
@@ -284,19 +289,19 @@ export function PortfolioPage() {
                   value={formSectorName}
                   onChange={(e) => setFormSectorName(e.target.value)}
                   placeholder="VD: Sản xuất cơ khí, Thương mại vật liệu"
-                  className="w-full h-9 px-3 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control"
                 />
               </div>
 
               <div>
-                <label htmlFor="co-relationship" className="block font-medium mb-1">
+                <label htmlFor="co-relationship" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Mối quan hệ
                 </label>
                 <select
                   id="co-relationship"
                   value={formRelationship}
                   onChange={(e) => setFormRelationship(e.target.value as RelationshipTag)}
-                  className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control"
                 >
                   {Object.entries(RELATIONSHIP_TAG_LABELS).map(([k, label]) => (
                     <option key={k} value={k}>
@@ -307,14 +312,14 @@ export function PortfolioPage() {
               </div>
 
               <div>
-                <label htmlFor="co-business-type" className="block font-medium mb-1">
+                <label htmlFor="co-business-type" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Loại hình doanh nghiệp
                 </label>
                 <select
                   id="co-business-type"
                   value={formBusinessType}
                   onChange={(e) => setFormBusinessType(e.target.value as BusinessType)}
-                  className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control"
                 >
                   {Object.entries(BUSINESS_TYPE_LABELS).map(([k, label]) => (
                     <option key={k} value={k}>
@@ -325,14 +330,14 @@ export function PortfolioPage() {
               </div>
 
               <div>
-                <label htmlFor="co-listing" className="block font-medium mb-1">
+                <label htmlFor="co-listing" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Trạng thái niêm yết
                 </label>
                 <select
                   id="co-listing"
                   value={formListingStatus}
                   onChange={(e) => setFormListingStatus(e.target.value as ListingStatus)}
-                  className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control"
                 >
                   <option value="unlisted">Chưa niêm yết (Doanh nghiệp tư nhân / TNHH)</option>
                   <option value="listed">Đã niêm yết (HOSE / HNX / UPCoM)</option>
@@ -343,7 +348,7 @@ export function PortfolioPage() {
             {formBusinessType === 'financial_institution' ? (
               <div
                 role="alert"
-                className="p-3 rounded-[6px] bg-[var(--risk-medium-bg)] text-[var(--risk-medium-fg)] flex items-start gap-2"
+                className="p-3 rounded-[3px] border border-[var(--risk-medium-border)] bg-[var(--risk-medium-bg)] text-[var(--risk-medium-fg)] flex items-start gap-2"
               >
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
@@ -354,7 +359,7 @@ export function PortfolioPage() {
               </div>
             ) : null}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
+            <div className="flex justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
               <Button variant="ghost" size="sm" onClick={() => setShowCreateForm(false)}>
                 Hủy
               </Button>
@@ -366,9 +371,15 @@ export function PortfolioPage() {
         </Panel>
       ) : null}
 
-      {/* Search & Filter Bar */}
-      <Panel>
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 text-xs items-center">
+      {/* Unified Directory Ledger Panel with Docked Filter Toolbar (Zero Double-Box Separation) */}
+      <Panel ruled className="overflow-hidden">
+        <PanelHeader
+          title={`Danh sách Doanh nghiệp (${companies.length})`}
+          description="Bấm vào tên doanh nghiệp để xem đánh giá 5 trụ cột, Điểm Tựa/Điểm Nghẽn, lịch sử đa kỳ và nhập BCTC."
+        />
+
+        {/* Docked Filter Bar */}
+        <div className="px-4 sm:px-5 py-3 bg-[var(--bg-subtle)]/55 border-b border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 text-xs items-center">
           <div className="lg:col-span-5 relative">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--text-muted)]"
@@ -386,7 +397,7 @@ export function PortfolioPage() {
                 setSearchParams(next, { replace: true });
               }}
               placeholder="Tìm theo Tên doanh nghiệp, MST hoặc Mã CK..."
-              className="w-full h-9 pl-9 pr-3 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+              className="field-control !pl-9"
             />
           </div>
 
@@ -395,7 +406,7 @@ export function PortfolioPage() {
               aria-label="Lọc theo thẻ quan hệ"
               value={relationshipFilter}
               onChange={(e) => setRelationshipFilter(e.target.value as RelationshipTag | '')}
-              className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+              className="field-control"
             >
               <option value="">Tất cả mối quan hệ</option>
               {Object.entries(RELATIONSHIP_TAG_LABELS).map(([k, label]) => (
@@ -411,7 +422,7 @@ export function PortfolioPage() {
               aria-label="Lọc theo loại hình doanh nghiệp"
               value={businessTypeFilter}
               onChange={(e) => setBusinessTypeFilter(e.target.value as BusinessType | '')}
-              className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+              className="field-control"
             >
               <option value="">Tất cả loại hình</option>
               {Object.entries(BUSINESS_TYPE_LABELS).map(([k, label]) => (
@@ -422,23 +433,16 @@ export function PortfolioPage() {
             </select>
           </div>
 
-          <label className="lg:col-span-2 inline-flex items-center gap-2 cursor-pointer text-[var(--text-secondary)]">
+          <label className="lg:col-span-2 inline-flex items-center gap-2 cursor-pointer text-[var(--text-secondary)] font-medium">
             <input
               type="checkbox"
               checked={includeArchived}
               onChange={(e) => setIncludeArchived(e.target.checked)}
+              className="accent-[var(--accent-primary)]"
             />
             <span>Hiện đã lưu trữ</span>
           </label>
         </div>
-      </Panel>
-
-      {/* Companies Directory Table */}
-      <Panel>
-        <PanelHeader
-          title={`Danh sách Doanh nghiệp (${companies.length})`}
-          description="Bấm vào tên doanh nghiệp để xem đánh giá 5 trụ cột, Điểm Tựa/Điểm Nghẽn, lịch sử đa kỳ và nhập BCTC."
-        />
 
         {companiesQuery.isLoading ? (
           <TableSkeleton rows={5} />
@@ -466,7 +470,7 @@ export function PortfolioPage() {
                     onClick={() => seedSamplesMutation.mutate()}
                     disabled={seedSamplesMutation.isPending}
                   >
-                    <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                    <Database className="h-3.5 w-3.5" aria-hidden="true" />
                     Nạp 3 doanh nghiệp mẫu VN
                   </Button>
                   <Button
@@ -483,24 +487,24 @@ export function PortfolioPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
+            <table className="ledger-table">
               <thead>
-                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)]">
-                  <th className="py-2.5 px-4 font-medium">Doanh nghiệp</th>
-                  <th className="py-2.5 px-4 font-medium">MST / Mã CK</th>
-                  <th className="py-2.5 px-4 font-medium">Quan hệ & Loại hình</th>
-                  <th className="py-2.5 px-4 font-medium">Sức khỏe / Phạm vi</th>
-                  <th className="py-2.5 px-4 font-medium">Cập nhật</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Thao tác</th>
+                <tr>
+                  <th>Doanh nghiệp</th>
+                  <th>MST / Mã CK</th>
+                  <th>Quan hệ & Loại hình</th>
+                  <th>Sức khỏe / Phạm vi</th>
+                  <th>Cập nhật</th>
+                  <th className="text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border-subtle)]">
+              <tbody>
                 {companies.map((company) => (
-                  <tr key={company.id} className="hover:bg-[var(--bg-hover)]/50">
-                    <td className="py-3 px-4">
+                  <tr key={company.id}>
+                    <td>
                       <Link
                         to={`/portfolio/${company.id}`}
-                        className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent-primary)] no-underline flex items-center gap-1.5"
+                        className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent-primary)] no-underline inline-flex items-center gap-1.5 flex-wrap"
                       >
                         <Building2
                           className="h-3.5 w-3.5 text-[var(--accent-primary)] shrink-0"
@@ -508,12 +512,12 @@ export function PortfolioPage() {
                         />
                         <span>{company.name}</span>
                         {company.is_sample ? (
-                          <span className="px-1.5 py-0.5 text-[10px] rounded bg-[var(--accent-soft)] text-[var(--accent-primary)]">
+                          <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] rounded-[2px] bg-[var(--accent-soft)] text-[var(--accent-primary)] border border-[var(--accent-border)]">
                             Mẫu
                           </span>
                         ) : null}
                         {company.archived ? (
-                          <span className="px-1.5 py-0.5 text-[10px] rounded bg-[var(--bg-subtle)] text-[var(--text-muted)]">
+                          <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-[2px] bg-[var(--bg-subtle)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
                             Lưu trữ
                           </span>
                         ) : null}
@@ -524,16 +528,16 @@ export function PortfolioPage() {
                         </div>
                       ) : null}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[var(--text-secondary)]">
+                    <td className="num text-[var(--text-secondary)]">
                       <div>{company.tax_code ?? '—'}</div>
                       {company.ticker ? (
-                        <div className="text-[11px] text-[var(--accent-primary)] font-semibold">
+                        <div className="text-[11px] text-[var(--accent-primary)] font-bold">
                           {company.ticker}
                         </div>
                       ) : null}
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="font-medium">
+                    <td>
+                      <div className="font-medium text-[var(--text-primary)]">
                         {RELATIONSHIP_TAG_LABELS[company.relationship_tag] ??
                           company.relationship_tag}
                       </div>
@@ -541,40 +545,41 @@ export function PortfolioPage() {
                         {BUSINESS_TYPE_LABELS[company.business_type] ?? company.business_type}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td>
                       {!company.scoring_eligible ? (
                         <span
                           title={company.scoring_exclusion_reason ?? undefined}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--risk-medium-bg)] text-[var(--risk-medium-fg)]"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] border border-[var(--risk-medium-border)] text-[11px] font-semibold bg-[var(--risk-medium-bg)] text-[var(--risk-medium-fg)]"
                         >
                           <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                           Loại trừ (TCTC)
                         </span>
                       ) : company.latest_risk_tier && RISK_TIER_META[company.latest_risk_tier] ? (
                         <div className="flex items-center gap-2">
-                          <span className="num font-semibold text-[var(--text-primary)]">
+                          <span className="num font-bold text-[var(--text-primary)]">
                             {formatScore(company.latest_health_score, 1)}
                           </span>
                           <span
-                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium"
+                            className="inline-flex items-center px-2 py-0.5 rounded-[2px] border text-[11px] font-semibold"
                             style={{
                               color: RISK_TIER_META[company.latest_risk_tier].fg,
                               backgroundColor: RISK_TIER_META[company.latest_risk_tier].bg,
+                              borderColor: 'currentColor',
                             }}
                           >
                             {RISK_TIER_META[company.latest_risk_tier].label}
                           </span>
                         </div>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[2px] border border-[var(--risk-low-border)] text-[11px] font-semibold bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]">
                           Đủ điều kiện chấm điểm
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 num text-[var(--text-secondary)]">
+                    <td className="num text-[var(--text-secondary)]">
                       {formatDate(company.updated_at)}
                     </td>
-                    <td className="py-3 px-4">
+                    <td>
                       <div className="flex items-center justify-end gap-1.5">
                         <Link to={`/portfolio/${company.id}`} className="no-underline">
                           <Button variant="secondary" size="sm">

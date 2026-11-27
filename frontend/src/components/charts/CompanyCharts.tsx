@@ -32,11 +32,11 @@ import { EmptyState } from '@/components/ui/Primitives';
 const TOOLTIP_STYLE = {
   backgroundColor: 'var(--bg-surface)',
   border: '1px solid var(--border-strong)',
-  borderRadius: '4px',
+  borderRadius: '3px',
   fontSize: '12px',
+  color: 'var(--text-primary)',
 };
 
-/** Biểu đồ kết hợp Doanh thu, Lợi nhuận ròng & Dòng tiền hoạt động (chuẩn Koyfin / Quartr). */
 export function FinancialsComboChart({ history }: { history: HistoricalMetricPoint[] }) {
   const data = useMemo(
     () =>
@@ -62,7 +62,7 @@ export function FinancialsComboChart({ history }: { history: HistoricalMetricPoi
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 8, right: 16, left: 4, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+          <CartesianGrid strokeDasharray="2 2" stroke="var(--border-subtle)" vertical={false} />
           <XAxis
             dataKey="period"
             tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
@@ -81,16 +81,17 @@ export function FinancialsComboChart({ history }: { history: HistoricalMetricPoi
           />
           <Legend wrapperStyle={{ fontSize: '11px' }} />
           <ReferenceLine y={0} stroke="var(--border-strong)" />
-          <Bar dataKey="revenues" name="Doanh thu" fill="#0F766E" radius={[2, 2, 0, 0]} maxBarSize={28} />
-          <Bar dataKey="net_income" name="Lợi nhuận ròng" fill="#1D4ED8" radius={[2, 2, 0, 0]} maxBarSize={28} />
+          <Bar dataKey="revenues" name="Doanh thu" fill="var(--chart-1)" radius={[2, 2, 0, 0]} maxBarSize={26} isAnimationActive={false} />
+          <Bar dataKey="net_income" name="Lợi nhuận ròng" fill="var(--chart-2)" radius={[2, 2, 0, 0]} maxBarSize={26} isAnimationActive={false} />
           <Line
             type="monotone"
             dataKey="ocf"
             name="Dòng tiền hoạt động (OCF)"
-            stroke="#D97706"
+            stroke="var(--chart-3)"
             strokeWidth={2.2}
             dot={{ r: 3 }}
             connectNulls={false}
+            isAnimationActive={false}
           />
         </ComposedChart>
       </ResponsiveContainer>
@@ -98,7 +99,6 @@ export function FinancialsComboChart({ history }: { history: HistoricalMetricPoi
   );
 }
 
-/** Biểu đồ cột chồng Cơ cấu Nguồn vốn (Tổng nợ phải trả vs Vốn chủ sở hữu). */
 export function CapitalStructureChart({ history }: { history: HistoricalMetricPoint[] }) {
   const data = useMemo(
     () =>
@@ -120,10 +120,10 @@ export function CapitalStructureChart({ history }: { history: HistoricalMetricPo
   }
 
   return (
-    <div className="h-[260px] w-full">
+    <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 16, left: 4, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+          <CartesianGrid strokeDasharray="2 2" stroke="var(--border-subtle)" vertical={false} />
           <XAxis
             dataKey="period"
             tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
@@ -142,14 +142,15 @@ export function CapitalStructureChart({ history }: { history: HistoricalMetricPo
           />
           <Legend wrapperStyle={{ fontSize: '11px' }} />
           <ReferenceLine y={0} stroke="var(--border-strong)" />
-          <Bar dataKey="liabilities" stackId="cap" name="Tổng nợ phải trả" fill="#DC2626" maxBarSize={32} />
+          <Bar dataKey="liabilities" stackId="cap" name="Tổng nợ phải trả" fill="var(--chart-4)" maxBarSize={30} isAnimationActive={false} />
           <Bar
             dataKey="equity"
             stackId="cap"
             name="Vốn chủ sở hữu"
-            fill="#0F766E"
+            fill="var(--chart-1)"
             radius={[2, 2, 0, 0]}
-            maxBarSize={32}
+            maxBarSize={30}
+            isAnimationActive={false}
           />
         </BarChart>
       </ResponsiveContainer>
@@ -157,7 +158,6 @@ export function CapitalStructureChart({ history }: { history: HistoricalMetricPo
   );
 }
 
-/** Quỹ đạo Altman Z-Score với các vùng cảnh báo Kiệt quệ / Vùng xám / An toàn. */
 export function AltmanZoneChart({ history }: { history: HistoricalMetricPoint[] }) {
   const data = useMemo(
     () =>
@@ -187,7 +187,7 @@ export function AltmanZoneChart({ history }: { history: HistoricalMetricPoint[] 
     <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+          <CartesianGrid strokeDasharray="2 2" stroke="var(--border-subtle)" />
           <XAxis
             dataKey="period"
             tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
@@ -199,11 +199,11 @@ export function AltmanZoneChart({ history }: { history: HistoricalMetricPoint[] 
             axisLine={false}
             tickLine={false}
           />
-          <ReferenceArea y1={minZ} y2={1.81} fill="#DC2626" fillOpacity={0.08} />
-          <ReferenceArea y1={1.81} y2={2.99} fill="#D97706" fillOpacity={0.08} />
-          <ReferenceArea y1={2.99} y2={maxZ} fill="#0F766E" fillOpacity={0.07} />
-          <ReferenceLine y={1.81} stroke="#DC2626" strokeDasharray="4 4" />
-          <ReferenceLine y={2.99} stroke="#0F766E" strokeDasharray="4 4" />
+          <ReferenceArea y1={minZ} y2={1.81} fill="#B41D2D" fillOpacity={0.07} />
+          <ReferenceArea y1={1.81} y2={2.99} fill="#B0791C" fillOpacity={0.07} />
+          <ReferenceArea y1={2.99} y2={maxZ} fill="#0D6E4E" fillOpacity={0.06} />
+          <ReferenceLine y={1.81} stroke="var(--risk-critical-fg)" strokeDasharray="4 4" />
+          <ReferenceLine y={2.99} stroke="var(--risk-low-fg)" strokeDasharray="4 4" />
           <Tooltip
             formatter={(val: unknown) => [formatRatio(Number(val)), 'Altman Z-Score']}
             contentStyle={TOOLTIP_STYLE}
@@ -212,11 +212,12 @@ export function AltmanZoneChart({ history }: { history: HistoricalMetricPoint[] 
             type="monotone"
             dataKey="z"
             name="Altman Z-Score"
-            stroke="#0B5D52"
-            fill="#0B5D52"
+            stroke="var(--chart-1)"
+            fill="var(--chart-1)"
             fillOpacity={0.14}
             strokeWidth={2.2}
             dot={{ r: 3 }}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -224,7 +225,6 @@ export function AltmanZoneChart({ history }: { history: HistoricalMetricPoint[] 
   );
 }
 
-/** Biểu đồ Radar 4 trụ cột sức khỏe tài chính cơ bản (nhãn gọn chống tràn khung). */
 const RADAR_SHORT_LABELS: Record<string, string> = {
   profitability: 'Sinh lời',
   liquidity: 'Thanh khoản',
@@ -257,7 +257,7 @@ export function HealthPillarsRadarChart({ pillars }: { pillars: HealthPillars | 
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data} cx="50%" cy="50%" outerRadius="66%">
           <PolarGrid stroke="var(--border-subtle)" />
-          <PolarAngleAxis dataKey="pillar" tick={{ fill: 'var(--text-primary)', fontSize: 11, fontWeight: 500 }} />
+          <PolarAngleAxis dataKey="pillar" tick={{ fill: 'var(--text-primary)', fontSize: 11, fontWeight: 600 }} />
           <PolarRadiusAxis
             angle={30}
             domain={[0, 100]}
@@ -270,10 +270,11 @@ export function HealthPillarsRadarChart({ pillars }: { pillars: HealthPillars | 
           <Radar
             name="Trụ cột sức khỏe"
             dataKey="score"
-            stroke="#0A6B5C"
-            fill="#0A6B5C"
-            fillOpacity={0.22}
+            stroke="var(--chart-1)"
+            fill="var(--chart-1)"
+            fillOpacity={0.2}
             strokeWidth={2}
+            isAnimationActive={false}
           />
         </RadarChart>
       </ResponsiveContainer>
@@ -281,7 +282,6 @@ export function HealthPillarsRadarChart({ pillars }: { pillars: HealthPillars | 
   );
 }
 
-/** Xếp hạng bách phân vị so với nhóm doanh nghiệp cùng ngành (0–100%). */
 export function PeerPercentileChart({ context }: { context: SectorPeerContext | null }) {
   const data = useMemo(() => {
     if (!context) return [];
@@ -309,7 +309,7 @@ export function PeerPercentileChart({ context }: { context: SectorPeerContext | 
     <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 12, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
+          <CartesianGrid strokeDasharray="2 2" stroke="var(--border-subtle)" horizontal={false} />
           <XAxis
             type="number"
             domain={[0, 100]}
@@ -319,7 +319,7 @@ export function PeerPercentileChart({ context }: { context: SectorPeerContext | 
           <YAxis
             type="category"
             dataKey="metric"
-            width={170}
+            width={175}
             tick={{ fill: 'var(--text-primary)', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
@@ -329,16 +329,16 @@ export function PeerPercentileChart({ context }: { context: SectorPeerContext | 
             formatter={(val: unknown) => [`Bách phân vị thứ ${Number(val).toFixed(1)}`, 'Xếp hạng ngành']}
             contentStyle={TOOLTIP_STYLE}
           />
-          <Bar dataKey="percentile" radius={[0, 3, 3, 0]} maxBarSize={16}>
+          <Bar dataKey="percentile" radius={[0, 2, 2, 0]} maxBarSize={16} isAnimationActive={false}>
             {data.map((row) => (
               <Cell
                 key={row.metric}
                 fill={
                   row.percentile >= 65
-                    ? '#0F766E'
+                    ? 'var(--risk-low-fg)'
                     : row.percentile >= 35
-                      ? '#1D4ED8'
-                      : '#D97706'
+                      ? 'var(--chart-1)'
+                      : 'var(--chart-3)'
                 }
               />
             ))}

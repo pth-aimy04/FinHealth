@@ -20,10 +20,10 @@ import { formatPct, formatRatio, translateSector } from '@/lib/format';
 import { EmptyState } from '@/components/ui/Primitives';
 
 const RISK_FILL: Record<string, string> = {
-  LOW: '#0D7A68',
-  MEDIUM: '#D97706',
-  HIGH: '#EA580C',
-  CRITICAL: '#BE123C',
+  LOW: 'var(--risk-low-fg)',
+  MEDIUM: 'var(--risk-medium-fg)',
+  HIGH: 'var(--risk-high-fg)',
+  CRITICAL: 'var(--risk-critical-fg)',
 };
 
 const RISK_VI: Record<string, string> = {
@@ -31,6 +31,14 @@ const RISK_VI: Record<string, string> = {
   MEDIUM: 'Trung bình',
   HIGH: 'Cao',
   CRITICAL: 'Nguy kịch',
+};
+
+const TOOLTIP_STYLE = {
+  backgroundColor: 'var(--bg-surface)',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '3px',
+  fontSize: '12px',
+  color: 'var(--text-primary)',
 };
 
 export function SectorRiskChart({ companies }: { companies: CompanySummary[] }) {
@@ -72,14 +80,14 @@ export function SectorRiskChart({ companies }: { companies: CompanySummary[] }) 
   }
 
   return (
-    <div className="h-[280px] w-full">
+    <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
+          margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
+          <CartesianGrid strokeDasharray="2 2" stroke="var(--border-subtle)" horizontal={false} />
           <XAxis
             type="number"
             allowDecimals={false}
@@ -89,31 +97,31 @@ export function SectorRiskChart({ companies }: { companies: CompanySummary[] }) 
           <YAxis
             type="category"
             dataKey="sector"
-            width={165}
+            width={150}
             tick={{ fill: 'var(--text-primary)', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip
-            cursor={{ fill: 'var(--bg-hover)' }}
-            contentStyle={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '6px',
-              fontSize: '12px',
-            }}
-          />
+          <Tooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={TOOLTIP_STYLE} />
           <Legend wrapperStyle={{ fontSize: '11px' }} />
-          <Bar dataKey="LOW" stackId="risk" name="Thấp" fill={RISK_FILL.LOW} maxBarSize={18} />
-          <Bar dataKey="MEDIUM" stackId="risk" name="Trung bình" fill={RISK_FILL.MEDIUM} maxBarSize={18} />
-          <Bar dataKey="HIGH" stackId="risk" name="Cao" fill={RISK_FILL.HIGH} maxBarSize={18} />
+          <Bar dataKey="LOW" stackId="risk" name="Thấp" fill={RISK_FILL.LOW} maxBarSize={16} isAnimationActive={false} />
+          <Bar
+            dataKey="MEDIUM"
+            stackId="risk"
+            name="Trung bình"
+            fill={RISK_FILL.MEDIUM}
+            maxBarSize={16}
+            isAnimationActive={false}
+          />
+          <Bar dataKey="HIGH" stackId="risk" name="Cao" fill={RISK_FILL.HIGH} maxBarSize={16} isAnimationActive={false} />
           <Bar
             dataKey="CRITICAL"
             stackId="risk"
             name="Nguy kịch"
             fill={RISK_FILL.CRITICAL}
-            radius={[0, 3, 3, 0]}
-            maxBarSize={18}
+            radius={[0, 2, 2, 0]}
+            maxBarSize={16}
+            isAnimationActive={false}
           />
         </BarChart>
       </ResponsiveContainer>
@@ -167,10 +175,10 @@ export function RiskReturnScatterChart({ companies }: { companies: CompanySummar
   }
 
   return (
-    <div className="h-[280px] w-full">
+    <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 14, right: 20, bottom: 14, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+          <CartesianGrid strokeDasharray="2 2" stroke="var(--border-subtle)" />
           <XAxis
             type="number"
             dataKey="z"
@@ -178,7 +186,7 @@ export function RiskReturnScatterChart({ companies }: { companies: CompanySummar
             domain={[-2, 12]}
             tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
             label={{
-              value: 'Altman Z-Score (giới hạn -2..12)',
+              value: 'Altman Z-Score (-2..12)',
               position: 'insideBottom',
               offset: -6,
               fill: 'var(--text-muted)',
@@ -193,27 +201,27 @@ export function RiskReturnScatterChart({ companies }: { companies: CompanySummar
             domain={[0, 100]}
             tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
           />
-          <ZAxis range={[52, 52]} />
+          <ZAxis range={[48, 48]} />
           <ReferenceLine
             x={1.81}
-            stroke="#BE123C"
+            stroke="var(--risk-critical-fg)"
             strokeDasharray="4 4"
-            label={{ value: 'Z=1.81', position: 'insideTopLeft', fill: '#BE123C', fontSize: 10 }}
+            label={{ value: 'Z=1.81', position: 'insideTopLeft', fill: 'var(--risk-critical-fg)', fontSize: 10 }}
           />
           <ReferenceLine
             x={2.99}
-            stroke="#0D7A68"
+            stroke="var(--risk-low-fg)"
             strokeDasharray="4 4"
-            label={{ value: 'Z=2.99', position: 'insideTopRight', fill: '#0D7A68', fontSize: 10 }}
+            label={{ value: 'Z=2.99', position: 'insideTopRight', fill: 'var(--risk-low-fg)', fontSize: 10 }}
           />
           <Tooltip
-            cursor={{ strokeDasharray: '3 3' }}
+            cursor={{ strokeDasharray: '2 2' }}
             content={({ payload }) => {
               const pt = payload?.[0]?.payload as FrontierPoint | undefined;
               if (!pt) return null;
               return (
-                <div className="surface p-2.5 text-xs space-y-1">
-                  <div className="font-mono font-semibold text-[var(--accent-primary)]">
+                <div className="surface-popover p-2.5 text-xs space-y-1">
+                  <div className="font-mono font-bold text-[var(--accent-primary)]">
                     {pt.ticker} · {pt.name}
                   </div>
                   <div className="num text-[var(--text-secondary)]">
@@ -230,14 +238,15 @@ export function RiskReturnScatterChart({ companies }: { companies: CompanySummar
           />
           <Scatter
             data={points}
+            isAnimationActive={false}
             className="cursor-pointer"
             onClick={(node) => {
               const pt = node?.payload as FrontierPoint | undefined;
-              if (pt) navigate(`/companies/${encodeURIComponent(pt.ticker)}`);
+              if (pt) navigate(`/us-market/${encodeURIComponent(pt.ticker)}`);
             }}
           >
             {points.map((pt) => (
-              <Cell key={pt.cik} fill={RISK_FILL[pt.risk] ?? '#475569'} />
+              <Cell key={pt.cik} fill={RISK_FILL[pt.risk] ?? 'var(--chart-5)'} />
             ))}
           </Scatter>
         </ScatterChart>

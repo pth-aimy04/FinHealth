@@ -19,6 +19,7 @@ import {
   Button,
   EmptyState,
   ErrorState,
+  PageHeader,
   Panel,
   PanelHeader,
   TableSkeleton,
@@ -190,7 +191,7 @@ export function OrganizationPage() {
 
   if (!user) {
     return (
-      <Panel>
+      <Panel ruled>
         <EmptyState
           title="Vui lòng đăng nhập để quản trị tổ chức"
           description="Không gian làm việc tổ chức giúp cô lập danh bạ doanh nghiệp, báo cáo tài chính và phân quyền thành viên."
@@ -205,21 +206,16 @@ export function OrganizationPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
-          Quản trị Không gian Tổ chức
-        </h1>
-        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-          Chuyển đổi tổ chức, phân quyền thành viên (Quản trị / Chuyên viên / Người xem) và theo dõi
-          nhật ký kiểm toán.
-        </p>
-      </div>
+    <div className="space-y-5 animate-view">
+      <PageHeader
+        title="Quản trị Không gian Tổ chức"
+        description="Chuyển đổi tổ chức, phân quyền thành viên (Quản trị / Chuyên viên / Người xem) và theo dõi nhật ký kiểm toán."
+      />
 
       {statusMessage ? (
         <div
           role="status"
-          className="p-3 rounded-[6px] text-xs bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]"
+          className="px-4 py-2.5 rounded-[3px] border border-[var(--risk-low-border)] text-xs font-semibold bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]"
         >
           {statusMessage}
         </div>
@@ -227,48 +223,47 @@ export function OrganizationPage() {
       {errorMessage ? (
         <div
           role="alert"
-          className="p-3 rounded-[6px] text-xs bg-[var(--risk-critical-bg)] text-[var(--risk-critical-fg)]"
+          className="px-4 py-2.5 rounded-[3px] border border-[var(--risk-critical-border)] text-xs font-semibold bg-[var(--risk-critical-bg)] text-[var(--risk-critical-fg)]"
         >
           {errorMessage}
         </div>
       ) : null}
 
-      {/* Organizations Switcher + Create / Join */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Panel className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+        <Panel ruled className="lg:col-span-2 overflow-hidden">
           <PanelHeader
             title="Danh sách Không gian làm việc"
             description="Mỗi tổ chức có danh bạ doanh nghiệp và dữ liệu BCTC cô lập hoàn toàn."
           />
-          <div className="p-4 space-y-2.5">
+          <div className="divide-y divide-[var(--border-subtle)]">
             {organizations.map((org) => {
               const isCurrent = activeOrg?.id === org.id;
               return (
                 <div
                   key={org.id}
-                  className="surface-subtle px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs"
+                  className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 text-[13px] hover:bg-[var(--bg-hover)]/45 transition-colors"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <Building2
                       className="h-4 w-4 text-[var(--accent-primary)] shrink-0"
                       aria-hidden="true"
                     />
                     <div className="min-w-0">
-                      <div className="font-semibold text-[var(--text-primary)] truncate">
-                        {org.name}
+                      <div className="font-bold text-[var(--text-primary)] truncate flex items-center gap-2">
+                        <span>{org.name}</span>
                         {org.is_personal ? (
-                          <span className="ml-2 text-[10px] font-normal px-1.5 py-0.5 rounded bg-[var(--bg-surface)] text-[var(--text-muted)]">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-[2px] bg-[var(--bg-subtle)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
                             Cá nhân
                           </span>
                         ) : null}
                       </div>
-                      <div className="text-[11px] text-[var(--text-secondary)]">
-                        {ORG_ROLE_LABELS[org.role]} · {org.member_count} thành viên
+                      <div className="text-xs text-[var(--text-secondary)]">
+                        {ORG_ROLE_LABELS[org.role]} · <span className="num">{org.member_count}</span> thành viên
                       </div>
                     </div>
                   </div>
                   {isCurrent ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[var(--accent-soft)] text-[var(--accent-primary)]">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] border border-[var(--accent-border)] text-[11px] font-semibold bg-[var(--accent-soft)] text-[var(--accent-primary)]">
                       <Check className="h-3 w-3" aria-hidden="true" />
                       Đang hoạt động
                     </span>
@@ -287,30 +282,32 @@ export function OrganizationPage() {
           </div>
         </Panel>
 
-        <div className="space-y-4">
-          <Panel>
+        <div className="min-w-0 space-y-5">
+          <Panel className="overflow-hidden">
             <PanelHeader title="Tạo tổ chức mới" description="Tối đa 5 tổ chức hoạt động." />
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 createOrgMutation.mutate();
               }}
-              className="p-4 space-y-2.5 text-xs"
+              className="p-4 space-y-3 text-xs"
             >
-              <label htmlFor="new-org-name" className="block font-medium">
-                Tên tổ chức / Phòng ban
-              </label>
-              <input
-                id="new-org-name"
-                type="text"
-                required
-                minLength={2}
-                maxLength={120}
-                value={newOrgName}
-                onChange={(e) => setNewOrgName(e.target.value)}
-                placeholder="VD: Phòng Thẩm định Tín dụng KHDN"
-                className="w-full h-9 px-3 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-              />
+              <div>
+                <label htmlFor="new-org-name" className="block font-semibold text-[var(--text-secondary)] mb-1">
+                  Tên tổ chức / Phòng ban
+                </label>
+                <input
+                  id="new-org-name"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  value={newOrgName}
+                  onChange={(e) => setNewOrgName(e.target.value)}
+                  placeholder="VD: Phòng Thẩm định Tín dụng KHDN"
+                  className="field-control"
+                />
+              </div>
               <Button
                 type="submit"
                 variant="primary"
@@ -324,7 +321,7 @@ export function OrganizationPage() {
             </form>
           </Panel>
 
-          <Panel>
+          <Panel className="overflow-hidden">
             <PanelHeader
               title="Tham gia bằng mã mời"
               description="Nhập mã mời nhận từ quản trị viên tổ chức."
@@ -334,21 +331,23 @@ export function OrganizationPage() {
                 e.preventDefault();
                 acceptInviteMutation.mutate();
               }}
-              className="p-4 space-y-2.5 text-xs"
+              className="p-4 space-y-3 text-xs"
             >
-              <label htmlFor="accept-invite-token" className="block font-medium">
-                Mã mời một lần
-              </label>
-              <input
-                id="accept-invite-token"
-                type="text"
-                required
-                minLength={16}
-                value={acceptToken}
-                onChange={(e) => setAcceptToken(e.target.value)}
-                placeholder="Dán mã mời tại đây..."
-                className="w-full h-9 px-3 font-mono bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-              />
+              <div>
+                <label htmlFor="accept-invite-token" className="block font-semibold text-[var(--text-secondary)] mb-1">
+                  Mã mời một lần
+                </label>
+                <input
+                  id="accept-invite-token"
+                  type="text"
+                  required
+                  minLength={16}
+                  value={acceptToken}
+                  onChange={(e) => setAcceptToken(e.target.value)}
+                  placeholder="Dán mã mời tại đây..."
+                  className="field-control font-mono"
+                />
+              </div>
               <Button
                 type="submit"
                 variant="secondary"
@@ -364,9 +363,8 @@ export function OrganizationPage() {
         </div>
       </div>
 
-      {/* Active Organization Settings (Admin only rename) */}
       {activeOrg && isOrgAdmin ? (
-        <Panel>
+        <Panel className="overflow-hidden">
           <PanelHeader
             title={`Cài đặt tổ chức: ${activeOrg.name}`}
             description="Chỉ Quản trị tổ chức mới có thể đổi tên và quản lý phân quyền."
@@ -376,10 +374,10 @@ export function OrganizationPage() {
               e.preventDefault();
               renameOrgMutation.mutate();
             }}
-            className="p-4 flex flex-col sm:flex-row gap-2.5 sm:items-end text-xs"
+            className="p-4 flex flex-col sm:flex-row gap-3 sm:items-end text-xs"
           >
             <div className="flex-1">
-              <label htmlFor="rename-org-input" className="block font-medium mb-1">
+              <label htmlFor="rename-org-input" className="block font-semibold text-[var(--text-secondary)] mb-1">
                 Đổi tên hiển thị tổ chức
               </label>
               <input
@@ -391,7 +389,7 @@ export function OrganizationPage() {
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
                 placeholder={activeOrg.name}
-                className="w-full h-9 px-3 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                className="field-control"
               />
             </div>
             <Button type="submit" variant="secondary" size="sm" disabled={renameOrgMutation.isPending}>
@@ -401,9 +399,8 @@ export function OrganizationPage() {
         </Panel>
       ) : null}
 
-      {/* Members Table */}
       {activeOrg ? (
-        <Panel>
+        <Panel ruled className="overflow-hidden">
           <PanelHeader
             title="Thành viên tổ chức"
             description={
@@ -427,24 +424,24 @@ export function OrganizationPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse">
+              <table className="ledger-table">
                 <thead>
-                  <tr className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)]">
-                    <th className="py-2.5 px-4 font-medium">Thành viên</th>
-                    <th className="py-2.5 px-4 font-medium">Email</th>
-                    <th className="py-2.5 px-4 font-medium">Vai trò</th>
-                    <th className="py-2.5 px-4 font-medium">Ngày tham gia</th>
-                    {isOrgAdmin ? <th className="py-2.5 px-4 font-medium text-right">Thao tác</th> : null}
+                  <tr>
+                    <th>Thành viên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>Ngày tham gia</th>
+                    {isOrgAdmin ? <th className="text-right">Thao tác</th> : null}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border-subtle)]">
+                <tbody>
                   {(membersQuery.data ?? []).map((member) => (
-                    <tr key={member.user_id} className="hover:bg-[var(--bg-hover)]/50">
-                      <td className="py-2.5 px-4">
-                        <div className="font-medium text-[var(--text-primary)]">
+                    <tr key={member.user_id}>
+                      <td>
+                        <div className="font-semibold text-[var(--text-primary)]">
                           {member.display_name}
                           {member.user_id === user.id ? (
-                            <span className="ml-1.5 text-[10px] text-[var(--text-muted)]">(Bạn)</span>
+                            <span className="ml-1.5 text-[11px] font-normal text-[var(--text-muted)]">(Bạn)</span>
                           ) : null}
                         </div>
                         {member.job_title ? (
@@ -453,10 +450,10 @@ export function OrganizationPage() {
                           </div>
                         ) : null}
                       </td>
-                      <td className="py-2.5 px-4 font-mono text-[var(--text-secondary)]">
+                      <td className="font-mono text-xs text-[var(--text-secondary)]">
                         {member.email}
                       </td>
-                      <td className="py-2.5 px-4">
+                      <td>
                         {isOrgAdmin ? (
                           <select
                             aria-label={`Vai trò của ${member.display_name}`}
@@ -468,24 +465,24 @@ export function OrganizationPage() {
                                 role: e.target.value as OrgRole,
                               })
                             }
-                            className="h-8 px-2 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px] text-xs"
+                            className="field-control !h-8 !w-auto"
                           >
                             <option value="viewer">{ORG_ROLE_LABELS.viewer}</option>
                             <option value="analyst">{ORG_ROLE_LABELS.analyst}</option>
                             <option value="org_admin">{ORG_ROLE_LABELS.org_admin}</option>
                           </select>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bg-subtle)] text-[var(--text-primary)] font-medium">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-primary)] text-xs font-semibold">
                             <Shield className="h-3 w-3 text-[var(--accent-primary)]" aria-hidden="true" />
                             {ORG_ROLE_LABELS[member.role]}
                           </span>
                         )}
                       </td>
-                      <td className="py-2.5 px-4 text-[var(--text-secondary)] num">
+                      <td className="text-[var(--text-secondary)] num">
                         {formatDate(member.joined_at)}
                       </td>
                       {isOrgAdmin ? (
-                        <td className="py-2.5 px-4 text-right">
+                        <td className="text-right">
                           <Button
                             variant="danger"
                             size="sm"
@@ -507,9 +504,8 @@ export function OrganizationPage() {
         </Panel>
       ) : null}
 
-      {/* Invite Members + Pending Invites (Admin Only) */}
       {activeOrg && isOrgAdmin ? (
-        <Panel>
+        <Panel className="overflow-hidden">
           <PanelHeader
             title="Mời thành viên mới"
             description="Mã mời có hiệu lực 72 giờ, chỉ dùng một lần và khớp đúng email người nhận."
@@ -520,10 +516,10 @@ export function OrganizationPage() {
                 e.preventDefault();
                 inviteMutation.mutate();
               }}
-              className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end"
+              className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
             >
               <div className="sm:col-span-6">
-                <label htmlFor="invite-email" className="block font-medium mb-1">
+                <label htmlFor="invite-email" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Email đồng nghiệp
                 </label>
                 <input
@@ -533,18 +529,18 @@ export function OrganizationPage() {
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="analyst@company.vn"
-                  className="w-full h-9 px-3 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control"
                 />
               </div>
               <div className="sm:col-span-3">
-                <label htmlFor="invite-role" className="block font-medium mb-1">
+                <label htmlFor="invite-role" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Vai trò phân quyền
                 </label>
                 <select
                   id="invite-role"
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as OrgRole)}
-                  className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control"
                 >
                   <option value="viewer">{ORG_ROLE_LABELS.viewer}</option>
                   <option value="analyst">{ORG_ROLE_LABELS.analyst}</option>
@@ -565,9 +561,9 @@ export function OrganizationPage() {
             </form>
 
             {lastCreatedInvite ? (
-              <div className="surface-subtle p-3 flex flex-wrap items-center justify-between gap-2 border border-[var(--border-strong)]">
+              <div className="p-3 rounded-[3px] bg-[var(--bg-header)] border border-[var(--border-strong)] flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="font-medium text-[var(--text-primary)]">
+                  <div className="font-semibold text-[var(--text-primary)]">
                     Mã mời một lần cho {lastCreatedInvite.email} ({ORG_ROLE_LABELS[lastCreatedInvite.role]})
                   </div>
                   <code className="block mt-1 font-mono text-[11px] break-all text-[var(--accent-primary)]">
@@ -590,43 +586,44 @@ export function OrganizationPage() {
             ) : null}
 
             {(invitesQuery.data ?? []).length > 0 ? (
-              <div className="pt-2 border-t border-[var(--border-subtle)] space-y-2">
-                <div className="font-semibold text-[var(--text-secondary)]">
+              <div className="pt-3 border-t border-[var(--border-subtle)] space-y-2">
+                <div className="font-bold text-[var(--text-secondary)] uppercase tracking-[0.04em] text-[11px]">
                   Lời mời đang chờ chấp nhận ({invitesQuery.data!.length})
                 </div>
-                {invitesQuery.data!.map((inv) => (
-                  <div
-                    key={inv.id}
-                    className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 rounded-[6px] bg-[var(--bg-subtle)]"
-                  >
-                    <div>
-                      <span className="font-mono font-medium">{inv.email}</span>
-                      <span className="mx-2 text-[var(--text-muted)]">·</span>
-                      <span>{ORG_ROLE_LABELS[inv.role]}</span>
-                      <span className="mx-2 text-[var(--text-muted)]">·</span>
-                      <span className="text-[var(--text-muted)]">
-                        Hết hạn: {formatDate(inv.expires_at)}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => revokeInviteMutation.mutate(inv.id)}
-                      disabled={revokeInviteMutation.isPending}
+                <div className="divide-y divide-[var(--border-subtle)] border border-[var(--border-subtle)] rounded-[2px]">
+                  {invitesQuery.data!.map((inv) => (
+                    <div
+                      key={inv.id}
+                      className="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 bg-[var(--bg-surface)]"
                     >
-                      Thu hồi
-                    </Button>
-                  </div>
-                ))}
+                      <div>
+                        <span className="font-mono font-semibold">{inv.email}</span>
+                        <span className="mx-2 text-[var(--text-muted)]">·</span>
+                        <span>{ORG_ROLE_LABELS[inv.role]}</span>
+                        <span className="mx-2 text-[var(--text-muted)]">·</span>
+                        <span className="text-[var(--text-muted)] num">
+                          Hết hạn: {formatDate(inv.expires_at)}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => revokeInviteMutation.mutate(inv.id)}
+                        disabled={revokeInviteMutation.isPending}
+                      >
+                        Thu hồi
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
         </Panel>
       ) : null}
 
-      {/* Organization Audit Logs (Admin Only) */}
       {activeOrg && isOrgAdmin ? (
-        <Panel>
+        <Panel className="overflow-hidden">
           <PanelHeader
             title="Nhật ký kiểm toán tổ chức"
             description="Ghi nhận các thay đổi quản trị và phân quyền (không lưu mật khẩu hay số liệu BCTC)."
@@ -640,26 +637,26 @@ export function OrganizationPage() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse">
+              <table className="ledger-table">
                 <thead>
-                  <tr className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)]">
-                    <th className="py-2 px-4 font-medium">Thời gian</th>
-                    <th className="py-2 px-4 font-medium">Hành động</th>
-                    <th className="py-2 px-4 font-medium">Đối tượng</th>
-                    <th className="py-2 px-4 font-medium">Kết quả</th>
+                  <tr>
+                    <th>Thời gian</th>
+                    <th>Hành động</th>
+                    <th>Đối tượng</th>
+                    <th>Kết quả</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border-subtle)]">
+                <tbody>
                   {(auditQuery.data ?? []).map((entry) => (
                     <tr key={entry.id}>
-                      <td className="py-2 px-4 num text-[var(--text-secondary)]">
+                      <td className="num text-[var(--text-secondary)]">
                         {formatDate(entry.created_at)}
                       </td>
-                      <td className="py-2 px-4 font-mono">{entry.action}</td>
-                      <td className="py-2 px-4 font-mono text-[var(--text-secondary)]">
+                      <td className="font-mono text-xs">{entry.action}</td>
+                      <td className="font-mono text-xs text-[var(--text-secondary)]">
                         {entry.target}
                       </td>
-                      <td className="py-2 px-4 text-[var(--risk-low-fg)] font-medium">
+                      <td className="text-[var(--risk-low-fg)] font-semibold">
                         {entry.outcome}
                       </td>
                     </tr>

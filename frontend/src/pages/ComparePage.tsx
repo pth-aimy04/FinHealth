@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Globe, Plus, Scale, X } from 'lucide-react';
+import { Building2, Globe2, Plus, Scale, X } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -19,6 +19,7 @@ import {
   Button,
   EmptyState,
   ErrorState,
+  PageHeader,
   Panel,
   PanelHeader,
   TableSkeleton,
@@ -181,124 +182,115 @@ export function ComparePage() {
 
   return (
     <div className="space-y-5 animate-view">
-      {/* Header & Source Switch */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-[-0.025em] text-[var(--text-primary)]">
-            So sánh Trực diện Doanh nghiệp (2–4 DN)
-          </h1>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">
-            Đặt song song Điểm Sức khỏe, Nguy cơ khủng hoảng 12 tháng, Altman Z-Score và các chỉ số
-            tài chính cốt lõi.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Source Switcher */}
-          <div
-            className="inline-flex rounded-[6px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-0.5 text-xs"
-            role="group"
-            aria-label="Chọn nguồn doanh nghiệp so sánh"
-          >
-            {user && activeOrg ? (
+      <PageHeader
+        title="So sánh Trực diện Doanh nghiệp (2–4 DN)"
+        description="Đặt song song Điểm Sức khỏe, Nguy cơ khủng hoảng 12 tháng, Altman Z-Score và các chỉ số tài chính cốt lõi."
+        actions={
+          <>
+            <div
+              className="inline-flex rounded-[3px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-0.5 text-xs"
+              role="group"
+              aria-label="Chọn nguồn doanh nghiệp so sánh"
+            >
+              {user && activeOrg ? (
+                <button
+                  type="button"
+                  onClick={() => switchSource('org')}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-3 py-1 rounded-[2px] font-semibold cursor-pointer border-0',
+                    source === 'org'
+                      ? 'bg-[var(--accent-primary)] text-[var(--accent-ink)]'
+                      : 'bg-transparent text-[var(--text-secondary)]',
+                  )}
+                >
+                  <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  DN Tổ chức (VND)
+                </button>
+              ) : null}
               <button
                 type="button"
-                onClick={() => switchSource('org')}
+                onClick={() => switchSource('sec')}
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] font-medium cursor-pointer',
-                  source === 'org'
+                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-[2px] font-semibold cursor-pointer border-0',
+                  source === 'sec'
                     ? 'bg-[var(--accent-primary)] text-[var(--accent-ink)]'
-                    : 'text-[var(--text-secondary)]',
+                    : 'bg-transparent text-[var(--text-secondary)]',
                 )}
               >
-                <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
-                DN Tổ chức (VND)
+                <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
+                Thị trường Mỹ (SEC — USD)
               </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => switchSource('sec')}
-              className={cn(
-                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] font-medium cursor-pointer',
-                source === 'sec'
-                  ? 'bg-[var(--accent-primary)] text-[var(--accent-ink)]'
-                  : 'text-[var(--text-secondary)]',
-              )}
-            >
-              <Globe className="h-3.5 w-3.5" aria-hidden="true" />
-              Thị trường Mỹ (SEC — USD)
-            </button>
-          </div>
+            </div>
 
-          {/* Period Policy + Common Fiscal Year */}
-          <div className="inline-flex items-center gap-1.5 rounded-[6px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-1 text-xs">
-            <button
-              type="button"
-              onClick={() => updateSearch({ common_year: null })}
-              className={cn(
-                'px-2.5 py-1 rounded-[4px] cursor-pointer font-medium',
-                !useCommonYear
-                  ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)]'
-                  : 'text-[var(--text-secondary)]',
-              )}
-            >
-              Năm mới nhất
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                updateSearch({
-                  common_year: String(commonYearValue ?? new Date().getFullYear() - 1),
-                })
-              }
-              className={cn(
-                'px-2.5 py-1 rounded-[4px] cursor-pointer font-medium',
-                useCommonYear
-                  ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)]'
-                  : 'text-[var(--text-secondary)]',
-              )}
-            >
-              Cùng năm tài chính
-            </button>
-            {useCommonYear ? (
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={4}
-                value={commonYearDraft}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/[^\d]/g, '').slice(0, 4);
-                  setCommonYearDraft(digits);
-                  const val = Number(digits);
-                  if (digits.length === 4 && Number.isInteger(val) && val >= 2010 && val <= 2035) {
-                    updateSearch({ common_year: String(val) });
-                  }
-                }}
-                onBlur={() => {
-                  const val = Number(commonYearDraft);
-                  if (Number.isInteger(val) && val >= 2010 && val <= 2035) {
-                    updateSearch({ common_year: String(val) });
-                  } else if (commonYearValue !== null) {
-                    setCommonYearDraft(String(commonYearValue));
-                  }
-                }}
-                aria-label="Chọn năm tài chính chung"
-                className="w-20 h-7 px-2 rounded border border-[var(--border-strong)] bg-[var(--bg-canvas)] num text-xs"
-              />
-            ) : null}
-          </div>
-        </div>
-      </div>
+            <div className="inline-flex items-center gap-1 rounded-[3px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => updateSearch({ common_year: null })}
+                className={cn(
+                  'px-2.5 py-1 rounded-[2px] cursor-pointer font-semibold border-0',
+                  !useCommonYear
+                    ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)]'
+                    : 'bg-transparent text-[var(--text-secondary)]',
+                )}
+              >
+                Năm mới nhất
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  updateSearch({
+                    common_year: String(commonYearValue ?? new Date().getFullYear() - 1),
+                  })
+                }
+                className={cn(
+                  'px-2.5 py-1 rounded-[2px] cursor-pointer font-semibold border-0',
+                  useCommonYear
+                    ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)]'
+                    : 'bg-transparent text-[var(--text-secondary)]',
+                )}
+              >
+                Cùng năm tài chính
+              </button>
+              {useCommonYear ? (
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={commonYearDraft}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/[^\d]/g, '').slice(0, 4);
+                    setCommonYearDraft(digits);
+                    const val = Number(digits);
+                    if (digits.length === 4 && Number.isInteger(val) && val >= 2010 && val <= 2035) {
+                      updateSearch({ common_year: String(val) });
+                    }
+                  }}
+                  onBlur={() => {
+                    const val = Number(commonYearDraft);
+                    if (Number.isInteger(val) && val >= 2010 && val <= 2035) {
+                      updateSearch({ common_year: String(val) });
+                    } else if (commonYearValue !== null) {
+                      setCommonYearDraft(String(commonYearValue));
+                    }
+                  }}
+                  aria-label="Chọn năm tài chính chung"
+                  className="field-control !w-16 !h-7 num"
+                />
+              ) : null}
+            </div>
+          </>
+        }
+      />
 
-      {/* Selector Bar (2-4 companies enforced) */}
-      <Panel className="p-4 space-y-2.5">
+      {/* Peer Selection Ribbon */}
+      <Panel className="px-4 py-3 bg-[var(--bg-header)] space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             {source === 'sec'
               ? secIdentifiers.map((ticker) => (
                   <span
                     key={ticker}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-xs font-mono font-semibold"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] bg-[var(--bg-surface)] border border-[var(--border-strong)] text-xs font-mono font-bold text-[var(--accent-primary)]"
                   >
                     {ticker}
                     <button
@@ -311,7 +303,7 @@ export function ComparePage() {
                         });
                       }}
                       aria-label={`Bỏ ${ticker}`}
-                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-0 p-0"
+                      className="text-[var(--text-muted)] hover:text-[var(--risk-critical-fg)] cursor-pointer bg-transparent border-0 p-0"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -322,7 +314,7 @@ export function ComparePage() {
                   return (
                     <span
                       key={cid}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-xs font-medium"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] bg-[var(--bg-surface)] border border-[var(--border-strong)] text-xs font-semibold text-[var(--text-primary)]"
                     >
                       {found ? found.name : `DN #${cid}`}
                       <button
@@ -335,7 +327,7 @@ export function ComparePage() {
                           });
                         }}
                         aria-label={`Bỏ doanh nghiệp ${found?.name ?? cid}`}
-                        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-0 p-0"
+                        className="text-[var(--text-muted)] hover:text-[var(--risk-critical-fg)] cursor-pointer bg-transparent border-0 p-0"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -352,7 +344,7 @@ export function ComparePage() {
                 onChange={(e) => setInputTicker(e.target.value)}
                 placeholder="Thêm mã CK (VD: NVDA)"
                 aria-label="Thêm mã chứng khoán SEC để so sánh"
-                className="h-8 px-2.5 text-xs font-mono uppercase rounded-[6px] border border-[var(--border-strong)] bg-[var(--bg-canvas)] w-44"
+                className="field-control !h-8 !w-44 font-mono uppercase"
               />
               <Button
                 type="submit"
@@ -370,7 +362,7 @@ export function ComparePage() {
                 value={selectedOrgIdToAdd}
                 onChange={(e) => setSelectedOrgIdToAdd(e.target.value)}
                 aria-label="Chọn doanh nghiệp tổ chức để so sánh"
-                className="h-8 px-2.5 text-xs rounded-[6px] border border-[var(--border-strong)] bg-[var(--bg-canvas)] min-w-[220px]"
+                className="field-control !h-8 !min-w-[230px]"
               >
                 <option value="">Chọn doanh nghiệp tổ chức...</option>
                 {orgCompanies
@@ -395,7 +387,7 @@ export function ComparePage() {
         </div>
 
         {limitNotice ? (
-          <p className="text-xs text-[var(--risk-medium-fg)]" role="status">
+          <p className="text-xs font-semibold text-[var(--risk-medium-fg)] m-0" role="status">
             {limitNotice}
           </p>
         ) : null}
@@ -404,10 +396,12 @@ export function ComparePage() {
       {/* Main Comparison Content */}
       {(source === 'sec' && secIdentifiers.length < 2) ||
       (source === 'org' && orgCompanyIds.length < 2) ? (
-        <EmptyState
-          title="Cần ít nhất 2 doanh nghiệp để so sánh"
-          description="Hãy chọn từ 2 đến 4 doanh nghiệp ở thanh phía trên để đối chiếu trực tiếp."
-        />
+        <Panel>
+          <EmptyState
+            title="Cần ít nhất 2 doanh nghiệp để so sánh"
+            description="Hãy chọn từ 2 đến 4 doanh nghiệp ở thanh phía trên để đối chiếu trực tiếp."
+          />
+        </Panel>
       ) : activeLoading ? (
         <Panel>
           <TableSkeleton rows={8} />
@@ -419,9 +413,8 @@ export function ComparePage() {
         />
       ) : (
         <>
-          {/* Bar Chart Comparison */}
           {chartData.length > 0 ? (
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title="Biểu đồ Đối chiếu Điểm Sức khỏe & Nguy cơ 12 tháng"
                 description="Điểm Sức khỏe cao hơn và Nguy cơ 12 tháng thấp hơn thể hiện nền tảng tài chính an toàn hơn."
@@ -429,14 +422,14 @@ export function ComparePage() {
               <div className="p-4 h-[270px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 4 }}>
-                    <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" />
-                    <XAxis dataKey="name" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                    <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="2 2" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fill: 'var(--text-primary)', fontSize: 12, fontWeight: 600 }} />
                     <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'var(--bg-surface)',
-                        borderColor: 'var(--border-strong)',
-                        borderRadius: '8px',
+                        border: '1px solid var(--border-strong)',
+                        borderRadius: '3px',
                         fontSize: '12px',
                       }}
                     />
@@ -444,16 +437,18 @@ export function ComparePage() {
                     <Bar
                       dataKey="health"
                       name="Điểm Sức khỏe (0–100)"
-                      fill="var(--accent-primary)"
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={44}
+                      fill="var(--chart-1)"
+                      radius={[2, 2, 0, 0]}
+                      maxBarSize={42}
+                      isAnimationActive={false}
                     />
                     <Bar
                       dataKey="pd"
                       name="Nguy cơ 12 tháng (%)"
-                      fill="#BE123C"
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={44}
+                      fill="var(--chart-4)"
+                      radius={[2, 2, 0, 0]}
+                      maxBarSize={42}
+                      isAnimationActive={false}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -461,23 +456,22 @@ export function ComparePage() {
             </Panel>
           ) : null}
 
-          {/* Side-by-Side Comparison Table */}
           {source === 'org' && orgCompareQuery.data ? (
-            <Panel>
+            <Panel ruled className="overflow-hidden">
               <PanelHeader
                 title="Bảng So sánh Doanh nghiệp Tổ chức"
                 description={`Kỳ đối chiếu: ${orgCompareQuery.data.common_fiscal_year ? `FY${orgCompareQuery.data.common_fiscal_year}` : 'Năm đã chốt mới nhất'}`}
               />
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="ledger-table">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)]/50 text-[var(--text-secondary)]">
-                      <th className="py-3 px-4 font-semibold">Chỉ tiêu</th>
+                    <tr>
+                      <th>Chỉ tiêu</th>
                       {orgCompareQuery.data.companies.map((col) => (
-                        <th key={col.company.id} className="py-3 px-4 font-semibold text-right">
+                        <th key={col.company.id} className="text-right">
                           <Link
                             to={`/portfolio/${col.company.id}`}
-                            className="text-[var(--accent-primary)] hover:underline no-underline"
+                            className="text-[var(--accent-primary)] hover:underline no-underline normal-case text-[13px] font-bold"
                           >
                             {col.company.name}
                           </Link>
@@ -488,26 +482,30 @@ export function ComparePage() {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
-                    <tr>
-                      <td className="py-2.5 px-4 font-medium">Điểm Sức khỏe (0–100)</td>
+                  <tbody>
+                    <tr className="bg-[var(--bg-header)]/50">
+                      <td className="font-bold">Điểm Sức khỏe (0–100)</td>
                       {orgCompareQuery.data.companies.map((col) => (
-                        <td key={col.company.id} className="py-2.5 px-4 text-right num font-bold">
+                        <td key={col.company.id} className="text-right num font-bold text-[14px]">
                           {formatScore(col.health_score, 1)}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 font-medium">Xếp hạng rủi ro</td>
+                      <td className="font-semibold">Xếp hạng rủi ro</td>
                       {orgCompareQuery.data.companies.map((col) => {
                         const meta = col.risk_tier ? RISK_TIER_META[col.risk_tier] : null;
                         return (
-                          <td key={col.company.id} className="py-2.5 px-4 text-right">
+                          <td key={col.company.id} className="text-right">
                             <span
-                              className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                              className="inline-block px-2 py-0.5 rounded-[2px] border text-[11px] font-semibold"
                               style={
                                 meta
-                                  ? { color: meta.fg, backgroundColor: meta.bg }
+                                  ? {
+                                      color: meta.fg,
+                                      backgroundColor: meta.bg,
+                                      borderColor: 'currentColor',
+                                    }
                                   : undefined
                               }
                             >
@@ -518,17 +516,17 @@ export function ComparePage() {
                       })}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 font-medium">Nguy cơ khủng hoảng 12 tháng</td>
+                      <td className="font-semibold">Nguy cơ khủng hoảng 12 tháng</td>
                       {orgCompareQuery.data.companies.map((col) => (
-                        <td key={col.company.id} className="py-2.5 px-4 text-right num">
+                        <td key={col.company.id} className="text-right num font-semibold">
                           {formatPct(col.pd_12m, 2)}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 font-medium">Altman Z-Score</td>
+                      <td className="font-semibold">Altman Z-Score</td>
                       {orgCompareQuery.data.companies.map((col) => (
-                        <td key={col.company.id} className="py-2.5 px-4 text-right num">
+                        <td key={col.company.id} className="text-right num">
                           {col.altman.applicable ? formatRatio(col.altman.score, 2) : 'Không áp dụng'}
                         </td>
                       ))}
@@ -543,9 +541,9 @@ export function ComparePage() {
                       ] as const
                     ).map(([key, label, fmt]) => (
                       <tr key={key}>
-                        <td className="py-2.5 px-4 text-[var(--text-secondary)]">{label}</td>
+                        <td className="text-[var(--text-secondary)]">{label}</td>
                         {orgCompareQuery.data!.companies.map((col) => (
-                          <td key={col.company.id} className="py-2.5 px-4 text-right num">
+                          <td key={col.company.id} className="text-right num">
                             {fmt(col.core_metrics[key])}
                           </td>
                         ))}
@@ -558,21 +556,21 @@ export function ComparePage() {
           ) : null}
 
           {source === 'sec' && secCompareQuery.data ? (
-            <Panel>
+            <Panel ruled className="overflow-hidden">
               <PanelHeader
                 title="Bảng So sánh Thị trường Mỹ (SEC — USD)"
                 description={`Kỳ đối chiếu: ${secCompareQuery.data.common_fiscal_year ? `FY${secCompareQuery.data.common_fiscal_year}` : 'Năm công bố mới nhất'}`}
               />
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="ledger-table">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)]/50 text-[var(--text-secondary)]">
-                      <th className="py-3 px-4 font-semibold">Chỉ tiêu</th>
+                    <tr>
+                      <th>Chỉ tiêu</th>
                       {secCompareQuery.data.companies.map((col) => (
-                        <th key={col.cik} className="py-3 px-4 font-semibold text-right">
+                        <th key={col.cik} className="text-right">
                           <Link
                             to={`/us-market/${encodeURIComponent(col.ticker || col.cik)}`}
-                            className="text-[var(--accent-primary)] hover:underline no-underline font-mono"
+                            className="text-[var(--accent-primary)] hover:underline no-underline font-mono text-[13px] font-bold"
                           >
                             {col.ticker ?? col.cik}
                           </Link>
@@ -583,59 +581,59 @@ export function ComparePage() {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
-                    <tr>
-                      <td className="py-2.5 px-4 font-medium">Điểm Sức khỏe (0–100)</td>
+                  <tbody>
+                    <tr className="bg-[var(--bg-header)]/50">
+                      <td className="font-bold">Điểm Sức khỏe (0–100)</td>
                       {secCompareQuery.data.companies.map((col) => (
-                        <td key={col.cik} className="py-2.5 px-4 text-right num font-bold">
+                        <td key={col.cik} className="text-right num font-bold text-[14px]">
                           {formatScore(mapPdToSingleHealthScore(col.distress_probability), 1)}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 font-medium">Nguy cơ khủng hoảng 12 tháng</td>
+                      <td className="font-semibold">Nguy cơ khủng hoảng 12 tháng</td>
                       {secCompareQuery.data.companies.map((col) => (
-                        <td key={col.cik} className="py-2.5 px-4 text-right num">
+                        <td key={col.cik} className="text-right num font-semibold">
                           {formatPct(col.distress_probability, 2)}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 font-medium">Altman Z-Score</td>
+                      <td className="font-semibold">Altman Z-Score</td>
                       {secCompareQuery.data.companies.map((col) => (
-                        <td key={col.cik} className="py-2.5 px-4 text-right num">
+                        <td key={col.cik} className="text-right num">
                           {formatRatio(col.altman_z_score, 2)}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 text-[var(--text-secondary)]">ROA</td>
+                      <td className="text-[var(--text-secondary)]">ROA</td>
                       {secCompareQuery.data.companies.map((col) => (
-                        <td key={col.cik} className="py-2.5 px-4 text-right num">
+                        <td key={col.cik} className="text-right num">
                           {formatPct(col.roa, 1)}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 text-[var(--text-secondary)]">ROE</td>
+                      <td className="text-[var(--text-secondary)]">ROE</td>
                       {secCompareQuery.data.companies.map((col) => (
-                        <td key={col.cik} className="py-2.5 px-4 text-right num">
+                        <td key={col.cik} className="text-right num">
                           {formatPct(col.roe, 1)}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 text-[var(--text-secondary)]">Tỷ lệ nợ / Tổng TS</td>
+                      <td className="text-[var(--text-secondary)]">Tỷ lệ nợ / Tổng TS</td>
                       {secCompareQuery.data.companies.map((col) => (
-                        <td key={col.cik} className="py-2.5 px-4 text-right num">
+                        <td key={col.cik} className="text-right num">
                           {formatPct(col.debt_ratio, 1)}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 text-[var(--text-secondary)]">Thanh toán hiện hành</td>
+                      <td className="text-[var(--text-secondary)]">Thanh toán hiện hành</td>
                       {secCompareQuery.data.companies.map((col) => (
-                        <td key={col.cik} className="py-2.5 px-4 text-right num">
+                        <td key={col.cik} className="text-right num">
                           {formatRatio(col.current_ratio, 2)}x
                         </td>
                       ))}
@@ -646,10 +644,9 @@ export function ComparePage() {
             </Panel>
           ) : null}
 
-          {/* Legal Disclaimer */}
-          <div className="surface-subtle px-4 py-3 flex items-start gap-2 text-[11px] text-[var(--text-muted)]">
-            <Scale className="h-3.5 w-3.5 shrink-0 mt-0.5" aria-hidden="true" />
-            <p>
+          <div className="px-4 py-3 rounded-[3px] border border-[var(--border-subtle)] bg-[var(--bg-header)] flex items-start gap-2 text-[11px] text-[var(--text-muted)]">
+            <Scale className="h-3.5 w-3.5 shrink-0 mt-0.5 text-[var(--text-secondary)]" aria-hidden="true" />
+            <p className="m-0">
               Kết quả so sánh và chấm điểm rủi ro là phân tích định lượng nội bộ dựa trên dữ liệu tài
               chính lịch sử, không phải dịch vụ xếp hạng tín nhiệm theo Nghị định 88/2014/NĐ-CP.
             </p>

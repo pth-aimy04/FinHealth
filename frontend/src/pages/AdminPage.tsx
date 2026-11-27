@@ -7,7 +7,9 @@ import { useAuth } from '@/context/AuthContext';
 import {
   Button,
   EmptyState,
+  MetricStrip,
   MetricTile,
+  PageHeader,
   Panel,
   PanelHeader,
   TableSkeleton,
@@ -80,11 +82,11 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
 
   if (!isAdmin) {
     return (
-      <Panel>
+      <Panel ruled>
         <div className="px-6 py-14 text-center space-y-2">
-          <ShieldAlert className="mx-auto h-8 w-8 text-[var(--risk-critical-fg)]" />
-          <h1 className="text-base font-semibold">Yêu cầu Quyền Quản trị viên</h1>
-          <p className="text-xs text-[var(--text-secondary)]">
+          <ShieldAlert className="mx-auto h-7 w-7 text-[var(--risk-critical-fg)]" />
+          <h1 className="font-editorial text-lg font-bold">Yêu cầu Quyền Quản trị viên</h1>
+          <p className="text-[13px] text-[var(--text-secondary)] max-w-lg mx-auto">
             Hãy đăng nhập bằng tài khoản quản trị viên đã xác thực để điều hành hệ thống, quản trị
             mô hình MLOps, quản lý người dùng và xem nhật ký kiểm toán.
           </p>
@@ -97,19 +99,13 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
 
   return (
     <div className="space-y-5 animate-view">
-      <div>
-        <h1 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
-          Cổng Quản trị Hệ thống & MLOps Nội bộ
-        </h1>
-        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-          Khu vực nội bộ dành riêng cho Quản trị viên: vận hành hàng đợi SEC EDGAR, quản trị người
-          dùng, kiểm định phiên bản mô hình và bản đồ phân cụm PCA.
-        </p>
-      </div>
+      <PageHeader
+        title="Cổng Quản trị Hệ thống & MLOps Nội bộ"
+        description="Khu vực nội bộ dành riêng cho Quản trị viên: vận hành hàng đợi SEC EDGAR, quản trị người dùng, kiểm định phiên bản mô hình và bản đồ phân cụm PCA."
+      />
 
-      {/* Internal Admin Navigation Tabs */}
       <div
-        className="flex flex-wrap items-center gap-1 border-b border-[var(--border-subtle)]"
+        className="flex flex-wrap items-center gap-1 border-b border-[var(--border-strong)]"
         role="tablist"
         aria-label="Phân mục Quản trị & MLOps"
       >
@@ -127,7 +123,7 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer bg-transparent',
+              'px-4 py-2.5 text-[13px] font-semibold border-b-2 -mb-px transition-colors cursor-pointer bg-transparent',
               activeTab === tab.id
                 ? 'border-[var(--accent-primary)] text-[var(--accent-primary)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
@@ -143,28 +139,32 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
 
       {activeTab === 'system' ? (
         <div className="space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricStrip columns={4}>
             <MetricTile
+              bare
               label="Kết nối Cơ sở dữ liệu"
               value={ov?.database_connected ? 'Trực tuyến' : 'Ngoại tuyến'}
               accent={ov?.database_connected ? 'low' : 'critical'}
             />
             <MetricTile
+              bare
               label="Worker Nạp dữ liệu SEC"
               value={ov?.worker_enabled ? 'Đang bật' : 'Đang tắt'}
               accent={ov?.worker_enabled ? 'low' : 'medium'}
             />
             <MetricTile
+              bare
               label="Cấu hình Gửi Email SMTP"
               value={ov?.email_configured ? 'Đã cấu hình' : 'Chưa cấu hình'}
             />
             <MetricTile
+              bare
               label="Lần chạy thành công gần nhất"
               value={ov?.last_success ? formatDate(ov.last_success) : '—'}
             />
-          </div>
+          </MetricStrip>
 
-          <Panel>
+          <Panel ruled className="overflow-hidden">
             <PanelHeader
               title="Hàng đợi Nạp dữ liệu SEC EDGAR"
               description="Gửi mã chứng khoán hoặc CIK để đưa vào hàng đợi cập nhật báo cáo SEC."
@@ -182,7 +182,7 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
                     onChange={(e) => setTickerInput(e.target.value)}
                     placeholder="Mã CK hoặc CIK"
                     aria-label="Nhập mã chứng khoán hoặc CIK để nạp dữ liệu"
-                    className="h-8 px-2.5 text-xs font-mono uppercase bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[4px] w-36"
+                    className="field-control !h-8 !w-36 font-mono uppercase"
                   />
                   <Button
                     type="submit"
@@ -205,24 +205,24 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="ledger-table">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
-                      <th className="py-2 px-4 font-medium">Mã phiên</th>
-                      <th className="py-2 px-3 font-medium">Định danh</th>
-                      <th className="py-2 px-3 font-medium">Trạng thái</th>
-                      <th className="py-2 px-3 font-medium">Giai đoạn</th>
-                      <th className="py-2 px-4 font-medium text-right">Thao tác</th>
+                    <tr>
+                      <th>Mã phiên</th>
+                      <th>Định danh</th>
+                      <th>Trạng thái</th>
+                      <th>Giai đoạn</th>
+                      <th className="text-right">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                  <tbody>
                     {(jobsQuery.data ?? []).map((job) => (
-                      <tr key={job.id} className="hover:bg-[var(--bg-hover)]">
-                        <td className="py-2 px-4 font-mono">#{job.id}</td>
-                        <td className="py-2 px-3 font-mono font-semibold">{job.identifier}</td>
-                        <td className="py-2 px-3 uppercase">{job.status}</td>
-                        <td className="py-2 px-3 text-[var(--text-secondary)]">{job.stage}</td>
-                        <td className="py-2 px-4 text-right space-x-2">
+                      <tr key={job.id}>
+                        <td className="num font-semibold">#{job.id}</td>
+                        <td className="num font-bold text-[var(--accent-primary)]">{job.identifier}</td>
+                        <td className="uppercase text-xs font-semibold">{job.status}</td>
+                        <td className="text-[var(--text-secondary)]">{job.stage}</td>
+                        <td className="text-right space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -249,9 +249,9 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
           </Panel>
 
           {selectedRunId !== null ? (
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader title={`Sự kiện của Phiên #${selectedRunId}`} />
-              <div className="p-4 space-y-1.5 text-xs font-mono">
+              <div className="p-4 space-y-1.5 text-xs font-mono bg-[var(--bg-header)]">
                 {(eventsQuery.data ?? []).map((ev, idx) => (
                   <div key={idx} className="flex items-center justify-between gap-2">
                     <span>
@@ -265,17 +265,17 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
           ) : null}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader title="Quản lý Tài khoản Người dùng" />
-              <div className="divide-y divide-[var(--border-subtle)] text-xs">
+              <div className="divide-y divide-[var(--border-subtle)] text-[13px]">
                 {(usersQuery.data ?? []).map((u) => (
                   <div key={u.id} className="px-4 py-2.5 flex items-center justify-between gap-2">
                     <div>
-                      <div className="font-medium">
+                      <div className="font-semibold">
                         {u.display_name}{' '}
-                        <span className="font-mono text-[var(--text-muted)]">({u.role})</span>
+                        <span className="font-mono text-xs text-[var(--text-muted)]">({u.role})</span>
                       </div>
-                      <div className="text-[var(--text-secondary)]">{u.email}</div>
+                      <div className="text-xs text-[var(--text-secondary)] font-mono">{u.email}</div>
                     </div>
                     {u.role !== 'admin' ? (
                       <Button
@@ -293,7 +293,7 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
               </div>
             </Panel>
 
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader title="Nhật ký Kiểm toán Quản trị (Audit Log)" />
               <div className="divide-y divide-[var(--border-subtle)] text-xs">
                 {(auditQuery.data ?? []).slice(0, 15).map((entry) => (
@@ -301,10 +301,10 @@ export function AdminPage({ initialTab = 'system' }: { initialTab?: AdminTab }) 
                     key={entry.id}
                     className="px-4 py-2.5 flex items-center justify-between gap-2"
                   >
-                    <span className="font-mono">
+                    <span className="font-mono font-medium">
                       {entry.action} → #{entry.target}
                     </span>
-                    <span className="text-[var(--text-muted)]">
+                    <span className="num text-[var(--text-muted)]">
                       {formatDate(entry.created_at)}
                     </span>
                   </div>

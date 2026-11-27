@@ -1,79 +1,66 @@
-# DESIGN.md — FinHealth Visual World ("Ledger & Signal")
+# DESIGN.md — FinHealth Visual World ("Capital Institutional")
 
 ## 1. Visual World & Aesthetic Direction
 
-**World:** *Ledger & Signal* — an institutional financial research aesthetic inspired by Swiss financial ledgers, modern equity terminals (Koyfin, Quartr), and calm fintech operational tools (Mercury, Stripe).
-**Mode Split:**
-- **Public Landing (`/`):** Persuade mode — editorial confidence, real system numbers, live interactive product preview, restrained single entrance animation.
-- **Application Workspace (`/app/*`):** Operate mode — high scanability, earned familiarity, hairline borders, compact/comfortable data density, zero decorative noise.
+**World:** *Capital Institutional* — a B2B corporate credit and financial intelligence workstation modeled on institutional research terminals (**S&P Capital IQ Pro**, **Moody's CreditView**, **FiinPro-X**).
+**Mode:** Operate (primary application surfaces) + Read (`MethodologyPage`).
 
-**Absolute Bans:**
-- No purple/indigo/lavender AI defaults anywhere in UI chrome or accents.
-- No eyebrow/kicker labels above headings.
-- No nested cards or ghost cards (never combine a `1px` border with a heavy blurred shadow).
-- No one-sided colored stripe bars on rounded boxes.
-- No decorative scroll fade-ins, card tilts, or emoji icons.
+**Structural Signature:**
+- **Two-Tier Deep Institutional Navy Masthead (`#0B1A30` / `#102442`)** replacing the legacy SaaS white sidebar, releasing 100% horizontal viewport width (`max-w-[1440px]`) for wide financial tables, 4-company comparison matrices, 20-ratio ledgers, and 3-part Vietnamese accounting forms.
+- **Brass-Gold Active Module Indicator (`#E0A83B`)** paired with **Institutional Cobalt (`#1849A9`)** interactive controls on a crisp alabaster-paper canvas (`#F4F6F9`) with pure white hairline-ruled sheets (`#FFFFFF`) and **zero blurred card shadows**.
+- **Institutional Credit Tearsheet Masthead** on company profiles: 3-column hairline-divided analytical grid featuring a calibrated 4-zone Health Score Spectrum (`0 | 35 | 60 | 80 | 100`), 12-month default probability + 4-layer confidence audit, and 3 executive takeaways.
+- **Flush Two-Column Credit Factors Ledger** (`Điểm Tựa & Điểm Nghẽn`) and hairline-divided `MetricStrip` KPI ribbons — zero nested cards, zero consumer rounded-full pill soup, zero `Sparkles` icons, and zero `border-l-4` accent stripes.
 
 ## 2. Color Tokens
 
+### Institutional Masthead Chrome (Persistent Chromatic Anchor)
+- `--chrome-bg`: `#0B1A30` (Tier 1 brand, omnibox search `Ctrl+K`, workspace switcher, account)
+- `--chrome-sub`: `#102442` (Tier 2 horizontal module navigation bar)
+- `--chrome-surface`: `#173057` (controls inside masthead)
+- `--chrome-border`: `rgba(255, 255, 255, 0.12)`
+- `--chrome-accent`: `#E0A83B` (2px brass-gold active module indicator)
+
 ### Light Theme (Default)
-- `--bg-canvas`: `#F6F7F8` (cool stone-paper canvas)
-- `--bg-surface`: `#FFFFFF` (primary panels, tables, inputs)
-- `--bg-subtle`: `#EEF1F4` (sidebar, secondary toolbar, table header)
-- `--bg-hover`: `#E7ECEF` (row hover, subtle button hover)
-- `--border-subtle`: `#E2E7EC` (hairline dividers)
-- `--border-strong`: `#C5CFD8` (input borders, focus boundaries)
-- `--text-primary`: `#0E1720` (deep ink, >= 14:1 on white)
-- `--text-secondary`: `#475569` (labels, metadata, >= 6.5:1 on white)
-- `--text-muted`: `#64748B` (table units, `—` missing values, >= 4.6:1 on white)
-- `--accent-primary`: `#0B5D52` (institutional deep teal — primary actions, active nav)
-- `--accent-primary-hover`: `#08473F`
-- `--accent-soft`: `#E6F4F1` (active nav tint, selected chip)
+- `--bg-canvas`: `#F4F6F9` (crisp alabaster ledger ground)
+- `--bg-surface`: `#FFFFFF` (primary ledger sheets, tables, tearsheets)
+- `--bg-header`: `#F8FAFC` (panel & table headers)
+- `--bg-subtle`: `#EDF1F6` (filter ribbons, group headers)
+- `--bg-hover`: `#E7EEF7` (table row hover)
+- `--border-subtle`: `#D6DFE9` (1px hairline structural rules)
+- `--border-strong`: `#B0BFCF` (inputs, table header rules, stamps)
+- `--rule-heavy`: `#0B1A30` (2px top structural rule on primary ledgers & tearsheets)
+- `--text-primary`: `#0B1526` (>= 16:1 on white)
+- `--text-secondary`: `#3D4F68` (>= 7.5:1 on white)
+- `--text-muted`: `#61738B` (>= 4.6:1 on white)
+- `--accent-primary`: `#1849A9` (Institutional Capital Cobalt)
+- `--accent-primary-hover`: `#123987`
+- `--accent-soft`: `#EBF2FF`
 
-### Dark Theme (Toggleable)
-- `--bg-canvas`: `#0B0F14` (deep charcoal slate, never pure black)
-- `--bg-surface`: `#111720` (elevated work panels)
-- `--bg-subtle`: `#161E29` (sidebar, table headers)
-- `--bg-hover`: `#1D2736`
-- `--border-subtle`: `#233042`
-- `--border-strong`: `#33455E`
-- `--text-primary`: `#F1F5F9`
-- `--text-secondary`: `#94A3B8`
-- `--text-muted`: `#64748B`
-- `--accent-primary`: `#14B8A6`
-- `--accent-primary-hover`: `#2DD4BF`
-- `--accent-soft`: `rgba(20, 184, 166, 0.14)`
+### Dark Theme (Toggleable Capital Terminal)
+- `--chrome-bg`: `#070E1A`, `--chrome-sub`: `#0C172B`, `--chrome-accent`: `#E8B24A`
+- `--bg-canvas`: `#0A0F18`, `--bg-surface`: `#101724`, `--bg-header`: `#131C2C`, `--bg-subtle`: `#162133`, `--bg-hover`: `#1C2B42`
+- `--border-subtle`: `#223047`, `--border-strong`: `#34496B`, `--rule-heavy`: `#4F86F7`
+- `--text-primary`: `#EEF3FA`, `--text-secondary`: `#A1B4CD`, `--text-muted`: `#6F84A1`
+- `--accent-primary`: `#4F86F7`, `--accent-primary-hover`: `#6E9DF9`
 
-### Semantic Risk & Signal Tokens (Always paired with icon + text label)
-- `LOW` / Strong / Mitigating SHAP: `#0F766E` (bg `#E6F4F1` / dark `rgba(20,184,166,0.16)`)
-- `MEDIUM` / Watch / Adequate: `#B45309` (bg `#FEF3C7` / dark `rgba(245,158,11,0.16)`)
-- `HIGH` / Weak: `#C2410C` (bg `#FFEDD5` / dark `rgba(249,115,22,0.16)`)
-- `CRITICAL` / Distress / Risk-Increasing SHAP: `#B91C1C` (bg `#FEE2E2` / dark `rgba(239,68,68,0.16)`)
-- Neutral / Unscored / Missing (`null`): `#475569` (bg `#EEF1F4`)
+### Semantic Financial Risk & Chart Tokens
+- `STRONG` / `LOW` / `SAFE`: Light `#0D6E4E` on `#E6F5EF` (`--risk-low-*`) / Dark `#34D399`
+- `STABLE` / `ADEQUATE`: Light `#1849A9` on `#EBF2FF` (`--risk-stable-*`) / Dark `#60A5FA`
+- `WATCH` / `MEDIUM` / `GREY`: Light `#9A5708` on `#FEF5E4` (`--risk-medium-*`) / Dark `#FBBF24`
+- `HIGH` / `WEAK`: Light `#B84309` on `#FFF0E6` (`--risk-high-*`) / Dark `#FB923C`
+- `CRITICAL` / `DISTRESS`: Light `#B41D2D` on `#FDECEF` (`--risk-critical-*`) / Dark `#F87171`
+- Chart Series: `--chart-1` (`#1849A9`), `--chart-2` (`#0D6E4E`), `--chart-3` (`#B0791C`), `--chart-4` (`#B41D2D`), `--chart-5` (`#526680`).
 
-## 3. Typography
+## 3. Typography (100% Native Vietnamese Diacritics)
 
-- **UI Sans (`--font-sans`):** `IBM Plex Sans`, system-ui, sans-serif (weights 400, 500, 600, 700)
-- **Financial Data & Code (`--font-mono`):** `IBM Plex Mono`, ui-monospace, monospace
-- **Landing Display (`--font-display`):** `IBM Plex Serif` (used strictly for Landing hero headline)
-- **Strict Numeric Rule:** Every table cell, KPI value, percentage, ratio, CIK, and axis tick uses `font-variant-numeric: tabular-nums` and right alignment in tables.
-- **Operate Mode Fixed Scale:**
-  - Page Title (`h1`): `1.375rem` (22px), weight `600`, tracking `-0.02em`
-  - Section Title (`h2`): `1rem` (16px), weight `600`, tracking `-0.01em`
-  - Subheading (`h3`): `0.875rem` (14px), weight `600`
-  - Body / Table Cell: `0.875rem` (14px) comfortable / `0.8125rem` (13px) compact
-  - Caption / Table Header: `0.75rem` (12px), weight `500`, uppercase where appropriate
+- **Editorial Headings (`--font-serif`):** `Source Serif 4` (400, 600, 700) — Page Masthead `h1` (`24px–28px`) and Company Tearsheet Entity Titles.
+- **Institutional UI Sans (`--font-sans`):** `Source Sans 3` (400, 500, 600, 700) — `13px–14px` body & table cells, `14px–15px` panel titles, `11px` uppercase tracked column headers.
+- **Financial Data & Identifiers (`--font-mono`):** `JetBrains Mono` (400, 500, 600) with `font-variant-numeric: tabular-nums` — every score, probability, ratio, MST, Ticker, CIK, Fiscal Year, and BCTC accounting line code (`270`, `100`, `400`).
 
-## 4. Geometry, Spacing & Motion
+## 4. Geometry, Elevation & Responsive Rules
 
-- **Sharp Fintech Radii:** `--radius-sm: 2px`, `--radius-md: 4px`, `--radius-lg: 6px`, `--radius-pill: 9999px` (badges only).
-- **Spacing Scale:** Strict `4px` increments (`4, 8, 12, 16, 20, 24, 32, 48`).
-- **Elevation:** Single declaration via `1px solid var(--border-subtle)`. Popovers/dialogs use `1px solid var(--border-strong)` + `0 8px 24px -8px rgba(14, 23, 32, 0.14)`.
-- **Motion:** `150ms–200ms cubic-bezier(0.16, 1, 0.3, 1)` for state transitions in Operate mode; single calm entrance on Landing hero; full `prefers-reduced-motion` support.
-- **Browser Surfaces:** Themed `::selection`, `caret-color`, `:focus-visible` (`2px solid var(--accent-primary)` with `2px` offset), and subtle custom scrollbars.
-
-## 5. Layout & Responsive Rules
-
-- **Desktop (`>= 1024px`):** Fixed collapsible left navigation rail (`232px` expanded / `64px` collapsed) + sticky `52px` top command bar (Global Ticker Search `Ctrl+K`, Health Status pill, Theme toggle, Account menu).
-- **Tablet (`768px–1023px`):** Collapsible drawer sidebar + 2-column analytic grids.
-- **Mobile (`390px–767px`):** Slide-over navigation drawer, single-column stacked panels, horizontally scrollable tables with sticky first column (`Ticker / Company`), `44px` minimum tap targets.
+- **Sharp Institutional Radii:** `2px` stamps & micro-bars, `3px` buttons & inputs, `4px` primary ledger panels.
+- **Single-Declaration Elevation:** `1px solid var(--border-subtle)` for all workspace panels (`border-top: 2px solid var(--rule-heavy)` on lead ledgers). Only popovers/dialogs carry `--shadow-popover`.
+- **Responsive Architecture:**
+  - Desktop (`>= 1024px`): 2-tier sticky Deep Navy masthead (`56px` + `42px`), `1440px` full-width workspace grids.
+  - Mobile & Tablet (`< 1024px`): Single compact Navy header + full-height slide-over Navy navigation drawer with `44px` minimum tap targets and horizontally scrollable financial ledgers.

@@ -311,7 +311,6 @@ export function StatementEditorForm({
   function handleFieldChange(field: NumericKey, rawValue: string) {
     setValues((prev) => {
       const next = { ...prev, [field]: rawValue };
-      // Auto-sum Gross Profit when Revenues & COGS are updated
       if (field === 'revenues' || field === 'cost_of_goods_sold') {
         const rev = parseNumericInput(next.revenues ?? '');
         const cogs = parseNumericInput(next.cost_of_goods_sold ?? '');
@@ -319,7 +318,6 @@ export function StatementEditorForm({
           next.gross_profit = String(Number((rev - cogs).toFixed(4)));
         }
       }
-      // Auto-sum EBITDA when Operating Income & D&A are updated
       if (field === 'operating_income' || field === 'depreciation_amortization') {
         const ebit = parseNumericInput(next.operating_income ?? '');
         const da = parseNumericInput(next.depreciation_amortization ?? '');
@@ -327,7 +325,6 @@ export function StatementEditorForm({
           next.ebitda = String(Number((ebit + da).toFixed(4)));
         }
       }
-      // Auto-sum Total Assets when Liabilities & Equity are both present and Total Assets is blank
       if (
         (field === 'total_liabilities' || field === 'stockholders_equity') &&
         !prev.total_assets?.trim()
@@ -415,8 +412,8 @@ export function StatementEditorForm({
   };
 
   return (
-    <div className="space-y-4">
-      <Panel>
+    <div className="space-y-5">
+      <Panel ruled className="overflow-hidden">
         <PanelHeader
           title={
             initialStatement
@@ -432,228 +429,225 @@ export function StatementEditorForm({
           }
         />
 
-        <div className="p-4 space-y-4 text-xs">
-          {/* Metadata Controls */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div>
-              <label htmlFor="stmt-fiscal-year" className="block font-medium mb-1">
-                Năm tài chính
-              </label>
-              <input
-                id="stmt-fiscal-year"
-                type="number"
-                min={1990}
-                max={2100}
-                value={fiscalYear}
-                onChange={(e) => setFiscalYear(Number(e.target.value))}
-                className="w-full h-9 px-2.5 font-mono bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="stmt-fiscal-period" className="block font-medium mb-1">
-                Kỳ báo cáo
-              </label>
-              <select
-                id="stmt-fiscal-period"
-                value={fiscalPeriod}
-                onChange={(e) => setFiscalPeriod(e.target.value)}
-                className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-              >
-                <option value="FY">Cả năm (FY)</option>
-                <option value="H1">Bán niên (H1)</option>
-                <option value="Q1">Quý 1 (Q1)</option>
-                <option value="Q2">Quý 2 (Q2)</option>
-                <option value="Q3">Quý 3 (Q3)</option>
-                <option value="Q4">Quý 4 (Q4)</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="stmt-standard" className="block font-medium mb-1">
-                Chế độ kế toán
-              </label>
-              <select
-                id="stmt-standard"
-                value={accountingStandard}
-                onChange={(e) => setAccountingStandard(e.target.value as AccountingStandard)}
-                className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-              >
-                <option value="TT99_2025">{ACCOUNTING_STANDARD_LABELS.TT99_2025}</option>
-                <option value="TT200_2014">{ACCOUNTING_STANDARD_LABELS.TT200_2014}</option>
-                <option value="TT133_2016">{ACCOUNTING_STANDARD_LABELS.TT133_2016}</option>
-                <option value="IFRS_USGAAP">{ACCOUNTING_STANDARD_LABELS.IFRS_USGAAP}</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="stmt-currency" className="block font-medium mb-1">
-                Tiền tệ
-              </label>
-              <select
-                id="stmt-currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-                className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-              >
-                <option value="VND">VND (₫)</option>
-                <option value="USD">USD ($)</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="stmt-unit-scale" className="block font-medium mb-1">
-                Đơn vị nhập liệu
-              </label>
-              <select
-                id="stmt-unit-scale"
-                aria-label="Đơn vị nhập liệu"
-                value={unitScale}
-                onChange={(e) => handleUnitScaleChange(Number(e.target.value) as UnitScale)}
-                className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-              >
-                {UNIT_OPTIONS.map((opt) => (
-                  <option key={opt.scale} value={opt.scale}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="stmt-audit-status" className="block font-medium mb-1">
-                Trạng thái kiểm toán
-              </label>
-              <select
-                id="stmt-audit-status"
-                value={auditStatus}
-                onChange={(e) => setAuditStatus(e.target.value as AuditStatus)}
-                className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-              >
-                {Object.entries(AUDIT_STATUS_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Metadata Controls Ribbon */}
+        <div className="px-5 py-4 bg-[var(--bg-subtle)]/50 border-b border-[var(--border-subtle)] grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+          <div>
+            <label htmlFor="stmt-fiscal-year" className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Năm tài chính
+            </label>
+            <input
+              id="stmt-fiscal-year"
+              type="number"
+              min={1990}
+              max={2100}
+              value={fiscalYear}
+              onChange={(e) => setFiscalYear(Number(e.target.value))}
+              className="field-control num"
+            />
           </div>
 
-          {/* 3 Section Tabs */}
-          <div
-            className="flex flex-wrap border-b border-[var(--border-subtle)] gap-1"
-            role="tablist"
-            aria-label="Ba phần báo cáo tài chính"
-          >
-            {(['bs', 'is', 'cf'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab}
-                onClick={() => setActiveTab(tab)}
+          <div>
+            <label htmlFor="stmt-fiscal-period" className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Kỳ báo cáo
+            </label>
+            <select
+              id="stmt-fiscal-period"
+              value={fiscalPeriod}
+              onChange={(e) => setFiscalPeriod(e.target.value)}
+              className="field-control"
+            >
+              <option value="FY">Cả năm (FY)</option>
+              <option value="H1">Bán niên (H1)</option>
+              <option value="Q1">Quý 1 (Q1)</option>
+              <option value="Q2">Quý 2 (Q2)</option>
+              <option value="Q3">Quý 3 (Q3)</option>
+              <option value="Q4">Quý 4 (Q4)</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="stmt-standard" className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Chế độ kế toán
+            </label>
+            <select
+              id="stmt-standard"
+              value={accountingStandard}
+              onChange={(e) => setAccountingStandard(e.target.value as AccountingStandard)}
+              className="field-control"
+            >
+              <option value="TT99_2025">{ACCOUNTING_STANDARD_LABELS.TT99_2025}</option>
+              <option value="TT200_2014">{ACCOUNTING_STANDARD_LABELS.TT200_2014}</option>
+              <option value="TT133_2016">{ACCOUNTING_STANDARD_LABELS.TT133_2016}</option>
+              <option value="IFRS_USGAAP">{ACCOUNTING_STANDARD_LABELS.IFRS_USGAAP}</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="stmt-currency" className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Tiền tệ
+            </label>
+            <select
+              id="stmt-currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+              className="field-control"
+            >
+              <option value="VND">VND (₫)</option>
+              <option value="USD">USD ($)</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="stmt-unit-scale" className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Đơn vị nhập liệu
+            </label>
+            <select
+              id="stmt-unit-scale"
+              aria-label="Đơn vị nhập liệu"
+              value={unitScale}
+              onChange={(e) => handleUnitScaleChange(Number(e.target.value) as UnitScale)}
+              className="field-control"
+            >
+              {UNIT_OPTIONS.map((opt) => (
+                <option key={opt.scale} value={opt.scale}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="stmt-audit-status" className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Trạng thái kiểm toán
+            </label>
+            <select
+              id="stmt-audit-status"
+              value={auditStatus}
+              onChange={(e) => setAuditStatus(e.target.value as AuditStatus)}
+              className="field-control"
+            >
+              {Object.entries(AUDIT_STATUS_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 3 Section Tabs */}
+        <div
+          className="px-5 flex flex-wrap border-b border-[var(--border-strong)] bg-[var(--bg-header)] gap-1 text-xs"
+          role="tablist"
+          aria-label="Ba phần báo cáo tài chính"
+        >
+          {(['bs', 'is', 'cf'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'px-4 py-2.5 text-[13px] font-semibold border-b-2 -mb-px cursor-pointer bg-transparent transition-colors',
+                activeTab === tab
+                  ? 'border-[var(--accent-primary)] text-[var(--accent-primary)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+              )}
+            >
+              {tabTitles[tab]}
+            </button>
+          ))}
+        </div>
+
+        {/* Accounting Ledger Input Rows */}
+        <div className="divide-y divide-[var(--border-subtle)] text-[13px]">
+          {tabLines[activeTab].map((item) => {
+            const isErrorField = errorFieldSet.has(item.field);
+            const isHighlighted = focusedField === item.field;
+            const code = item.codes[regimeKey];
+            return (
+              <div
+                key={item.field}
                 className={cn(
-                  'px-3.5 py-2 font-medium border-b-2 cursor-pointer bg-transparent transition-colors',
-                  activeTab === tab
-                    ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] font-semibold'
-                    : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                  'py-2.5 px-5 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center transition-colors',
+                  item.isParent && !isErrorField && 'bg-[var(--bg-header)]/55',
+                  isErrorField && 'bg-[var(--risk-critical-bg)]/60',
+                  isHighlighted && 'ring-1 ring-inset ring-[var(--accent-primary)]',
                 )}
               >
-                {tabTitles[tab]}
-              </button>
-            ))}
-          </div>
-
-          {/* Active Tab Table */}
-          <div className="divide-y divide-[var(--border-subtle)]">
-            {tabLines[activeTab].map((item) => {
-              const isErrorField = errorFieldSet.has(item.field);
-              const isHighlighted = focusedField === item.field;
-              const code = item.codes[regimeKey];
-              return (
-                <div
-                  key={item.field}
-                  className={cn(
-                    'py-2.5 px-2 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center rounded-[4px] transition-colors',
-                    isErrorField && 'bg-[var(--risk-critical-bg)]/50',
-                    isHighlighted && 'ring-1 ring-[var(--accent-primary)]',
-                  )}
-                >
-                  <div className="sm:col-span-1 font-mono text-[11px] text-[var(--text-muted)]">
-                    {code}
-                  </div>
-                  <div className="sm:col-span-7">
-                    <label
-                      htmlFor={`field-${item.field}`}
-                      className={cn(
-                        'block',
-                        item.isParent ? 'font-semibold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]',
-                        isErrorField && 'text-[var(--risk-critical-fg)]',
-                      )}
-                    >
-                      {item.label}
-                    </label>
-                    {item.helper ? (
-                      <div className="text-[11px] text-[var(--text-muted)]">{item.helper}</div>
-                    ) : null}
-                  </div>
-                  <div className="sm:col-span-4">
-                    <input
-                      id={`field-${item.field}`}
-                      type="text"
-                      inputMode="decimal"
-                      aria-invalid={isErrorField}
-                      value={values[item.field] ?? ''}
-                      onChange={(e) => handleFieldChange(item.field, e.target.value)}
-                      onFocus={() => setFocusedField(item.field)}
-                      placeholder="Để trống nếu chưa có"
-                      className={cn(
-                        'w-full h-9 px-3 text-right font-mono bg-[var(--bg-canvas)] border rounded-[6px]',
-                        isErrorField
-                          ? 'border-[var(--risk-critical-fg)] text-[var(--risk-critical-fg)]'
-                          : 'border-[var(--border-strong)] text-[var(--text-primary)]',
-                      )}
-                    />
-                  </div>
+                <div className="sm:col-span-1 num text-xs font-bold text-[var(--text-muted)]">
+                  {code}
                 </div>
-              );
-            })}
-          </div>
+                <div className="sm:col-span-7">
+                  <label
+                    htmlFor={`field-${item.field}`}
+                    className={cn(
+                      'block',
+                      item.isParent ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]',
+                      isErrorField && 'text-[var(--risk-critical-fg)]',
+                    )}
+                  >
+                    {item.label}
+                  </label>
+                  {item.helper ? (
+                    <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{item.helper}</div>
+                  ) : null}
+                </div>
+                <div className="sm:col-span-4">
+                  <input
+                    id={`field-${item.field}`}
+                    type="text"
+                    inputMode="decimal"
+                    aria-invalid={isErrorField}
+                    value={values[item.field] ?? ''}
+                    onChange={(e) => handleFieldChange(item.field, e.target.value)}
+                    onFocus={() => setFocusedField(item.field)}
+                    placeholder="Để trống nếu chưa có"
+                    className={cn(
+                      'field-control text-right font-mono',
+                      isErrorField && '!border-[var(--risk-critical-fg)] !text-[var(--risk-critical-fg)]',
+                    )}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-          {serverError ? (
-            <div
-              role="alert"
-              className="p-3 rounded-[6px] bg-[var(--risk-critical-bg)] text-[var(--risk-critical-fg)]"
-            >
-              {serverError}
-            </div>
+        {serverError ? (
+          <div
+            role="alert"
+            className="mx-5 my-3 px-4 py-2.5 rounded-[3px] border border-[var(--risk-critical-border)] bg-[var(--risk-critical-bg)] text-xs font-semibold text-[var(--risk-critical-fg)]"
+          >
+            {serverError}
+          </div>
+        ) : null}
+
+        <div className="px-5 py-3.5 bg-[var(--bg-header)] border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-end gap-2">
+          {onCancel ? (
+            <Button variant="ghost" size="sm" onClick={onCancel} disabled={isSubmitting}>
+              Hủy
+            </Button>
           ) : null}
-
-          <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
-            {onCancel ? (
-              <Button variant="ghost" size="sm" onClick={onCancel} disabled={isSubmitting}>
-                Hủy
-              </Button>
-            ) : null}
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={isSubmitting}
-              onClick={() => void submitWithStatus('draft')}
-            >
-              <Save className="h-3.5 w-3.5" aria-hidden="true" />
-              Lưu nháp
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={isSubmitting || !liveReport.is_balanced}
-              onClick={() => void submitWithStatus('finalized')}
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              Chốt báo cáo & Chấm điểm
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={isSubmitting}
+            onClick={() => void submitWithStatus('draft')}
+          >
+            <Save className="h-3.5 w-3.5" aria-hidden="true" />
+            Lưu nháp
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={isSubmitting || !liveReport.is_balanced}
+            onClick={() => void submitWithStatus('finalized')}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+            Chốt báo cáo & Chấm điểm
+          </Button>
         </div>
       </Panel>
 

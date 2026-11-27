@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import {
   Button,
   EmptyState,
+  PageHeader,
   Panel,
   PanelHeader,
   TableSkeleton,
@@ -53,11 +54,11 @@ export function WorkspacePage() {
 
   if (!user) {
     return (
-      <Panel>
+      <Panel ruled>
         <div className="px-6 py-14 text-center space-y-3">
-          <Lock className="mx-auto h-8 w-8 text-[var(--text-muted)]" strokeWidth={1.5} />
-          <h1 className="text-base font-semibold">Đăng nhập để mở Không gian Cá nhân</h1>
-          <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto">
+          <Lock className="mx-auto h-7 w-7 text-[var(--text-muted)]" strokeWidth={1.5} />
+          <h1 className="font-editorial text-lg font-bold">Đăng nhập để mở Không gian Cá nhân</h1>
+          <p className="text-[13px] text-[var(--text-secondary)] max-w-md mx-auto">
             Danh sách theo dõi, bộ lọc đã lưu và các báo cáo chấm điểm riêng tư được bảo vệ theo
             đúng tài khoản đã xác thực của bạn.
           </p>
@@ -72,18 +73,14 @@ export function WorkspacePage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
-          Không gian Cá nhân
-        </h1>
-        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-          Đang đăng nhập dưới tên <span className="font-medium text-[var(--text-primary)]">{user.display_name}</span> ({user.email}).
-        </p>
-      </div>
+    <div className="space-y-5 animate-view">
+      <PageHeader
+        title="Không gian Cá nhân"
+        description={`Đang đăng nhập dưới tên ${user.display_name} (${user.email}).`}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Panel>
+        <Panel ruled className="overflow-hidden">
           <PanelHeader
             title={`Danh sách Theo dõi (${watchlistQuery.data?.length ?? 0})`}
             description="Các doanh nghiệp SEC bạn đang theo dõi."
@@ -101,17 +98,17 @@ export function WorkspacePage() {
               }
             />
           ) : (
-            <ul className="divide-y divide-[var(--border-subtle)] text-xs">
+            <ul className="divide-y divide-[var(--border-subtle)] text-[13px] list-none p-0 m-0">
               {(watchlistQuery.data ?? []).map((item) => (
-                <li key={item.id} className="px-4 py-3 flex items-center justify-between gap-2">
+                <li key={item.id} className="px-4 py-3 flex items-center justify-between gap-2 hover:bg-[var(--bg-hover)]/45">
                   <Link
                     to={`/us-market/${encodeURIComponent(item.ticker || item.cik)}`}
                     className="flex items-center gap-2 no-underline text-[var(--text-primary)] hover:text-[var(--accent-primary)]"
                   >
-                    <span className="font-mono font-semibold text-[var(--accent-primary)]">
+                    <span className="num text-xs font-bold px-1.5 py-0.5 rounded-[2px] bg-[var(--accent-soft)] text-[var(--accent-primary)] border border-[var(--accent-border)]">
                       {item.ticker ?? item.cik}
                     </span>
-                    <span className="truncate max-w-[220px]">{item.name}</span>
+                    <span className="truncate max-w-[240px] font-semibold">{item.name}</span>
                   </Link>
                   <button
                     type="button"
@@ -127,7 +124,7 @@ export function WorkspacePage() {
           )}
         </Panel>
 
-        <Panel>
+        <Panel ruled className="overflow-hidden">
           <PanelHeader
             title={`Bộ lọc Đã lưu (${screenersQuery.data?.length ?? 0})`}
             description="Mở lại nhanh các tiêu chí sàng lọc đã thiết lập."
@@ -140,17 +137,17 @@ export function WorkspacePage() {
               description="Thiết lập điều kiện lọc trên trang Bộ lọc doanh nghiệp rồi nhấn Lưu bộ lọc."
             />
           ) : (
-            <ul className="divide-y divide-[var(--border-subtle)] text-xs">
+            <ul className="divide-y divide-[var(--border-subtle)] text-[13px] list-none p-0 m-0">
               {(screenersQuery.data ?? []).map((sc) => {
                 const qs = new URLSearchParams();
                 for (const [k, v] of Object.entries(sc.filters)) {
                   if (v !== null && v !== undefined && v !== '') qs.set(k, String(v));
                 }
                 return (
-                  <li key={sc.id} className="px-4 py-3 flex items-center justify-between gap-2">
+                  <li key={sc.id} className="px-4 py-3 flex items-center justify-between gap-2 hover:bg-[var(--bg-hover)]/45">
                     <Link
                       to={`/us-market?${qs.toString()}`}
-                      className="inline-flex items-center gap-1.5 font-medium text-[var(--text-primary)] hover:text-[var(--accent-primary)] no-underline"
+                      className="inline-flex items-center gap-1.5 font-semibold text-[var(--text-primary)] hover:text-[var(--accent-primary)] no-underline"
                     >
                       <span>{sc.name}</span>
                       <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
@@ -170,7 +167,7 @@ export function WorkspacePage() {
           )}
         </Panel>
 
-        <Panel className="lg:col-span-2">
+        <Panel className="lg:col-span-2 overflow-hidden">
           <PanelHeader
             title={`Phân tích Tự nhập Đã lưu (${analysesQuery.data?.length ?? 0})`}
             description="Các hồ sơ chấm điểm báo cáo tự nhập được máy chủ tính toán lại và lưu riêng tư."
@@ -188,14 +185,14 @@ export function WorkspacePage() {
               }
             />
           ) : (
-            <ul className="divide-y divide-[var(--border-subtle)] text-xs">
+            <ul className="divide-y divide-[var(--border-subtle)] text-[13px] list-none p-0 m-0">
               {(analysesQuery.data ?? []).map((item) => (
-                <li key={item.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                <li key={item.id} className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-[var(--bg-hover)]/45">
                   <div>
-                    <div className="font-medium text-[var(--text-primary)]">{item.name}</div>
-                    <div className="text-[var(--text-secondary)]">
+                    <div className="font-semibold text-[var(--text-primary)]">{item.name}</div>
+                    <div className="text-xs text-[var(--text-secondary)]">
                       Mô hình <span className="font-mono">{item.model_version}</span> · Đã lưu ngày{' '}
-                      {formatDate(item.created_at)}
+                      <span className="num">{formatDate(item.created_at)}</span>
                     </div>
                   </div>
                   <button

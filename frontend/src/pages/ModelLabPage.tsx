@@ -9,6 +9,7 @@ import {
   Button,
   EmptyState,
   ErrorState,
+  MetricStrip,
   MetricTile,
   Panel,
   PanelHeader,
@@ -115,10 +116,10 @@ export function ModelLabPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
+          <h2 className="font-editorial text-xl font-bold text-[var(--text-primary)] m-0">
             Phòng thí nghiệm Mô hình ML & Chấm điểm
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+          </h2>
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5 m-0">
             Kiểm tra các gói mô hình theo thời gian, kết quả kiểm định out-of-time và chấm điểm báo
             cáo tài chính tự nhập hoặc theo lô danh mục.
           </p>
@@ -126,14 +127,14 @@ export function ModelLabPage() {
 
         {(versionsQuery.data ?? []).length > 0 ? (
           <div className="flex items-center gap-2 text-xs">
-            <label htmlFor="model-ver-select" className="text-[var(--text-secondary)]">
+            <label htmlFor="model-ver-select" className="font-semibold text-[var(--text-secondary)]">
               Phiên bản mô hình:
             </label>
             <select
               id="model-ver-select"
               value={selectedVersion ?? ''}
               onChange={(e) => setSelectedVersion(e.target.value || undefined)}
-              className="h-8 px-2.5 font-mono bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-[4px]"
+              className="field-control !h-8 !w-auto font-mono"
             >
               <option value="">Mặc định đang chạy</option>
               {(versionsQuery.data ?? []).map((v) => (
@@ -146,7 +147,7 @@ export function ModelLabPage() {
         ) : null}
       </div>
 
-      <div className="border-b border-[var(--border-subtle)] flex items-center gap-1" role="tablist">
+      <div className="border-b border-[var(--border-strong)] flex items-center gap-1" role="tablist">
         {(
           [
             { id: 'evaluation', label: 'Kho Mô hình & Đánh giá' },
@@ -161,7 +162,7 @@ export function ModelLabPage() {
             aria-selected={tab === item.id}
             onClick={() => setTab(item.id)}
             className={cn(
-              'px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer bg-transparent',
+              'px-4 py-2.5 text-[13px] font-semibold border-b-2 -mb-px transition-colors cursor-pointer bg-transparent',
               tab === item.id
                 ? 'border-[var(--accent-primary)] text-[var(--accent-primary)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
@@ -174,7 +175,7 @@ export function ModelLabPage() {
 
       {tab === 'evaluation' ? (
         <div className="space-y-5">
-          <Panel>
+          <Panel ruled className="overflow-hidden">
             <PanelHeader
               title="Danh sách Phiên bản Mô hình đã lưu"
               description="Các gói mô hình bất biến trong thư mục data/artifacts/models."
@@ -188,38 +189,38 @@ export function ModelLabPage() {
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="ledger-table">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
-                      <th className="py-2.5 px-4 font-medium">Phiên bản</th>
-                      <th className="py-2.5 px-3 font-medium">Mô hình chọn</th>
-                      <th className="py-2.5 px-3 font-medium">Tập dữ liệu</th>
-                      <th className="py-2.5 px-3 font-medium">Xử lý mất cân bằng</th>
-                      <th className="py-2.5 px-3 font-medium">Ngày tạo</th>
-                      <th className="py-2.5 px-4 font-medium text-right">Trạng thái</th>
+                    <tr>
+                      <th>Phiên bản</th>
+                      <th>Mô hình chọn</th>
+                      <th>Tập dữ liệu</th>
+                      <th>Xử lý mất cân bằng</th>
+                      <th>Ngày tạo</th>
+                      <th className="text-right">Trạng thái</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                  <tbody>
                     {(versionsQuery.data ?? []).map((v) => (
-                      <tr key={v.model_version} className="hover:bg-[var(--bg-hover)]">
-                        <td className="py-2.5 px-4 font-mono font-semibold text-[var(--accent-primary)]">
+                      <tr key={v.model_version}>
+                        <td className="font-mono font-bold text-[var(--accent-primary)]">
                           {v.model_version}
                         </td>
-                        <td className="py-2.5 px-3">{v.selected_model_name ?? '—'}</td>
-                        <td className="py-2.5 px-3 text-[var(--text-secondary)]">{v.dataset}</td>
-                        <td className="py-2.5 px-3 font-mono text-[var(--text-secondary)]">
+                        <td className="font-medium">{v.selected_model_name ?? '—'}</td>
+                        <td className="text-[var(--text-secondary)]">{v.dataset}</td>
+                        <td className="font-mono text-xs text-[var(--text-secondary)]">
                           {v.imbalance_strategy ?? '—'}
                         </td>
-                        <td className="py-2.5 px-3 text-[var(--text-secondary)]">
+                        <td className="num text-[var(--text-secondary)]">
                           {formatDate(v.created_at)}
                         </td>
-                        <td className="py-2.5 px-4 text-right">
+                        <td className="text-right">
                           {v.is_active ? (
-                            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]">
+                            <span className="px-2 py-0.5 rounded-[2px] border border-[var(--risk-low-border)] text-[11px] font-semibold bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]">
                               Đang chạy
                             </span>
                           ) : (
-                            <span className="text-[var(--text-muted)]">Lưu trữ</span>
+                            <span className="text-xs text-[var(--text-muted)]">Lưu trữ</span>
                           )}
                         </td>
                       </tr>
@@ -231,7 +232,7 @@ export function ModelLabPage() {
           </Panel>
 
           {evalQuery.data ? (
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title={`Đối chiếu Hiệu năng Các mô hình Phân loại (${evalQuery.data.model_version})`}
                 description="So sánh tương tác ROC-AUC, PR-AUC và điểm F1 trên tập kiểm định out-of-time."
@@ -242,21 +243,21 @@ export function ModelLabPage() {
             </Panel>
           ) : null}
 
-          <Panel>
+          <Panel className="overflow-hidden">
             <PanelHeader
               title="Biểu đồ Đánh giá Nghiên cứu (Publication Figures)"
               description="Hình ảnh độ phân giải cao đọc trực tiếp từ /api/v1/figures."
             />
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {PUBLICATION_FIGURES.map((fig) => (
-                <figure key={fig.file} className="surface-subtle overflow-hidden m-0">
+                <figure key={fig.file} className="border border-[var(--border-subtle)] rounded-[3px] overflow-hidden m-0 bg-[var(--bg-surface)]">
                   <img
                     src={`/api/v1/figures/${fig.file}`}
                     alt={fig.title}
                     loading="lazy"
                     className="w-full h-48 object-contain bg-white p-2"
                   />
-                  <figcaption className="px-3 py-2 text-xs font-medium text-[var(--text-secondary)] border-t border-[var(--border-subtle)]">
+                  <figcaption className="px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-header)] border-t border-[var(--border-subtle)]">
                     {fig.title}
                   </figcaption>
                 </figure>
@@ -265,12 +266,12 @@ export function ModelLabPage() {
           </Panel>
 
           {evalQuery.data ? (
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title={`Báo cáo Đánh giá JSON gốc (${evalQuery.data.model_version})`}
                 description="Báo cáo chi tiết được lưu kèm gói mô hình đã huấn luyện."
               />
-              <pre className="p-4 text-[11px] font-mono overflow-x-auto max-h-80 text-[var(--text-secondary)]">
+              <pre className="p-4 text-[11px] font-mono overflow-x-auto max-h-80 text-[var(--text-secondary)] m-0 bg-[var(--bg-header)]">
                 {JSON.stringify(evalQuery.data.evaluation_report, null, 2)}
               </pre>
             </Panel>
@@ -279,8 +280,8 @@ export function ModelLabPage() {
       ) : null}
 
       {tab === 'manual' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <Panel className="lg:col-span-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <Panel ruled className="lg:col-span-5 overflow-hidden">
             <PanelHeader
               title="Nhập Số liệu Báo cáo Tài chính"
               description="Nhập số liệu (đơn vị USD) để tính tỷ số, Altman Z và giải thích TreeSHAP."
@@ -295,29 +296,33 @@ export function ModelLabPage() {
             >
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label htmlFor="m-name" className="block font-medium mb-1">Tên doanh nghiệp</label>
+                  <label htmlFor="m-name" className="block font-semibold text-[var(--text-secondary)] mb-1">
+                    Tên doanh nghiệp
+                  </label>
                   <input
                     id="m-name"
                     type="text"
                     required
                     value={manualInput.company_name}
                     onChange={(e) => updateManualField('company_name', e.target.value)}
-                    className="w-full h-8 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[4px]"
+                    className="field-control !h-8"
                   />
                 </div>
                 <div>
-                  <label htmlFor="m-fy" className="block font-medium mb-1">Năm tài chính</label>
+                  <label htmlFor="m-fy" className="block font-semibold text-[var(--text-secondary)] mb-1">
+                    Năm tài chính
+                  </label>
                   <input
                     id="m-fy"
                     type="number"
                     required
                     value={manualInput.fiscal_year}
                     onChange={(e) => updateManualField('fiscal_year', Number(e.target.value))}
-                    className="w-full h-8 px-2.5 num bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[4px]"
+                    className="field-control !h-8 num"
                   />
                 </div>
                 <div className="flex items-end pb-1.5">
-                  <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <label className="inline-flex items-center gap-2 cursor-pointer font-medium">
                     <input
                       type="checkbox"
                       checked={manualInput.is_manufacturing}
@@ -342,7 +347,7 @@ export function ModelLabPage() {
                   ] as const
                 ).map(([field, label]) => (
                   <div key={field}>
-                    <label htmlFor={`m-${field}`} className="block font-medium mb-1">
+                    <label htmlFor={`m-${field}`} className="block font-semibold text-[var(--text-secondary)] mb-1">
                       {label}
                     </label>
                     <input
@@ -356,13 +361,13 @@ export function ModelLabPage() {
                           e.target.value === '' ? (null as unknown as number) : Number(e.target.value),
                         )
                       }
-                      className="w-full h-8 px-2.5 num bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[4px]"
+                      className="field-control !h-8 num"
                     />
                   </div>
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[var(--border-subtle)]">
                 <Button type="submit" variant="primary" disabled={manualMutation.isPending}>
                   <Cpu className="h-3.5 w-3.5" aria-hidden="true" />
                   {manualMutation.isPending ? 'Đang chấm điểm...' : 'Chạy dự báo mô hình'}
@@ -378,13 +383,13 @@ export function ModelLabPage() {
                   </Button>
                 ) : null}
                 {savedNotice ? (
-                  <span className="text-[var(--risk-low-fg)]">{savedNotice}</span>
+                  <span className="text-[var(--risk-low-fg)] font-semibold">{savedNotice}</span>
                 ) : null}
               </div>
             </form>
           </Panel>
 
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7 min-w-0 space-y-5">
             {manualMutation.isError ? (
               <ErrorState
                 message={
@@ -402,35 +407,38 @@ export function ModelLabPage() {
               </Panel>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <MetricStrip columns={3}>
                   <MetricTile
+                    bare
                     label="Xác suất Kiệt quệ"
                     value={formatPct(manualMutation.data.prediction.distress_probability)}
                     meta={`Mô hình ${manualMutation.data.prediction.model_version}`}
                   />
                   <MetricTile
+                    bare
                     label="Altman Z-Score"
                     value={formatRatio(manualMutation.data.altman_z_score)}
                     meta={manualMutation.data.altman_zone ?? '—'}
                   />
                   <MetricTile
+                    bare
                     label="Điểm Sức khỏe"
                     value={formatScore(manualMutation.data.health_pillars?.overall_score)}
                     meta={`Hạng ${manualMutation.data.health_pillars?.overall_grade ?? '—'}`}
                   />
-                </div>
+                </MetricStrip>
 
-                <Panel>
+                <Panel className="overflow-hidden">
                   <PanelHeader
                     title="Các yếu tố TreeSHAP hàng đầu"
                     actions={<RiskBadge level={manualMutation.data.prediction.risk_level} />}
                   />
-                  <div className="divide-y divide-[var(--border-subtle)] text-xs">
+                  <div className="divide-y divide-[var(--border-subtle)] text-[13px]">
                     {manualMutation.data.prediction.top_drivers.slice(0, 8).map((d) => (
                       <div key={d.feature} className="px-4 py-2.5 flex items-center justify-between">
-                        <span className="font-medium">{humanizeFeature(d.feature)}</span>
+                        <span className="font-semibold">{humanizeFeature(d.feature)}</span>
                         <span
-                          className="num font-semibold"
+                          className="num font-bold"
                           style={{
                             color:
                               (d.shap_value ?? 0) >= 0
@@ -451,8 +459,8 @@ export function ModelLabPage() {
       ) : null}
 
       {tab === 'batch' ? (
-        <div className="space-y-4">
-          <Panel>
+        <div className="space-y-5">
+          <Panel ruled className="overflow-hidden">
             <PanelHeader
               title="Dữ liệu Danh mục JSON theo Lô (tối đa 200 doanh nghiệp)"
               description="Gửi mảng báo cáo tài chính để chấm điểm tổng hợp rủi ro toàn danh mục."
@@ -469,10 +477,10 @@ export function ModelLabPage() {
                 value={batchJson}
                 onChange={(e) => setBatchJson(e.target.value)}
                 aria-label="Mảng JSON báo cáo doanh nghiệp"
-                className="w-full p-3 text-xs font-mono bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[4px]"
+                className="w-full p-3 text-xs font-mono bg-[var(--bg-header)] border border-[var(--border-strong)] rounded-[3px] text-[var(--text-primary)]"
               />
               {batchParseError ? (
-                <p role="alert" className="text-xs text-[var(--risk-critical-fg)]">
+                <p role="alert" className="text-xs font-semibold text-[var(--risk-critical-fg)] m-0">
                   {batchParseError}
                 </p>
               ) : null}
@@ -480,40 +488,40 @@ export function ModelLabPage() {
           </Panel>
 
           {batchMutation.data ? (
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title={`Kết quả Chấm điểm Danh mục (${batchMutation.data.total_companies} doanh nghiệp)`}
                 description={`XS kiệt quệ trung bình: ${formatPct(batchMutation.data.average_distress_probability)} · Mô hình ${batchMutation.data.model_version}`}
               />
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="ledger-table">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
-                      <th className="py-2.5 px-4 font-medium">Doanh nghiệp</th>
-                      <th className="py-2.5 px-3 font-medium text-right">XS Kiệt quệ</th>
-                      <th className="py-2.5 px-3 font-medium text-right">Điểm SK</th>
-                      <th className="py-2.5 px-3 font-medium text-right">Altman Z</th>
-                      <th className="py-2.5 px-3 font-medium">Yếu tố rủi ro chính</th>
-                      <th className="py-2.5 px-4 font-medium text-right">Mức rủi ro</th>
+                    <tr>
+                      <th>Doanh nghiệp</th>
+                      <th className="text-right">XS Kiệt quệ</th>
+                      <th className="text-right">Điểm SK</th>
+                      <th className="text-right">Altman Z</th>
+                      <th>Yếu tố rủi ro chính</th>
+                      <th className="text-right">Mức rủi ro</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                  <tbody>
                     {batchMutation.data.results.map((r, i) => (
-                      <tr key={`${r.company_name}-${i}`} className="hover:bg-[var(--bg-hover)]">
-                        <td className="py-2.5 px-4 font-medium">{r.company_name}</td>
-                        <td className="py-2.5 px-3 text-right num font-semibold">
+                      <tr key={`${r.company_name}-${i}`}>
+                        <td className="font-semibold">{r.company_name}</td>
+                        <td className="text-right num font-bold">
                           {formatPct(r.distress_probability)}
                         </td>
-                        <td className="py-2.5 px-3 text-right num">
+                        <td className="text-right num">
                           {formatScore(r.overall_health_score)}
                         </td>
-                        <td className="py-2.5 px-3 text-right num">
+                        <td className="text-right num">
                           {formatRatio(r.altman_z_score)}
                         </td>
-                        <td className="py-2.5 px-3 text-[var(--text-secondary)]">
+                        <td className="text-[var(--text-secondary)]">
                           {r.top_risk_driver ? humanizeFeature(r.top_risk_driver) : '—'}
                         </td>
-                        <td className="py-2.5 px-4 text-right">
+                        <td className="text-right">
                           <RiskBadge level={r.risk_level} />
                         </td>
                       </tr>

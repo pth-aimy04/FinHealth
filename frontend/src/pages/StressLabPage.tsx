@@ -20,7 +20,9 @@ import {
   Button,
   EmptyState,
   ErrorState,
+  MetricStrip,
   MetricTile,
+  PageHeader,
   Panel,
   PanelHeader,
   RiskBadge,
@@ -98,27 +100,21 @@ export function StressLabPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
-          Mô phỏng Sức chịu đựng (What-If Stress Test)
-        </h1>
-        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-          Giả lập cú sốc doanh thu, biên lợi nhuận, nợ vay và dòng tiền hoạt động để kiểm tra độ
-          nhạy rủi ro và các chỉ tiêu tài chính chịu tác động mạnh nhất mà không làm thay đổi dữ
-          liệu gốc.
-        </p>
-      </div>
+    <div className="space-y-5 animate-view">
+      <PageHeader
+        title="Mô phỏng Sức chịu đựng (What-If Stress Test)"
+        description="Giả lập cú sốc doanh thu, biên lợi nhuận, nợ vay và dòng tiền hoạt động để kiểm tra độ nhạy rủi ro mà không làm thay đổi dữ liệu gốc."
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <Panel className="lg:col-span-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <Panel ruled className="lg:col-span-4 overflow-hidden">
           <PanelHeader
             title="Tham số Kịch bản Giả lập"
             description="Chọn doanh nghiệp và thiết lập mức cú sốc giới hạn."
           />
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-4 text-xs">
             <div>
-              <label htmlFor="stress-issuer" className="block text-xs font-medium mb-1">
+              <label htmlFor="stress-issuer" className="block font-semibold text-[var(--text-secondary)] mb-1">
                 Doanh nghiệp (Mã CK hoặc CIK)
               </label>
               <select
@@ -128,7 +124,7 @@ export function StressLabPage() {
                   setIdentifier(e.target.value);
                   setSearchParams({ id: e.target.value }, { replace: true });
                 }}
-                className="w-full h-9 px-2.5 text-xs bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[4px]"
+                className="field-control"
               >
                 {(companiesQuery.data ?? []).map((c) => {
                   const val = c.ticker || c.cik;
@@ -148,14 +144,14 @@ export function StressLabPage() {
                   key={preset.label}
                   type="button"
                   onClick={() => setScenario(preset.scenario)}
-                  className="px-2 py-1 text-[11px] rounded-[4px] border border-[var(--border-subtle)] bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] cursor-pointer"
+                  className="px-2.5 py-1 text-[11px] font-semibold rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-header)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)] text-[var(--text-secondary)] cursor-pointer transition-colors"
                 >
                   {preset.label}
                 </button>
               ))}
             </div>
 
-            <div className="space-y-3.5 text-xs">
+            <div className="space-y-3.5 pt-2 border-t border-[var(--border-subtle)]">
               {(
                 [
                   { key: 'revenue_shock_pct', label: 'Biến động Doanh thu', min: -50, max: 50 },
@@ -168,10 +164,10 @@ export function StressLabPage() {
                 return (
                   <div key={slider.key} className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <label htmlFor={slider.key} className="font-medium text-[var(--text-primary)]">
+                      <label htmlFor={slider.key} className="font-semibold text-[var(--text-primary)]">
                         {slider.label}
                       </label>
-                      <span className="num font-semibold text-[var(--accent-primary)]">
+                      <span className="num font-bold text-[var(--accent-primary)]">
                         {pct > 0 ? `+${pct}%` : `${pct}%`}
                       </span>
                     </div>
@@ -190,7 +186,7 @@ export function StressLabPage() {
               })}
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 pt-3 border-t border-[var(--border-subtle)]">
               <Button
                 variant="primary"
                 className="flex-1"
@@ -211,7 +207,7 @@ export function StressLabPage() {
           </div>
         </Panel>
 
-        <div className="lg:col-span-8 space-y-4">
+        <div className="lg:col-span-8 min-w-0 space-y-5">
           {simMutation.isError ? (
             <ErrorState
               title="Mô phỏng thất bại"
@@ -239,19 +235,19 @@ export function StressLabPage() {
               {result.is_ood_scenario ? (
                 <div
                   role="alert"
-                  className="surface px-4 py-3 flex items-start gap-3 border-[var(--risk-medium-fg)]/40 bg-[var(--risk-medium-bg)]"
+                  className="px-4 py-3 rounded-[3px] border border-[var(--risk-medium-border)] bg-[var(--risk-medium-bg)] flex items-start gap-3"
                 >
                   <AlertTriangle
                     className="h-4 w-4 shrink-0 mt-0.5 text-[var(--risk-medium-fg)]"
                     aria-hidden="true"
                   />
                   <div className="text-xs">
-                    <div className="font-semibold text-[var(--risk-medium-fg)]">
+                    <div className="font-bold text-[var(--risk-medium-fg)]">
                       Cảnh báo Kịch bản Ngoài phân phối huấn luyện (OOD)
                     </div>
-                    <p className="mt-0.5 text-[var(--text-primary)]">
+                    <p className="mt-0.5 text-[var(--text-primary)] m-0">
                       Các chỉ số sau cú sốc vượt ngoài vùng dữ liệu huấn luyện đối với:{' '}
-                      <span className="font-medium">
+                      <span className="font-semibold">
                         {result.ood_features.map(humanizeFeature).join(', ')}
                       </span>
                       .
@@ -260,26 +256,35 @@ export function StressLabPage() {
                 </div>
               ) : null}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <MetricStrip columns={3}>
                 <MetricTile
+                  bare
                   label="XS Kiệt quệ Cơ sở"
                   value={formatPct(result.baseline.prediction.distress_probability)}
                   meta={`Mức rủi ro: ${result.baseline.prediction.risk_level ?? '—'}`}
                 />
                 <MetricTile
+                  bare
                   label="XS Kiệt quệ Sau cú sốc"
                   value={formatPct(result.stressed.prediction.distress_probability)}
                   meta={`Biến động: ${formatSigned(result.probability_delta * 100, 2)} đ%`}
-                  accent={result.probability_delta > 0.05 ? 'critical' : result.probability_delta < -0.02 ? 'low' : 'medium'}
+                  accent={
+                    result.probability_delta > 0.05
+                      ? 'critical'
+                      : result.probability_delta < -0.02
+                        ? 'low'
+                        : 'medium'
+                  }
                 />
                 <MetricTile
+                  bare
                   label="Biến động Altman Z"
                   value={formatSigned(result.altman_z_delta, 2)}
                   meta={result.cluster_shift ? 'Đã dịch chuyển cụm PCA' : 'Giữ nguyên cụm PCA'}
                 />
-              </div>
+              </MetricStrip>
 
-              <Panel>
+              <Panel className="overflow-hidden">
                 <PanelHeader
                   title="Các Yếu tố Tài chính Dịch chuyển Mạnh nhất (Sau cú sốc − Cơ sở)"
                   description="Mức biến động tác động của từng chỉ tiêu tài chính lên rủi ro do kịch bản cú sốc gây ra."
@@ -292,7 +297,7 @@ export function StressLabPage() {
                       layout="vertical"
                       margin={{ top: 4, right: 20, left: 16, bottom: 4 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
+                      <CartesianGrid strokeDasharray="2 2" stroke="var(--border-subtle)" horizontal={false} />
                       <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                       <YAxis
                         type="category"
@@ -308,15 +313,15 @@ export function StressLabPage() {
                         contentStyle={{
                           backgroundColor: 'var(--bg-surface)',
                           border: '1px solid var(--border-strong)',
-                          borderRadius: '4px',
+                          borderRadius: '3px',
                           fontSize: '12px',
                         }}
                       />
-                      <Bar dataKey="delta" radius={[2, 2, 2, 2]} maxBarSize={18}>
+                      <Bar dataKey="delta" radius={[2, 2, 2, 2]} maxBarSize={16} isAnimationActive={false}>
                         {shiftData.map((entry) => (
                           <Cell
                             key={entry.feature}
-                            fill={entry.delta >= 0 ? '#DC2626' : '#0F766E'}
+                            fill={entry.delta >= 0 ? 'var(--chart-4)' : 'var(--chart-2)'}
                           />
                         ))}
                       </Bar>
@@ -325,7 +330,7 @@ export function StressLabPage() {
                 </div>
               </Panel>
 
-              <Panel>
+              <Panel className="overflow-hidden">
                 <PanelHeader
                   title="So sánh Tỷ số Tài chính Cốt lõi: Cơ sở vs Sau cú sốc"
                   description="Tác động trực tiếp của kịch bản lên khả năng sinh lời, đòn bẩy và dòng tiền."
@@ -335,9 +340,9 @@ export function StressLabPage() {
                 </div>
               </Panel>
 
-              <Panel>
+              <Panel className="overflow-hidden">
                 <PanelHeader title="Giả định của Kịch bản Mô phỏng" />
-                <ul className="p-4 list-disc pl-8 space-y-1 text-xs text-[var(--text-secondary)]">
+                <ul className="p-4 list-disc pl-8 space-y-1 text-[13px] text-[var(--text-secondary)] m-0">
                   {result.assumptions.map((line, i) => (
                     <li key={i}>{line}</li>
                   ))}

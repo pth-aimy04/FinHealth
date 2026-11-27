@@ -26,6 +26,7 @@ import {
   EmptyState,
   ErrorState,
   InlineProbBar,
+  PageHeader,
   Panel,
   PanelHeader,
   RiskBadge,
@@ -165,10 +166,10 @@ export function ScreenerPage() {
               to={`/us-market/${encodeURIComponent(id)}`}
               className="flex items-center gap-2 no-underline text-[var(--text-primary)] hover:text-[var(--accent-primary)]"
             >
-              <span className="font-mono font-bold text-[var(--accent-primary)] w-11 shrink-0">
+              <span className="num text-xs font-bold text-[var(--accent-primary)] w-12 shrink-0">
                 {item.ticker ?? '—'}
               </span>
-              <span className="truncate max-w-[140px] font-medium">{item.name}</span>
+              <span className="truncate max-w-[180px] font-semibold">{item.name}</span>
             </Link>
           );
         },
@@ -176,7 +177,7 @@ export function ScreenerPage() {
       columnHelper.accessor('sector', {
         header: 'Nhóm ngành',
         cell: (info) => (
-          <span className="text-[var(--text-secondary)] truncate block max-w-[125px]">
+          <span className="text-[var(--text-secondary)] truncate block max-w-[140px]">
             {translateSector(info.getValue())}
           </span>
         ),
@@ -200,15 +201,15 @@ export function ScreenerPage() {
       }),
       columnHelper.accessor('altman_z_score', {
         header: 'Altman Z',
-        cell: (info) => <span className="num">{formatRatio(info.getValue())}</span>,
+        cell: (info) => <span className="num font-medium">{formatRatio(info.getValue())}</span>,
       }),
       columnHelper.accessor('roa', {
         header: 'ROA',
-        cell: (info) => <span className="num">{formatPct(info.getValue())}</span>,
+        cell: (info) => <span className="num font-medium">{formatPct(info.getValue())}</span>,
       }),
       columnHelper.accessor('debt_ratio', {
         header: 'Tỷ lệ nợ',
-        cell: (info) => <span className="num">{formatPct(info.getValue())}</span>,
+        cell: (info) => <span className="num font-medium">{formatPct(info.getValue())}</span>,
       }),
       columnHelper.display({
         id: 'watch',
@@ -229,9 +230,9 @@ export function ScreenerPage() {
               }
               aria-label={`Theo dõi ${row.original.ticker ?? row.original.name}`}
               className={cn(
-                'p-1 rounded-[4px] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed',
+                'p-1 rounded-[2px] transition-colors cursor-pointer bg-transparent border-0 disabled:opacity-40 disabled:cursor-not-allowed',
                 isWatched
-                  ? 'text-[var(--risk-medium-fg)]'
+                  ? 'text-[var(--brand-gold)]'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]',
               )}
             >
@@ -263,174 +264,174 @@ export function ScreenerPage() {
   ]);
 
   return (
-    <div className="space-y-4 min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-[1.4rem] font-bold tracking-[-0.025em]">
-            Sàng lọc Cổ phiếu & Rủi ro Tín dụng
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Bộ lọc đa tiêu chí trên dữ liệu báo cáo SEC. Chọn nhanh kịch bản mẫu hoặc tự thiết lập
-            ngưỡng chỉ số.
-          </p>
-        </div>
+    <div className="space-y-5 min-w-0">
+      <PageHeader
+        title="Sàng lọc Cổ phiếu & Rủi ro Tín dụng (SEC)"
+        description="Bộ lọc đa tiêu chí trên dữ liệu báo cáo công khai 10-K/10-Q. Chọn nhanh kịch bản mẫu hoặc tự thiết lập ngưỡng chỉ số."
+        actions={
+          <>
+            {selectedTickers.length >= 2 ? (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() =>
+                  navigate(`/compare?source=sec&ids=${encodeURIComponent(selectedTickers.join(','))}`)
+                }
+              >
+                <GitCompare className="h-3.5 w-3.5" aria-hidden="true" />
+                So sánh đã chọn ({selectedTickers.length})
+              </Button>
+            ) : null}
 
-        <div className="flex flex-wrap items-center gap-2">
-          {selectedTickers.length >= 2 ? (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() =>
-                navigate(`/compare?source=sec&ids=${encodeURIComponent(selectedTickers.join(','))}`)
-              }
+            <div
+              className="inline-flex rounded-[3px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-0.5 text-xs"
+              role="group"
+              aria-label="Mật độ dòng bảng"
             >
-              <GitCompare className="h-3.5 w-3.5" aria-hidden="true" />
-              So sánh đã chọn ({selectedTickers.length})
-            </Button>
-          ) : null}
+              <button
+                type="button"
+                onClick={() => setDensity('compact')}
+                className={cn(
+                  'px-2.5 py-1 rounded-[2px] cursor-pointer transition-colors font-semibold border-0',
+                  density === 'compact'
+                    ? 'bg-[var(--accent-primary)] text-[var(--accent-ink)]'
+                    : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                )}
+              >
+                Gọn
+              </button>
+              <button
+                type="button"
+                onClick={() => setDensity('comfortable')}
+                className={cn(
+                  'px-2.5 py-1 rounded-[2px] cursor-pointer transition-colors font-semibold border-0',
+                  density === 'comfortable'
+                    ? 'bg-[var(--accent-primary)] text-[var(--accent-ink)]'
+                    : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                )}
+              >
+                Thoáng
+              </button>
+            </div>
+          </>
+        }
+      />
 
-          <div
-            className="inline-flex rounded-[6px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-0.5 text-xs"
-            role="group"
-            aria-label="Mật độ dòng bảng"
-          >
-            <button
-              type="button"
-              onClick={() => setDensity('compact')}
-              className={cn(
-                'px-2.5 py-1 rounded-[4px] cursor-pointer transition-colors',
-                density === 'compact'
-                  ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)] font-semibold'
-                  : 'text-[var(--text-secondary)]',
-              )}
-            >
-              Gọn
-            </button>
-            <button
-              type="button"
-              onClick={() => setDensity('comfortable')}
-              className={cn(
-                'px-2.5 py-1 rounded-[4px] cursor-pointer transition-colors',
-                density === 'comfortable'
-                  ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)] font-semibold'
-                  : 'text-[var(--text-secondary)]',
-              )}
-            >
-              Thoáng
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Analyst Quick-Filter Preset Pills */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-[var(--text-muted)]">Bộ lọc nhanh:</span>
-        {ANALYST_PRESETS.map((preset) => (
-          <button
-            key={preset.label}
-            type="button"
-            onClick={() => setSearchParams(preset.params, { replace: true })}
-            className="px-3 py-1.5 text-xs font-medium rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)]/40 hover:bg-[var(--accent-soft)] transition-all cursor-pointer"
-          >
-            {preset.label}
-          </button>
-        ))}
-        {(q || sector || riskLevel || minRoa || maxDebt) ? (
-          <Button variant="ghost" size="sm" onClick={() => setSearchParams({}, { replace: true })}>
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-            Đặt lại
-          </Button>
-        ) : null}
-      </div>
-
-      <Panel className="p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-          <div className="lg:col-span-2">
-            <label htmlFor="filter-q" className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
-              Tìm mã CK, tên công ty hoặc CIK
-            </label>
-            <input
-              id="filter-q"
-              type="search"
-              value={q}
-              onChange={(e) => updateParam('q', e.target.value)}
-              placeholder="VD: AAPL, Airlines, 0000320193"
-              className="w-full h-9 px-3 text-xs bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-            />
+      {/* Unified Institutional Screener Panel: Presets + Filters + Results Matrix */}
+      <Panel ruled className="min-w-0 overflow-hidden">
+        {/* Preset & Save Ribbon */}
+        <div className="px-4 sm:px-5 py-3 bg-[var(--bg-header)] border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-[0.05em] text-[var(--text-muted)] mr-1">
+              Bộ lọc nhanh:
+            </span>
+            {ANALYST_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => setSearchParams(preset.params, { replace: true })}
+                className="px-2.5 py-1 text-xs font-semibold rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)] hover:bg-[var(--accent-soft)] transition-colors cursor-pointer"
+              >
+                {preset.label}
+              </button>
+            ))}
+            {q || sector || riskLevel || minRoa || maxDebt ? (
+              <Button variant="ghost" size="sm" onClick={() => setSearchParams({}, { replace: true })}>
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                Đặt lại
+              </Button>
+            ) : null}
           </div>
 
-          <div>
-            <label htmlFor="filter-risk" className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
-              Mức rủi ro
-            </label>
-            <select
-              id="filter-risk"
-              value={riskLevel}
-              onChange={(e) => updateParam('risk_level', e.target.value)}
-              className="w-full h-9 px-2.5 text-xs bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-            >
-              <option value="">Tất cả mức</option>
-              <option value="LOW">Rủi ro thấp</option>
-              <option value="MEDIUM">Trung bình</option>
-              <option value="HIGH">Rủi ro cao</option>
-              <option value="CRITICAL">Nguy kịch</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="filter-sector" className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
-              Nhóm ngành
-            </label>
-            <select
-              id="filter-sector"
-              value={sector}
-              onChange={(e) => updateParam('sector', e.target.value)}
-              className="w-full h-9 px-2.5 text-xs bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-            >
-              <option value="">Tất cả ngành</option>
-              {sectors.map((s) => (
-                <option key={s} value={s}>
-                  {translateSector(s)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="filter-roa" className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
-              ROA tối thiểu (thập phân)
-            </label>
-            <input
-              id="filter-roa"
-              type="number"
-              step="0.01"
-              value={minRoa}
-              onChange={(e) => updateParam('min_roa', e.target.value)}
-              placeholder="0.05"
-              className="w-full h-9 px-2.5 text-xs num bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="filter-debt" className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
-              Tỷ lệ nợ tối đa
-            </label>
-            <input
-              id="filter-debt"
-              type="number"
-              step="0.05"
-              value={maxDebt}
-              onChange={(e) => updateParam('max_debt_ratio', e.target.value)}
-              placeholder="0.80"
-              className="w-full h-9 px-2.5 text-xs num bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
-            />
-          </div>
-        </div>
-
-        <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-            <span className="num font-semibold text-[var(--text-primary)]">{allCompanies.length}</span>
+            <span className="num font-bold text-[var(--text-primary)]">{allCompanies.length}</span>
             <span>doanh nghiệp phù hợp</span>
+          </div>
+        </div>
+
+        {/* Filter Controls Grid */}
+        <div className="px-4 sm:px-5 py-3.5 bg-[var(--bg-subtle)]/45 border-b border-[var(--border-subtle)] space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+            <div className="lg:col-span-2">
+              <label htmlFor="filter-q" className="block text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)] mb-1">
+                Tìm mã CK, tên công ty hoặc CIK
+              </label>
+              <input
+                id="filter-q"
+                type="search"
+                value={q}
+                onChange={(e) => updateParam('q', e.target.value)}
+                placeholder="VD: AAPL, Airlines, 0000320193"
+                className="field-control"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="filter-risk" className="block text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)] mb-1">
+                Mức rủi ro
+              </label>
+              <select
+                id="filter-risk"
+                value={riskLevel}
+                onChange={(e) => updateParam('risk_level', e.target.value)}
+                className="field-control"
+              >
+                <option value="">Tất cả mức</option>
+                <option value="LOW">Rủi ro thấp</option>
+                <option value="MEDIUM">Trung bình</option>
+                <option value="HIGH">Rủi ro cao</option>
+                <option value="CRITICAL">Nguy kịch</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="filter-sector" className="block text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)] mb-1">
+                Nhóm ngành
+              </label>
+              <select
+                id="filter-sector"
+                value={sector}
+                onChange={(e) => updateParam('sector', e.target.value)}
+                className="field-control"
+              >
+                <option value="">Tất cả ngành</option>
+                {sectors.map((s) => (
+                  <option key={s} value={s}>
+                    {translateSector(s)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="filter-roa" className="block text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)] mb-1">
+                ROA tối thiểu (thập phân)
+              </label>
+              <input
+                id="filter-roa"
+                type="number"
+                step="0.01"
+                value={minRoa}
+                onChange={(e) => updateParam('min_roa', e.target.value)}
+                placeholder="0.05"
+                className="field-control num"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="filter-debt" className="block text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)] mb-1">
+                Tỷ lệ nợ tối đa
+              </label>
+              <input
+                id="filter-debt"
+                type="number"
+                step="0.05"
+                value={maxDebt}
+                onChange={(e) => updateParam('max_debt_ratio', e.target.value)}
+                placeholder="0.80"
+                className="field-control num"
+              />
+            </div>
           </div>
 
           {user ? (
@@ -439,7 +440,7 @@ export function ScreenerPage() {
                 e.preventDefault();
                 if (screenerName.trim()) saveScreenerMutation.mutate();
               }}
-              className="flex items-center gap-2"
+              className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]"
             >
               <input
                 type="text"
@@ -447,7 +448,7 @@ export function ScreenerPage() {
                 onChange={(e) => setScreenerName(e.target.value)}
                 placeholder="Đặt tên bộ lọc để lưu..."
                 aria-label="Tên bộ lọc cần lưu"
-                className="h-8 px-2.5 text-xs bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px] w-48"
+                className="field-control !h-8 !w-52"
               />
               <Button
                 type="submit"
@@ -459,29 +460,30 @@ export function ScreenerPage() {
                 Lưu bộ lọc
               </Button>
               {saveMessage ? (
-                <span className="text-xs text-[var(--risk-low-fg)]">{saveMessage}</span>
+                <span className="text-xs font-semibold text-[var(--risk-low-fg)]">{saveMessage}</span>
               ) : null}
             </form>
           ) : null}
         </div>
-      </Panel>
 
-      <Panel className="min-w-0 overflow-hidden">
         <PanelHeader
           title="Kết quả Sàng lọc Doanh nghiệp"
           description="Bấm vào tiêu đề cột để sắp xếp. Đánh dấu từ 2 đến 4 doanh nghiệp để so sánh song song."
         />
+
         {companiesQuery.isLoading ? (
           <TableSkeleton rows={10} />
         ) : companiesQuery.isError ? (
-          <ErrorState
-            message={
-              companiesQuery.error instanceof Error
-                ? companiesQuery.error.message
-                : 'Không thể tải danh sách doanh nghiệp.'
-            }
-            onRetry={() => void companiesQuery.refetch()}
-          />
+          <div className="p-4">
+            <ErrorState
+              message={
+                companiesQuery.error instanceof Error
+                  ? companiesQuery.error.message
+                  : 'Không thể tải danh sách doanh nghiệp.'
+              }
+              onRetry={() => void companiesQuery.refetch()}
+            />
+          </div>
         ) : allCompanies.length === 0 ? (
           <EmptyState
             title="Không tìm thấy doanh nghiệp phù hợp"
@@ -494,30 +496,24 @@ export function ScreenerPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="ledger-table">
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <tr
-                    key={headerGroup.id}
-                    className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[11px] uppercase tracking-wider text-[var(--text-muted)]"
-                  >
+                  <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       const isNumeric = numericCols.has(header.column.id);
                       const canSort = header.column.getCanSort();
                       return (
                         <th
                           key={header.id}
-                          className={cn(
-                            'py-2.5 px-2 font-semibold whitespace-nowrap',
-                            isNumeric && 'text-right',
-                          )}
+                          className={cn(isNumeric && 'text-right')}
                         >
                           {header.isPlaceholder ? null : canSort ? (
                             <button
                               type="button"
                               onClick={header.column.getToggleSortingHandler()}
                               className={cn(
-                                'inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-0 p-0 text-inherit uppercase',
+                                'inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-0 p-0 text-inherit uppercase font-semibold tracking-[0.05em]',
                                 isNumeric && 'flex-row-reverse',
                               )}
                             >
@@ -533,17 +529,17 @@ export function ScreenerPage() {
                   </tr>
                 ))}
               </thead>
-              <tbody className="divide-y divide-[var(--border-subtle)] text-xs">
+              <tbody>
                 {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                  <tr key={row.id}>
                     {row.getVisibleCells().map((cell) => {
                       const isNumeric = numericCols.has(cell.column.id);
                       return (
                         <td
                           key={cell.id}
                           className={cn(
-                            'px-2 whitespace-nowrap',
-                            density === 'compact' ? 'py-2' : 'py-3',
+                            'whitespace-nowrap',
+                            density === 'compact' ? '!py-2' : '!py-3',
                             isNumeric && 'text-right',
                           )}
                         >

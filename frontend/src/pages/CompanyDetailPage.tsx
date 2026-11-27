@@ -376,7 +376,7 @@ export function CompanyDetailPage() {
       <div className="space-y-4">
         <Link
           to="/us-market"
-          className="inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] no-underline"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] no-underline"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Quay lại Thị trường Mỹ (SEC)
         </Link>
@@ -402,14 +402,14 @@ export function CompanyDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           to="/us-market"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--accent-primary)] no-underline"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] no-underline"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           Thị trường Mỹ (SEC — USD)
         </Link>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-[6px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-0.5 text-xs">
+          <div className="inline-flex rounded-[3px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-0.5 text-xs">
             {(['10-K', '10-Q'] as const).map((ft) => (
               <button
                 key={ft}
@@ -420,10 +420,10 @@ export function CompanyDetailPage() {
                   setSearchParams(next, { replace: true });
                 }}
                 className={cn(
-                  'px-2.5 py-1 rounded-[4px] cursor-pointer font-medium',
+                  'px-2.5 py-1 rounded-[2px] cursor-pointer font-semibold border-0',
                   formType === ft
-                    ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)]'
-                    : 'text-[var(--text-secondary)]',
+                    ? 'bg-[var(--accent-primary)] text-[var(--accent-ink)]'
+                    : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
                 )}
               >
                 {ft === '10-K' ? 'Báo cáo năm (10-K)' : 'Báo cáo quý (10-Q)'}
@@ -458,7 +458,7 @@ export function CompanyDetailPage() {
         <ErrorState title="Không thể xuất báo cáo PDF" message={pdfError} />
       ) : null}
 
-      {/* Unified HealthHeroCard (Single Health Score, zero ML jargon, NĐ 88/2014 disclaimer) */}
+      {/* Unified Credit Tearsheet Masthead */}
       <HealthHeroCard
         summary={summaryView}
         companyName={company.name}
@@ -475,7 +475,7 @@ export function CompanyDetailPage() {
 
       {/* Tabs */}
       <div
-        className="flex flex-wrap items-center gap-1 border-b border-[var(--border-subtle)]"
+        className="flex flex-wrap items-center gap-1 border-b border-[var(--border-strong)]"
         role="tablist"
         aria-label="Phân mục hồ sơ doanh nghiệp SEC"
       >
@@ -494,7 +494,7 @@ export function CompanyDetailPage() {
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer bg-transparent',
+              'px-4 py-2.5 text-[13px] font-semibold border-b-2 -mb-px transition-colors cursor-pointer bg-transparent',
               activeTab === tab.id
                 ? 'border-[var(--accent-primary)] text-[var(--accent-primary)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
@@ -505,7 +505,7 @@ export function CompanyDetailPage() {
         ))}
       </div>
 
-      {/* Tab 1: DriversSplitPanel + DynamicAltmanGauge */}
+      {/* Tab 1 */}
       {activeTab === 'overview' ? (
         <div className="space-y-5">
           <DriversSplitPanel drivers={driversView} />
@@ -513,11 +513,11 @@ export function CompanyDetailPage() {
         </div>
       ) : null}
 
-      {/* Tab 2: Financials & Peer Percentile */}
+      {/* Tab 2 */}
       {activeTab === 'financials' ? (
         <div className="space-y-5">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title="Doanh thu, Lợi nhuận & Dòng tiền HĐKD (USD)"
                 description="Diễn biến hiệu quả kinh doanh qua các kỳ công bố SEC."
@@ -526,7 +526,7 @@ export function CompanyDetailPage() {
                 <FinancialsComboChart history={history} />
               </div>
             </Panel>
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title="Cơ cấu Tài sản, Nợ & Vốn chủ sở hữu (USD)"
                 description="Theo dõi đòn bẩy tài chính và quy mô tài sản theo thời gian."
@@ -538,7 +538,7 @@ export function CompanyDetailPage() {
           </div>
 
           {data.sector_peer_context ? (
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title="Đối chiếu Phân vị Ngành (SEC Cohort)"
                 description={`So sánh với ${data.sector_peer_context.cohort_size} doanh nghiệp cùng nhóm ngành ${translateSector(data.sector_peer_context.sector)}.`}
@@ -551,37 +551,45 @@ export function CompanyDetailPage() {
         </div>
       ) : null}
 
-      {/* Tab 3: Accounting Diagnostics (DuPont, QoE, Checklist) */}
+      {/* Tab 3 */}
       {activeTab === 'diagnostics' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {data.dupont ? (
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title="Phân rã DuPont 3 nhân tố"
                 description="Biên lợi nhuận ròng × Vòng quay tài sản × Đòn bẩy tài chính."
               />
-              <div className="p-5 grid grid-cols-2 gap-4 text-xs">
-                <div>
-                  <div className="text-[var(--text-muted)]">Biên lợi nhuận ròng</div>
-                  <div className="mt-1 num text-lg font-semibold">
+              <div className="grid grid-cols-2 divide-x divide-y divide-[var(--border-subtle)] text-xs">
+                <div className="p-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                    Biên lợi nhuận ròng
+                  </div>
+                  <div className="mt-1.5 num text-lg font-bold">
                     {formatPct(data.dupont.net_profit_margin, 2)}
                   </div>
                 </div>
-                <div>
-                  <div className="text-[var(--text-muted)]">Vòng quay tài sản TB</div>
-                  <div className="mt-1 num text-lg font-semibold">
+                <div className="p-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                    Vòng quay tài sản TB
+                  </div>
+                  <div className="mt-1.5 num text-lg font-bold">
                     {formatRatio(data.dupont.asset_turnover_avg, 2)}x
                   </div>
                 </div>
-                <div>
-                  <div className="text-[var(--text-muted)]">Đòn bẩy vốn CSH TB</div>
-                  <div className="mt-1 num text-lg font-semibold">
+                <div className="p-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                    Đòn bẩy vốn CSH TB
+                  </div>
+                  <div className="mt-1.5 num text-lg font-bold">
                     {formatRatio(data.dupont.equity_multiplier_avg, 2)}x
                   </div>
                 </div>
-                <div>
-                  <div className="text-[var(--text-muted)]">ROE DuPont</div>
-                  <div className="mt-1 num text-lg font-semibold text-[var(--accent-primary)]">
+                <div className="p-4 bg-[var(--accent-soft)]/40">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)]">
+                    ROE DuPont
+                  </div>
+                  <div className="mt-1.5 num text-lg font-bold text-[var(--accent-primary)]">
                     {formatPct(data.dupont.roe_dupont_avg, 2)}
                   </div>
                 </div>
@@ -590,27 +598,31 @@ export function CompanyDetailPage() {
           ) : null}
 
           {data.quality_of_earnings ? (
-            <Panel>
+            <Panel className="overflow-hidden">
               <PanelHeader
                 title="Chất lượng Lợi nhuận (QoE)"
                 description="Kiểm tra mức độ bảo chứng của lợi nhuận kế toán bằng dòng tiền thực."
               />
-              <div className="p-5 space-y-3 text-xs">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-[var(--text-muted)]">Tỷ lệ chuyển hóa tiền (OCF / LNST)</div>
-                    <div className="mt-1 num text-lg font-semibold">
+              <div className="divide-y divide-[var(--border-subtle)] text-xs">
+                <div className="grid grid-cols-2 divide-x divide-[var(--border-subtle)]">
+                  <div className="p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                      Tỷ lệ chuyển hóa tiền (OCF / LNST)
+                    </div>
+                    <div className="mt-1.5 num text-lg font-bold">
                       {formatRatio(data.quality_of_earnings.cash_conversion_qoe, 2)}x
                     </div>
                   </div>
-                  <div>
-                    <div className="text-[var(--text-muted)]">Chênh lệch dồn tích (USD)</div>
-                    <div className="mt-1 num text-lg font-semibold">
+                  <div className="p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                      Chênh lệch dồn tích (USD)
+                    </div>
+                    <div className="mt-1.5 num text-lg font-bold">
                       {formatCompactUsd(data.quality_of_earnings.accrual_gap_usd)}
                     </div>
                   </div>
                 </div>
-                <p className="text-[var(--text-secondary)]">
+                <p className="px-4 py-3 bg-[var(--bg-header)] text-[var(--text-secondary)] m-0">
                   {data.quality_of_earnings.basis_note}
                 </p>
               </div>
@@ -618,16 +630,16 @@ export function CompanyDetailPage() {
           ) : null}
 
           {data.accounting_checklist ? (
-            <Panel className="lg:col-span-2">
+            <Panel ruled className="lg:col-span-2 overflow-hidden">
               <PanelHeader
                 title="Bảng kiểm Tín hiệu Kế toán"
                 description={`Đạt ${data.accounting_checklist.observed_passes} / ${data.accounting_checklist.observed_checks} tiêu chí sức khỏe tài chính cơ bản.`}
               />
-              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-x divide-[var(--border-subtle)] text-xs">
                 {Object.entries(data.accounting_checklist.signals).map(([key, sig]) => (
                   <div
                     key={key}
-                    className="flex items-start gap-2.5 p-3 rounded-[6px] bg-[var(--bg-subtle)]/50 border border-[var(--border-subtle)]"
+                    className="flex items-start gap-2.5 px-4 py-3 hover:bg-[var(--bg-hover)]/45 transition-colors"
                   >
                     {sig.status === 'PASS' ? (
                       <CheckCircle2 className="h-4 w-4 text-[var(--risk-low-fg)] shrink-0 mt-0.5" />
@@ -640,7 +652,7 @@ export function CompanyDetailPage() {
                       <div className="font-semibold text-[var(--text-primary)]">
                         {humanizeFeature(key)}
                       </div>
-                      <div className="text-[11px] text-[var(--text-secondary)]">
+                      <div className="text-xs text-[var(--text-secondary)] mt-0.5">
                         {translateSignalReason(sig.reason)}
                       </div>
                     </div>
@@ -652,9 +664,9 @@ export function CompanyDetailPage() {
         </div>
       ) : null}
 
-      {/* Tab 4: SEC Filings History */}
+      {/* Tab 4 */}
       {activeTab === 'filings' ? (
-        <Panel>
+        <Panel ruled className="overflow-hidden">
           <PanelHeader
             title="Lịch sử Báo cáo Tài chính Công bố (SEC EDGAR)"
             description="Nguồn dữ liệu gốc kèm ngày nộp hồ sơ và mã Accession."
@@ -666,34 +678,38 @@ export function CompanyDetailPage() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="ledger-table">
                 <thead>
-                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)]/50 text-[var(--text-secondary)]">
-                    <th className="py-2.5 px-4 font-semibold">Kỳ</th>
-                    <th className="py-2.5 px-3 font-semibold">Mẫu đơn</th>
-                    <th className="py-2.5 px-3 font-semibold">Ngày nộp</th>
-                    <th className="py-2.5 px-3 font-semibold text-right">Doanh thu (USD)</th>
-                    <th className="py-2.5 px-3 font-semibold text-right">LNST (USD)</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Tổng tài sản (USD)</th>
+                  <tr>
+                    <th>Kỳ</th>
+                    <th>Mẫu đơn</th>
+                    <th>Ngày nộp</th>
+                    <th className="text-right">Doanh thu (USD)</th>
+                    <th className="text-right">LNST (USD)</th>
+                    <th className="text-right">Tổng tài sản (USD)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border-subtle)]">
+                <tbody>
                   {history.map((pt) => (
                     <tr key={`${pt.fiscal_year}-${pt.fiscal_period}-${pt.accession_number ?? ''}`}>
-                      <td className="py-2.5 px-4 num font-semibold">
+                      <td className="num font-bold">
                         FY{pt.fiscal_year} {pt.fiscal_period}
                       </td>
-                      <td className="py-2.5 px-3">{pt.form_type}</td>
-                      <td className="py-2.5 px-3 num text-[var(--text-secondary)]">
+                      <td>
+                        <span className="num text-xs font-semibold px-1.5 py-0.5 rounded-[2px] bg-[var(--bg-subtle)] border border-[var(--border-subtle)]">
+                          {pt.form_type}
+                        </span>
+                      </td>
+                      <td className="num text-[var(--text-secondary)]">
                         {formatDate(pt.filed_date)}
                       </td>
-                      <td className="py-2.5 px-3 text-right num">
+                      <td className="text-right num">
                         {formatCompactUsd(pt.revenues)}
                       </td>
-                      <td className="py-2.5 px-3 text-right num">
+                      <td className="text-right num">
                         {formatCompactUsd(pt.net_income)}
                       </td>
-                      <td className="py-2.5 px-4 text-right num">
+                      <td className="text-right num">
                         {formatCompactUsd(pt.total_assets)}
                       </td>
                     </tr>
@@ -704,17 +720,19 @@ export function CompanyDetailPage() {
           )}
 
           {alertsQuery.data && alertsQuery.data.length > 0 ? (
-            <div className="p-4 border-t border-[var(--border-subtle)] space-y-2">
-              <div className="text-xs font-semibold text-[var(--text-primary)]">
+            <div className="p-4 bg-[var(--bg-header)] border-t border-[var(--border-subtle)] space-y-2">
+              <div className="text-xs font-bold uppercase tracking-[0.04em] text-[var(--text-primary)]">
                 Cảnh báo điều chỉnh hồi tố (Restatement Alerts)
               </div>
               {alertsQuery.data.map((alert, idx) => (
                 <div
                   key={idx}
-                  className="text-xs text-[var(--text-secondary)] p-2.5 rounded bg-[var(--bg-subtle)]"
+                  className="text-xs text-[var(--text-secondary)] px-3 py-2 rounded-[2px] border border-[var(--risk-medium-border)] bg-[var(--risk-medium-bg)]/60"
                 >
-                  Ngày {formatDate(alert.published_on)}: thay đổi các khoản mục{' '}
-                  <strong>{alert.changed_fields.map(humanizeFeature).join(', ')}</strong>.
+                  Ngày <span className="num font-semibold">{formatDate(alert.published_on)}</span>: thay đổi các khoản mục{' '}
+                  <strong className="text-[var(--text-primary)]">
+                    {alert.changed_fields.map(humanizeFeature).join(', ')}
+                  </strong>.
                 </div>
               ))}
             </div>

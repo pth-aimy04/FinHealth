@@ -11,7 +11,7 @@ export interface DriversSplitPanelProps {
   title?: string;
 }
 
-function DriverCard({
+function DriverLedgerRow({
   driver,
   tone,
 }: {
@@ -21,27 +21,30 @@ function DriverCard({
   const isStrength = tone === 'strength';
   const accentFg = isStrength ? 'var(--risk-low-fg)' : 'var(--risk-critical-fg)';
   const accentBg = isStrength ? 'var(--risk-low-bg)' : 'var(--risk-critical-bg)';
+  const accentBorder = isStrength ? 'var(--risk-low-border)' : 'var(--risk-critical-border)';
   const clampedShare = Math.max(0, Math.min(100, driver.impact_share_pct));
 
   return (
     <article
-      className="p-3.5 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] space-y-2"
+      className="px-5 py-3.5 space-y-2 hover:bg-[var(--bg-hover)]/45 transition-colors"
       aria-label={driver.label_vi}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <h4 className="text-sm font-semibold text-[var(--text-primary)] leading-snug">
-              {driver.label_vi}
-            </h4>
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-[var(--bg-subtle)] text-[var(--text-secondary)]">
-              {PILLAR_SHORT_LABELS_VI[driver.pillar]}
-            </span>
-          </div>
+        <div className="min-w-0 flex flex-wrap items-center gap-2">
+          <h4 className="text-[13px] font-bold text-[var(--text-primary)] leading-snug m-0">
+            {driver.label_vi}
+          </h4>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-[2px] bg-[var(--bg-subtle)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
+            {PILLAR_SHORT_LABELS_VI[driver.pillar]}
+          </span>
         </div>
         <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0"
-          style={{ color: accentFg, backgroundColor: accentBg }}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] border text-[11px] font-semibold shrink-0"
+          style={{
+            color: accentFg,
+            backgroundColor: accentBg,
+            borderColor: accentBorder,
+          }}
         >
           {isStrength ? (
             <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
@@ -52,18 +55,17 @@ function DriverCard({
         </span>
       </div>
 
-      <p className="text-xs font-medium text-[var(--text-primary)] leading-relaxed">
+      <p className="text-[13px] font-medium text-[var(--text-primary)] leading-snug m-0">
         {driver.headline_vi}
       </p>
       {driver.detail_vi ? (
-        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+        <p className="text-xs text-[var(--text-secondary)] leading-relaxed m-0">
           {driver.detail_vi}
         </p>
       ) : null}
 
-      {/* Observed Value vs Reference + Relative Impact Share */}
-      <div className="pt-1.5 border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-2 text-[11px]">
-        <div className="flex flex-wrap items-center gap-3 text-[var(--text-secondary)]">
+      <div className="pt-1.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-4 text-[var(--text-secondary)]">
           <span>
             Thực tế:{' '}
             <strong className="num font-semibold text-[var(--text-primary)]">
@@ -78,18 +80,18 @@ function DriverCard({
           </span>
         </div>
 
-        <div className="flex items-center gap-2 min-w-[140px]">
-          <span className="text-[var(--text-muted)]">Tỷ trọng:</span>
-          <div className="w-16 h-1.5 rounded-full bg-[var(--bg-subtle)] overflow-hidden">
+        <div className="flex items-center gap-2 min-w-[144px]">
+          <span className="text-[11px] text-[var(--text-muted)]">Tỷ trọng:</span>
+          <div className="w-16 h-1.5 rounded-[1px] bg-[var(--bg-subtle)] overflow-hidden">
             <div
-              className="h-full rounded-full"
+              className="h-full"
               style={{
                 width: `${clampedShare}%`,
                 backgroundColor: accentFg,
               }}
             />
           </div>
-          <span className="num font-semibold text-[var(--text-primary)]">
+          <span className="num text-xs font-semibold text-[var(--text-primary)]">
             {formatPctVi(clampedShare, 1, true)}
           </span>
         </div>
@@ -106,76 +108,77 @@ export function DriversSplitPanel({
   const bottlenecks = drivers.bottlenecks.slice(0, 5);
 
   return (
-    <section className="surface overflow-hidden" aria-label={title}>
-      <div className="px-5 py-3.5 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-2">
+    <section className="surface-ruled overflow-hidden" aria-label={title}>
+      <div className="px-5 py-3 bg-[var(--bg-header)] border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+          <h2 className="text-[14px] font-bold tracking-[-0.01em] text-[var(--text-primary)] m-0">
             {title}
           </h2>
-          <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+          <p className="mt-0.5 text-xs text-[var(--text-secondary)] m-0">
             Phân tách các yếu tố tài chính cốt lõi đang nâng đỡ hoặc gây áp lực lên mức độ an toàn của doanh nghiệp.
           </p>
         </div>
-        <div className="flex items-center gap-3 text-xs">
-          <span className="inline-flex items-center gap-1 font-medium text-[var(--risk-low-fg)]">
+        <div className="flex items-center gap-4 text-xs font-semibold">
+          <span className="inline-flex items-center gap-1.5 text-[var(--risk-low-fg)]">
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            {strengths.length} Điểm tựa
+            <span className="num">{strengths.length}</span> Điểm tựa
           </span>
-          <span className="inline-flex items-center gap-1 font-medium text-[var(--risk-critical-fg)]">
+          <span className="inline-flex items-center gap-1.5 text-[var(--risk-critical-fg)]">
             <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
-            {bottlenecks.length} Điểm nghẽn
+            <span className="num">{bottlenecks.length}</span> Điểm nghẽn
           </span>
         </div>
       </div>
 
-      <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Green Column: Strengths */}
-        <div className="space-y-3">
+      {/* Flush 2-Column Credit Balance Sheet Ledger (Zero Nested Cards) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[var(--border-subtle)]">
+        {/* Left Ledger: Strengths */}
+        <div className="flex flex-col">
           <div
-            className="flex items-center gap-2 px-3 py-2 rounded-[6px] text-xs font-semibold"
+            className="flex items-center gap-2 px-5 py-2.5 border-b border-[var(--border-subtle)] text-xs font-bold uppercase tracking-[0.04em]"
             style={{
               backgroundColor: 'var(--risk-low-bg)',
               color: 'var(--risk-low-fg)',
             }}
           >
-            <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>Điểm Tựa Tài Chính (Giảm rủi ro)</span>
           </div>
 
           {strengths.length > 0 ? (
-            <div className="space-y-2.5">
+            <div className="divide-y divide-[var(--border-subtle)]">
               {strengths.map((item) => (
-                <DriverCard key={item.factor_code} driver={item} tone="strength" />
+                <DriverLedgerRow key={item.factor_code} driver={item} tone="strength" />
               ))}
             </div>
           ) : (
-            <div className="p-4 rounded-[8px] border border-dashed border-[var(--border-strong)] text-xs text-[var(--text-muted)] text-center">
+            <div className="px-5 py-8 text-xs text-[var(--text-muted)] text-center">
               Chưa ghi nhận điểm tựa tài chính nổi bật trong kỳ này.
             </div>
           )}
         </div>
 
-        {/* Red Column: Bottlenecks */}
-        <div className="space-y-3">
+        {/* Right Ledger: Bottlenecks */}
+        <div className="flex flex-col">
           <div
-            className="flex items-center gap-2 px-3 py-2 rounded-[6px] text-xs font-semibold"
+            className="flex items-center gap-2 px-5 py-2.5 border-b border-[var(--border-subtle)] text-xs font-bold uppercase tracking-[0.04em]"
             style={{
               backgroundColor: 'var(--risk-critical-bg)',
               color: 'var(--risk-critical-fg)',
             }}
           >
-            <ShieldAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <ShieldAlert className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>Điểm Nghẽn Tài Chính (Đẩy rủi ro tăng)</span>
           </div>
 
           {bottlenecks.length > 0 ? (
-            <div className="space-y-2.5">
+            <div className="divide-y divide-[var(--border-subtle)]">
               {bottlenecks.map((item) => (
-                <DriverCard key={item.factor_code} driver={item} tone="bottleneck" />
+                <DriverLedgerRow key={item.factor_code} driver={item} tone="bottleneck" />
               ))}
             </div>
           ) : (
-            <div className="p-4 rounded-[8px] border border-dashed border-[var(--border-strong)] text-xs text-[var(--text-muted)] text-center">
+            <div className="px-5 py-8 text-xs text-[var(--text-muted)] text-center">
               Không ghi nhận điểm nghẽn rủi ro đáng kể trong kỳ này.
             </div>
           )}

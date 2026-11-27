@@ -73,18 +73,18 @@ export function ImportStatementModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[1px]"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55"
       role="dialog"
       aria-modal="true"
       aria-labelledby="import-statement-title"
     >
-      <div className="surface w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-xl">
-        <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-[var(--border-subtle)]">
+      <div className="surface-popover w-full max-w-xl max-h-[90vh] overflow-y-auto border-t-2 border-t-[var(--rule-heavy)]">
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-[var(--bg-header)] border-b border-[var(--border-subtle)]">
           <div>
-            <h2 id="import-statement-title" className="text-sm font-semibold">
+            <h2 id="import-statement-title" className="text-[14px] font-bold text-[var(--text-primary)] m-0">
               Nhập BCTC từ XML HTKK / Excel chuẩn
             </h2>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate m-0">
               Doanh nghiệp: {companyName}
             </p>
           </div>
@@ -92,14 +92,13 @@ export function ImportStatementModal({
             type="button"
             onClick={onClose}
             aria-label="Đóng hộp thoại nhập BCTC"
-            className="p-1.5 rounded-[6px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] cursor-pointer"
+            className="p-1.5 rounded-[3px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] cursor-pointer bg-transparent border-0"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="p-5 space-y-4 text-xs">
-          {/* Source Mode Switch */}
           <div className="grid grid-cols-2 gap-2" role="tablist">
             <button
               type="button"
@@ -112,16 +111,16 @@ export function ImportStatementModal({
                 setErrorMessage(null);
               }}
               className={cn(
-                'p-3 rounded-[6px] border text-left flex items-center gap-2.5 cursor-pointer transition-colors',
+                'p-3 rounded-[3px] border text-left flex items-center gap-2.5 cursor-pointer transition-colors',
                 mode === 'xml'
                   ? 'border-[var(--accent-primary)] bg-[var(--accent-soft)] text-[var(--accent-primary)] font-semibold'
-                  : 'border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)]',
+                  : 'border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-secondary)]',
               )}
             >
               <FileCode2 className="h-4 w-4 shrink-0" aria-hidden="true" />
               <div>
                 <div>XML HTKK (Thuế)</div>
-                <div className="text-[11px] font-normal opacity-80">TT99 / TT200 / TT133 (≤ 5 MB)</div>
+                <div className="text-[11px] font-normal opacity-85">TT99 / TT200 / TT133 (≤ 5 MB)</div>
               </div>
             </button>
 
@@ -136,24 +135,23 @@ export function ImportStatementModal({
                 setErrorMessage(null);
               }}
               className={cn(
-                'p-3 rounded-[6px] border text-left flex items-center gap-2.5 cursor-pointer transition-colors',
+                'p-3 rounded-[3px] border text-left flex items-center gap-2.5 cursor-pointer transition-colors',
                 mode === 'excel'
                   ? 'border-[var(--accent-primary)] bg-[var(--accent-soft)] text-[var(--accent-primary)] font-semibold'
-                  : 'border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)]',
+                  : 'border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-secondary)]',
               )}
             >
               <FileSpreadsheet className="h-4 w-4 shrink-0" aria-hidden="true" />
               <div>
                 <div>Biểu mẫu Excel (.xlsx)</div>
-                <div className="text-[11px] font-normal opacity-80">Tải file mẫu & nạp nhanh</div>
+                <div className="text-[11px] font-normal opacity-85">Tải file mẫu & nạp nhanh</div>
               </div>
             </button>
           </div>
 
-          {/* Excel Template Downloader */}
           {mode === 'excel' ? (
-            <div className="surface-subtle p-3.5 space-y-2.5 border border-[var(--border-subtle)]">
-              <div className="font-medium text-[var(--text-primary)]">
+            <div className="p-3.5 rounded-[3px] bg-[var(--bg-header)] border border-[var(--border-subtle)] space-y-2.5">
+              <div className="font-semibold text-[var(--text-primary)]">
                 Bước 1: Tải biểu mẫu Excel chuẩn theo Thông tư
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -165,7 +163,7 @@ export function ImportStatementModal({
                       e.target.value as 'TT99_2025' | 'TT200_2014' | 'TT133_2016',
                     )
                   }
-                  className="h-8 px-2.5 bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control !h-8 !w-auto"
                 >
                   <option value="TT99_2025">TT99/2025/TT-BTC</option>
                   <option value="TT200_2014">TT200/2014/TT-BTC</option>
@@ -184,10 +182,9 @@ export function ImportStatementModal({
             </div>
           ) : null}
 
-          {/* Upload Form */}
           <div className="space-y-3">
             <div>
-              <label htmlFor="import-bctc-file" className="block font-medium mb-1">
+              <label htmlFor="import-bctc-file" className="block font-semibold text-[var(--text-secondary)] mb-1">
                 {mode === 'xml'
                   ? 'Chọn tệp XML xuất từ HTKK / phần mềm kế toán (.xml)'
                   : 'Bước 2: Chọn tệp Excel đã điền số liệu (.xlsx)'}
@@ -197,13 +194,13 @@ export function ImportStatementModal({
                 type="file"
                 accept={mode === 'xml' ? '.xml,text/xml,application/xml' : '.xlsx'}
                 onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-                className="w-full p-2 bg-[var(--bg-canvas)] border border-dashed border-[var(--border-strong)] rounded-[6px] cursor-pointer"
+                className="w-full p-2.5 bg-[var(--bg-header)] border border-dashed border-[var(--border-strong)] rounded-[3px] cursor-pointer"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="import-fiscal-year" className="block font-medium mb-1">
+                <label htmlFor="import-fiscal-year" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Năm tài chính (tùy chọn)
                 </label>
                 <input
@@ -214,18 +211,18 @@ export function ImportStatementModal({
                   value={fiscalYearOverride}
                   onChange={(e) => setFiscalYearOverride(e.target.value)}
                   placeholder="Tự nhận diện từ tệp"
-                  className="w-full h-9 px-2.5 font-mono bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control font-mono"
                 />
               </div>
               <div>
-                <label htmlFor="import-unit-scale" className="block font-medium mb-1">
+                <label htmlFor="import-unit-scale" className="block font-semibold text-[var(--text-secondary)] mb-1">
                   Đơn vị tiền tệ trong tệp
                 </label>
                 <select
                   id="import-unit-scale"
                   value={unitScale}
                   onChange={(e) => setUnitScale(Number(e.target.value) as UnitScale)}
-                  className="w-full h-9 px-2.5 bg-[var(--bg-canvas)] border border-[var(--border-strong)] rounded-[6px]"
+                  className="field-control"
                 >
                   <option value={1}>Đồng (mặc định HTKK)</option>
                   <option value={1_000_000}>Triệu đồng</option>
@@ -238,7 +235,7 @@ export function ImportStatementModal({
           {errorMessage ? (
             <div
               role="alert"
-              className="p-3 rounded-[6px] bg-[var(--risk-critical-bg)] text-[var(--risk-critical-fg)]"
+              className="p-3 rounded-[3px] border border-[var(--risk-critical-border)] bg-[var(--risk-critical-bg)] text-[var(--risk-critical-fg)] font-medium"
             >
               {errorMessage}
             </div>
@@ -248,7 +245,7 @@ export function ImportStatementModal({
             <div className="space-y-3">
               <div
                 role="status"
-                className="p-3 rounded-[6px] bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]"
+                className="p-3 rounded-[3px] border border-[var(--risk-low-border)] bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)] font-medium"
               >
                 Đã nạp thành công bản nháp BCTC năm {importedDraft.fiscal_year} (chuẩn{' '}
                 {importedDraft.accounting_standard}). Vui lòng kiểm tra cân đối trước khi chốt.
@@ -257,7 +254,7 @@ export function ImportStatementModal({
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
+          <div className="flex justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
             <Button variant="ghost" size="sm" onClick={onClose}>
               Đóng
             </Button>

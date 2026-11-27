@@ -26,6 +26,14 @@ export interface MultiPeriodHistoryChartsProps {
   currency?: string;
 }
 
+const TOOLTIP_STYLE = {
+  backgroundColor: 'var(--bg-surface)',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '3px',
+  fontSize: '12px',
+  color: 'var(--text-primary)',
+};
+
 export function MultiPeriodHistoryCharts({
   history,
   currency,
@@ -75,12 +83,12 @@ export function MultiPeriodHistoryCharts({
 
   if (sorted.length === 0) {
     return (
-      <section className="surface p-8 text-center space-y-2">
+      <section className="surface p-10 text-center space-y-2">
         <CalendarRange className="mx-auto h-7 w-7 text-[var(--text-muted)]" aria-hidden="true" />
         <h3 className="text-sm font-semibold text-[var(--text-primary)]">
           Chưa có dữ liệu lịch sử đa kỳ
         </h3>
-        <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto">
+        <p className="text-[13px] text-[var(--text-secondary)] max-w-md mx-auto">
           Hãy bổ sung ít nhất 2 kỳ báo cáo tài chính đã chốt để theo dõi quỹ đạo Điểm Sức khỏe và xu hướng dòng tiền qua các năm.
         </p>
       </section>
@@ -89,11 +97,11 @@ export function MultiPeriodHistoryCharts({
 
   return (
     <div className="space-y-5">
-      {/* Period & Accounting Standard Bridge Strip */}
-      <section className="surface p-4 flex flex-wrap items-center justify-between gap-3">
+      {/* Period & Accounting Standard Context Strip */}
+      <section className="surface px-5 py-3 flex flex-wrap items-center justify-between gap-3 bg-[var(--bg-header)]">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-[var(--accent-primary)]" aria-hidden="true" />
-          <span className="text-xs font-semibold text-[var(--text-primary)]">
+          <span className="text-[13px] font-bold text-[var(--text-primary)]">
             Chuỗi lịch sử {sorted.length} kỳ tài chính (
             {sorted[0].fiscal_year} – {sorted[sorted.length - 1].fiscal_year})
           </span>
@@ -102,7 +110,7 @@ export function MultiPeriodHistoryCharts({
           {sorted.map((pt) => (
             <span
               key={pt.statement_id}
-              className="num text-[11px] px-2 py-0.5 rounded bg-[var(--bg-subtle)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
+              className="num text-[11px] font-semibold px-2 py-0.5 rounded-[2px] bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-strong)]"
             >
               FY{pt.fiscal_year} · {formatStandardShortVi(pt.accounting_standard)}
             </span>
@@ -112,13 +120,12 @@ export function MultiPeriodHistoryCharts({
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        {/* Chart 1: Health Score 0-100 & PD 12m Trajectory */}
         <section className="surface overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-[var(--border-subtle)]">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+          <div className="px-5 py-3 bg-[var(--bg-header)] border-b border-[var(--border-subtle)]">
+            <h3 className="text-[14px] font-bold text-[var(--text-primary)] m-0">
               Quỹ đạo Điểm Sức khỏe & Nguy cơ khủng hoảng
             </h3>
-            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+            <p className="mt-0.5 text-xs text-[var(--text-secondary)] m-0">
               Theo dõi biến động Điểm Sức khỏe (0–100) song song với Tỷ lệ nguy cơ khủng hoảng 12 tháng (%).
             </p>
           </div>
@@ -128,7 +135,7 @@ export function MultiPeriodHistoryCharts({
                 data={trajectoryData}
                 margin={{ top: 10, right: 16, left: 0, bottom: 4 }}
               >
-                <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" />
+                <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="2 2" vertical={false} />
                 <XAxis
                   dataKey="yearLabel"
                   tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
@@ -137,12 +144,6 @@ export function MultiPeriodHistoryCharts({
                   yAxisId="left"
                   domain={[0, 100]}
                   tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
-                  label={{
-                    value: 'Điểm (0–100)',
-                    angle: -90,
-                    position: 'insideLeft',
-                    style: { fill: 'var(--text-muted)', fontSize: 11 },
-                  }}
                 />
                 <YAxis
                   yAxisId="right"
@@ -151,13 +152,7 @@ export function MultiPeriodHistoryCharts({
                   tickFormatter={(v: number) => `${v}%`}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--border-strong)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: 'var(--text-primary)',
-                  }}
+                  contentStyle={TOOLTIP_STYLE}
                   formatter={(value: number, name: string) =>
                     name === 'Nguy cơ 12 tháng'
                       ? [`${formatScoreVi(value, 2)}%`, name]
@@ -169,33 +164,34 @@ export function MultiPeriodHistoryCharts({
                   yAxisId="left"
                   dataKey="health_score"
                   name="Điểm Sức khỏe"
-                  fill="var(--accent-primary)"
-                  fillOpacity={0.82}
-                  radius={[5, 5, 0, 0]}
-                  maxBarSize={42}
+                  fill="var(--chart-1)"
+                  fillOpacity={0.88}
+                  radius={[2, 2, 0, 0]}
+                  maxBarSize={38}
+                  isAnimationActive={false}
                 />
                 <Line
                   yAxisId="right"
                   type="monotone"
                   dataKey="pd_pct"
                   name="Nguy cơ 12 tháng"
-                  stroke="#BE123C"
+                  stroke="var(--chart-4)"
                   strokeWidth={2.5}
-                  dot={{ r: 4, fill: '#BE123C' }}
+                  dot={{ r: 3.5, fill: 'var(--chart-4)' }}
                   connectNulls
+                  isAnimationActive={false}
                 />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
         </section>
 
-        {/* Chart 2: Revenue, Net Income, OCF & Total Liabilities */}
         <section className="surface overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-[var(--border-subtle)]">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+          <div className="px-5 py-3 bg-[var(--bg-header)] border-b border-[var(--border-subtle)]">
+            <h3 className="text-[14px] font-bold text-[var(--text-primary)] m-0">
               Doanh thu, Lợi nhuận, Dòng tiền & Tổng nợ ({scaleUnitLabel})
             </h3>
-            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+            <p className="mt-0.5 text-xs text-[var(--text-secondary)] m-0">
               Đối chiếu quy mô doanh thu, chất lượng lợi nhuận bằng dòng tiền HĐKD và áp lực nợ phải trả.
             </p>
           </div>
@@ -205,20 +201,14 @@ export function MultiPeriodHistoryCharts({
                 data={trajectoryData}
                 margin={{ top: 10, right: 16, left: 0, bottom: 4 }}
               >
-                <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" />
+                <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="2 2" vertical={false} />
                 <XAxis
                   dataKey="yearLabel"
                   tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
                 />
                 <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--border-strong)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: 'var(--text-primary)',
-                  }}
+                  contentStyle={TOOLTIP_STYLE}
                   formatter={(value: number, name: string) => [
                     `${formatScoreVi(value, 1)} ${scaleUnitLabel}`,
                     name,
@@ -228,37 +218,41 @@ export function MultiPeriodHistoryCharts({
                 <Bar
                   dataKey="revenues"
                   name="Doanh thu"
-                  fill="#0A6B5C"
-                  fillOpacity={0.78}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
+                  fill="var(--chart-1)"
+                  fillOpacity={0.85}
+                  radius={[2, 2, 0, 0]}
+                  maxBarSize={26}
+                  isAnimationActive={false}
                 />
                 <Bar
                   dataKey="total_liabilities"
                   name="Tổng nợ phải trả"
-                  fill="#64748B"
+                  fill="var(--chart-5)"
                   fillOpacity={0.55}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
+                  radius={[2, 2, 0, 0]}
+                  maxBarSize={26}
+                  isAnimationActive={false}
                 />
                 <Line
                   type="monotone"
                   dataKey="net_income"
                   name="Lợi nhuận sau thuế"
-                  stroke="#2563EB"
+                  stroke="var(--chart-2)"
                   strokeWidth={2.2}
                   dot={{ r: 3.5 }}
                   connectNulls
+                  isAnimationActive={false}
                 />
                 <Line
                   type="monotone"
                   dataKey="operating_cash_flow"
                   name="Dòng tiền HĐKD (OCF)"
-                  stroke="#D97706"
+                  stroke="var(--chart-3)"
                   strokeWidth={2.2}
                   strokeDasharray="4 2"
                   dot={{ r: 3.5 }}
                   connectNulls
+                  isAnimationActive={false}
                 />
               </ComposedChart>
             </ResponsiveContainer>
@@ -266,69 +260,68 @@ export function MultiPeriodHistoryCharts({
         </section>
       </div>
 
-      {/* Multi-period Tabular Summary */}
-      <section className="surface overflow-hidden">
-        <div className="px-5 py-3 border-b border-[var(--border-subtle)]">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+      {/* Multi-period Tabular Ledger Summary */}
+      <section className="surface-ruled overflow-hidden">
+        <div className="px-5 py-3 bg-[var(--bg-header)] border-b border-[var(--border-subtle)]">
+          <h3 className="text-[14px] font-bold text-[var(--text-primary)] m-0">
             Bảng tổng hợp diễn biến theo từng năm tài chính
           </h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="ledger-table">
             <thead>
-              <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)]/50 text-[var(--text-secondary)]">
-                <th className="py-2.5 px-4 font-semibold">Kỳ</th>
-                <th className="py-2.5 px-3 font-semibold">Chuẩn / Kiểm toán</th>
-                <th className="py-2.5 px-3 font-semibold text-right">Điểm Sức khỏe</th>
-                <th className="py-2.5 px-3 font-semibold text-right">Nguy cơ 12T</th>
-                <th className="py-2.5 px-3 font-semibold text-right">Doanh thu</th>
-                <th className="py-2.5 px-3 font-semibold text-right">LNST</th>
-                <th className="py-2.5 px-3 font-semibold text-right">OCF</th>
-                <th className="py-2.5 px-3 font-semibold text-right">Tỷ lệ nợ</th>
-                <th className="py-2.5 px-4 font-semibold text-right">Altman</th>
+              <tr>
+                <th>Kỳ</th>
+                <th>Chuẩn / Kiểm toán</th>
+                <th className="text-right">Điểm Sức khỏe</th>
+                <th className="text-right">Nguy cơ 12T</th>
+                <th className="text-right">Doanh thu</th>
+                <th className="text-right">LNST</th>
+                <th className="text-right">OCF</th>
+                <th className="text-right">Tỷ lệ nợ</th>
+                <th className="text-right">Altman</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--border-subtle)]">
+            <tbody>
               {sorted.map((pt) => {
                 const tierMeta = pt.risk_tier ? RISK_TIER_STYLE[pt.risk_tier] : null;
                 return (
-                  <tr
-                    key={pt.statement_id}
-                    className="hover:bg-[var(--bg-hover)]/40 transition-colors"
-                  >
-                    <td className="py-2.5 px-4 num font-semibold text-[var(--text-primary)]">
+                  <tr key={pt.statement_id}>
+                    <td className="num font-bold text-[var(--text-primary)]">
                       FY{pt.fiscal_year}
                     </td>
-                    <td className="py-2.5 px-3 text-[var(--text-secondary)]">
-                      <div>{formatStandardShortVi(pt.accounting_standard)}</div>
+                    <td className="text-[var(--text-secondary)]">
+                      <div className="font-medium text-[var(--text-primary)]">
+                        {formatStandardShortVi(pt.accounting_standard)}
+                      </div>
                       <div className="text-[11px] text-[var(--text-muted)]">
                         {formatAuditStatusVi(pt.audit_status)}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="text-right">
                       <span
-                        className="num font-semibold"
+                        className="num font-bold"
                         style={{ color: tierMeta?.fg ?? 'var(--text-primary)' }}
                       >
                         {formatScoreVi(pt.health_score, 1)}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-right num text-[var(--text-primary)]">
+                    <td className="text-right num text-[var(--text-primary)]">
                       {formatPctVi(pt.pd_12m, 2)}
                     </td>
-                    <td className="py-2.5 px-3 text-right num text-[var(--text-primary)]">
+                    <td className="text-right num text-[var(--text-primary)]">
                       {formatCompactCurrencyVi(pt.revenues, pt.currency)}
                     </td>
-                    <td className="py-2.5 px-3 text-right num text-[var(--text-primary)]">
+                    <td className="text-right num text-[var(--text-primary)]">
                       {formatCompactCurrencyVi(pt.net_income, pt.currency)}
                     </td>
-                    <td className="py-2.5 px-3 text-right num text-[var(--text-primary)]">
+                    <td className="text-right num text-[var(--text-primary)]">
                       {formatCompactCurrencyVi(pt.operating_cash_flow, pt.currency)}
                     </td>
-                    <td className="py-2.5 px-3 text-right num text-[var(--text-secondary)]">
+                    <td className="text-right num text-[var(--text-secondary)]">
                       {formatPctVi(pt.debt_ratio, 1)}
                     </td>
-                    <td className="py-2.5 px-4 text-right num text-[var(--text-secondary)]">
+                    <td className="text-right num text-[var(--text-secondary)]">
                       {pt.altman_z_score !== null
                         ? `${formatScoreVi(pt.altman_z_score, 2)}${pt.altman_variant ? ` (${pt.altman_variant})` : ''}`
                         : '—'}

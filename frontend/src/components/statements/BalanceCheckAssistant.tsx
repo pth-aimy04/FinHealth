@@ -159,7 +159,6 @@ export function evaluateStatementBalance(
     }
   }
 
-  // Business Warnings (non-blocking)
   if (isNum(eq) && eq <= 0) {
     warnings.push({
       code: 'NEGATIVE_EQUITY',
@@ -230,51 +229,49 @@ export function BalanceCheckAssistant({
 
   return (
     <div
-      className="surface p-4 space-y-3 text-xs"
+      className="surface overflow-hidden text-xs"
       role={hasErrors ? 'alert' : 'status'}
       aria-live="polite"
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 font-semibold">
-          {hasErrors ? (
-            <>
-              <AlertCircle
-                className="h-4 w-4 text-[var(--risk-critical-fg)] shrink-0"
-                aria-hidden="true"
-              />
-              <span className="text-[var(--risk-critical-fg)]">
-                Trợ lý Cân đối Kế toán: Phát hiện {report.errors.length} lỗi cứng cần xử lý trước
-                khi chốt
-              </span>
-            </>
-          ) : (
-            <>
-              <CheckCircle2
-                className="h-4 w-4 text-[var(--risk-low-fg)] shrink-0"
-                aria-hidden="true"
-              />
-              <span className="text-[var(--risk-low-fg)]">
-                Trợ lý Cân đối Kế toán: Đạt cân đối cấu trúc (có thể chốt báo cáo)
-              </span>
-            </>
-          )}
-        </div>
+      <div
+        className="px-4 py-3 flex items-center gap-2 font-bold border-b border-[var(--border-subtle)]"
+        style={
+          hasErrors
+            ? { backgroundColor: 'var(--risk-critical-bg)', color: 'var(--risk-critical-fg)' }
+            : { backgroundColor: 'var(--risk-low-bg)', color: 'var(--risk-low-fg)' }
+        }
+      >
+        {hasErrors ? (
+          <>
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              Trợ lý Cân đối Kế toán: Phát hiện {report.errors.length} lỗi cứng cần xử lý trước khi chốt
+            </span>
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              Trợ lý Cân đối Kế toán: Đạt cân đối cấu trúc (có thể chốt báo cáo)
+            </span>
+          </>
+        )}
       </div>
 
-      {hasErrors ? (
-        <ul className="space-y-2">
+      {hasErrors || hasWarnings ? (
+        <div className="divide-y divide-[var(--border-subtle)]">
           {report.errors.map((issue, idx) => (
-            <li
+            <div
               key={`${issue.code}-${issue.field}-${idx}`}
-              className="p-2.5 rounded-[6px] bg-[var(--risk-critical-bg)] text-[var(--risk-critical-fg)] flex flex-wrap items-start justify-between gap-2"
+              className="px-4 py-3 bg-[var(--risk-critical-bg)]/35 text-[var(--risk-critical-fg)] flex flex-wrap items-start justify-between gap-2"
             >
               <div className="space-y-1">
-                <div className="font-semibold">
+                <div className="font-bold">
                   Dòng lệch: {STATEMENT_FIELD_LABELS_VI[issue.field] ?? issue.field}
                 </div>
-                <div>{issue.message}</div>
+                <div className="text-[var(--text-primary)]">{issue.message}</div>
                 {issue.related_fields.length > 1 ? (
-                  <div className="text-[11px] opacity-90">
+                  <div className="text-[11px] text-[var(--text-secondary)]">
                     Các chỉ tiêu liên quan:{' '}
                     {issue.related_fields
                       .map((f) => STATEMENT_FIELD_LABELS_VI[f] ?? f)
@@ -286,33 +283,29 @@ export function BalanceCheckAssistant({
                 <button
                   type="button"
                   onClick={() => onSelectField(issue.field)}
-                  className="px-2 py-1 rounded bg-[var(--bg-surface)] text-[var(--risk-critical-fg)] border border-[var(--risk-critical-fg)]/30 text-[11px] font-medium cursor-pointer hover:opacity-90"
+                  className="px-2.5 py-1 rounded-[2px] bg-[var(--bg-surface)] text-[var(--risk-critical-fg)] border border-[var(--risk-critical-border)] text-[11px] font-semibold cursor-pointer hover:bg-[var(--risk-critical-bg)]"
                 >
                   Đi tới dòng lệch
                 </button>
               ) : null}
-            </li>
+            </div>
           ))}
-        </ul>
-      ) : null}
 
-      {hasWarnings ? (
-        <ul className="space-y-1.5">
           {report.warnings.map((issue, idx) => (
-            <li
+            <div
               key={`${issue.code}-${issue.field}-${idx}`}
-              className="p-2.5 rounded-[6px] bg-[var(--risk-medium-bg)] text-[var(--risk-medium-fg)] flex items-start gap-2"
+              className="px-4 py-2.5 bg-[var(--risk-medium-bg)]/45 text-[var(--risk-medium-fg)] flex items-start gap-2"
             >
               <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" aria-hidden="true" />
               <div>
-                <span className="font-semibold">
+                <span className="font-bold">
                   {STATEMENT_FIELD_LABELS_VI[issue.field] ?? issue.field}:{' '}
                 </span>
-                <span>{issue.message}</span>
+                <span className="text-[var(--text-primary)]">{issue.message}</span>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       ) : null}
     </div>
   );

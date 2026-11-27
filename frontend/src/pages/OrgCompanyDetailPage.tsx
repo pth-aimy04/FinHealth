@@ -227,7 +227,7 @@ export function OrgCompanyDetailPage() {
       <div className="space-y-4">
         <Link
           to="/portfolio"
-          className="inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] no-underline"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] no-underline"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Quay lại Danh bạ Doanh nghiệp
         </Link>
@@ -257,11 +257,11 @@ export function OrgCompanyDetailPage() {
 
   return (
     <div className="space-y-5 animate-view">
-      {/* Breadcrumb & Period Switcher */}
+      {/* Breadcrumb & Period Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           to="/portfolio"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--accent-primary)] no-underline"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] no-underline"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           Danh bạ Doanh nghiệp
@@ -269,14 +269,14 @@ export function OrgCompanyDetailPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           {availableYears.length > 1 ? (
-            <label className="inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+            <label className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)]">
               <span>Kỳ đánh giá:</span>
               <select
                 value={selectedYear ?? ''}
                 onChange={(e) =>
                   setSelectedYear(e.target.value ? Number(e.target.value) : undefined)
                 }
-                className="h-8 px-2.5 rounded-[6px] border border-[var(--border-strong)] bg-[var(--bg-surface)] text-xs text-[var(--text-primary)]"
+                className="field-control !h-8 !w-auto num"
               >
                 <option value="">Kỳ mới nhất</option>
                 {availableYears.map((yr) => (
@@ -290,7 +290,7 @@ export function OrgCompanyDetailPage() {
 
           {canWrite && analysis ? (
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => recomputeMutation.mutate()}
               disabled={recomputeMutation.isPending}
@@ -308,14 +308,18 @@ export function OrgCompanyDetailPage() {
       {actionMessage ? (
         <div
           role="status"
-          className="p-3 rounded-[8px] text-xs font-medium flex items-center justify-between gap-3"
-          style={{ backgroundColor: 'var(--risk-low-bg)', color: 'var(--risk-low-fg)' }}
+          className="px-4 py-2.5 rounded-[3px] border text-xs font-semibold flex items-center justify-between gap-3"
+          style={{
+            backgroundColor: 'var(--risk-low-bg)',
+            color: 'var(--risk-low-fg)',
+            borderColor: 'var(--risk-low-border)',
+          }}
         >
           <span>{actionMessage}</span>
           <button
             type="button"
             onClick={() => setActionMessage(null)}
-            className="underline cursor-pointer bg-transparent border-0 text-inherit"
+            className="underline cursor-pointer bg-transparent border-0 text-inherit font-semibold"
           >
             Đóng
           </button>
@@ -326,7 +330,7 @@ export function OrgCompanyDetailPage() {
         <ErrorState title="Thao tác chưa hoàn tất" message={actionError} />
       ) : null}
 
-      {/* Hero 3-Second Card (when analysis is available) */}
+      {/* Institutional Credit Tearsheet Masthead */}
       {analysisQuery.isLoading ? (
         <Skeleton className="h-48 w-full" />
       ) : analysis ? (
@@ -349,10 +353,12 @@ export function OrgCompanyDetailPage() {
           onCompare={() => navigate(`/compare?source=org&ids=${companyId}`)}
         />
       ) : (
-        <Panel className="p-5 flex flex-wrap items-center justify-between gap-4">
+        <Panel ruled className="p-5 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-lg font-bold text-[var(--text-primary)]">{company.name}</h1>
-            <p className="text-xs text-[var(--text-secondary)]">
+            <h1 className="font-editorial text-xl font-bold text-[var(--text-primary)] m-0">
+              {company.name}
+            </h1>
+            <p className="text-[13px] text-[var(--text-secondary)] m-0">
               Doanh nghiệp chưa có kỳ BCTC nào ở trạng thái Đã chốt (finalized). Hãy nhập hoặc chốt
               BCTC ở tab Quản lý & Nhập BCTC để kích hoạt chấm điểm tự động.
             </p>
@@ -366,9 +372,9 @@ export function OrgCompanyDetailPage() {
         </Panel>
       )}
 
-      {/* 4 UX Tabs */}
+      {/* Institutional Underlined Tabs */}
       <div
-        className="flex flex-wrap items-center gap-1 border-b border-[var(--border-subtle)]"
+        className="flex flex-wrap items-center gap-1 border-b border-[var(--border-strong)]"
         role="tablist"
         aria-label="Phân mục hồ sơ doanh nghiệp"
       >
@@ -387,7 +393,7 @@ export function OrgCompanyDetailPage() {
             aria-selected={activeTab === tab.id}
             onClick={() => switchTab(tab.id)}
             className={cn(
-              'px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer bg-transparent',
+              'px-4 py-2.5 text-[13px] font-semibold border-b-2 -mb-px transition-colors cursor-pointer bg-transparent',
               activeTab === tab.id
                 ? 'border-[var(--accent-primary)] text-[var(--accent-primary)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
@@ -410,29 +416,33 @@ export function OrgCompanyDetailPage() {
             />
             <DynamicAltmanGauge altman={analysis.altman} />
 
-            {/* DuPont & Quality of Earnings Diagnostics */}
+            {/* DuPont & Quality of Earnings Diagnostics (Flush Hairline Matrices) */}
             {analysis.diagnostics &&
             (analysis.diagnostics.dupont || analysis.diagnostics.quality_of_earnings) ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {analysis.diagnostics.dupont ? (
-                  <Panel>
+                  <Panel className="overflow-hidden">
                     <PanelHeader
                       title="Phân rã DuPont 3 nhân tố"
                       description="Biên lợi nhuận ròng × Vòng quay tài sản × Đòn bẩy vốn chủ sở hữu."
                     />
-                    <div className="p-4 grid grid-cols-2 gap-4 text-xs">
-                      <div>
-                        <div className="text-[var(--text-muted)]">Biên lợi nhuận ròng</div>
-                        <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                    <div className="grid grid-cols-2 divide-x divide-y divide-[var(--border-subtle)] text-xs">
+                      <div className="p-4">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                          Biên lợi nhuận ròng
+                        </div>
+                        <div className="mt-1.5 num text-lg font-bold text-[var(--text-primary)]">
                           {formatPct(
                             analysis.diagnostics.dupont.net_profit_margin as number | null | undefined,
                             2,
                           )}
                         </div>
                       </div>
-                      <div>
-                        <div className="text-[var(--text-muted)]">Vòng quay tài sản TB</div>
-                        <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                      <div className="p-4">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                          Vòng quay tài sản TB
+                        </div>
+                        <div className="mt-1.5 num text-lg font-bold text-[var(--text-primary)]">
                           {formatRatio(
                             analysis.diagnostics.dupont.asset_turnover_avg as number | null | undefined,
                             2,
@@ -440,9 +450,11 @@ export function OrgCompanyDetailPage() {
                           x
                         </div>
                       </div>
-                      <div>
-                        <div className="text-[var(--text-muted)]">Đòn bẩy vốn CSH TB</div>
-                        <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                      <div className="p-4">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                          Đòn bẩy vốn CSH TB
+                        </div>
+                        <div className="mt-1.5 num text-lg font-bold text-[var(--text-primary)]">
                           {formatRatio(
                             analysis.diagnostics.dupont.equity_multiplier_avg as
                               | number
@@ -453,9 +465,11 @@ export function OrgCompanyDetailPage() {
                           x
                         </div>
                       </div>
-                      <div>
-                        <div className="text-[var(--text-muted)]">ROE DuPont</div>
-                        <div className="mt-1 num text-base font-semibold text-[var(--accent-primary)]">
+                      <div className="p-4 bg-[var(--accent-soft)]/40">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)]">
+                          ROE DuPont
+                        </div>
+                        <div className="mt-1.5 num text-lg font-bold text-[var(--accent-primary)]">
                           {formatPct(
                             analysis.diagnostics.dupont.roe_dupont_avg as number | null | undefined,
                             2,
@@ -467,16 +481,18 @@ export function OrgCompanyDetailPage() {
                 ) : null}
 
                 {analysis.diagnostics.quality_of_earnings ? (
-                  <Panel>
+                  <Panel className="overflow-hidden">
                     <PanelHeader
                       title="Chất lượng Lợi nhuận (QoE)"
                       description="Đối chiếu mức độ bảo chứng lợi nhuận kế toán bằng dòng tiền hoạt động (OCF)."
                     />
-                    <div className="p-4 space-y-2.5 text-xs">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-[var(--text-muted)]">Chuyển hóa tiền (OCF / LNST)</div>
-                          <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                    <div className="divide-y divide-[var(--border-subtle)] text-xs">
+                      <div className="grid grid-cols-2 divide-x divide-[var(--border-subtle)]">
+                        <div className="p-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                            Chuyển hóa tiền (OCF / LNST)
+                          </div>
+                          <div className="mt-1.5 num text-lg font-bold text-[var(--text-primary)]">
                             {formatRatio(
                               analysis.diagnostics.quality_of_earnings.cash_conversion_qoe as
                                 | number
@@ -487,9 +503,11 @@ export function OrgCompanyDetailPage() {
                             x
                           </div>
                         </div>
-                        <div>
-                          <div className="text-[var(--text-muted)]">Tỷ lệ dồn tích (Accruals)</div>
-                          <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                        <div className="p-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+                            Tỷ lệ dồn tích (Accruals)
+                          </div>
+                          <div className="mt-1.5 num text-lg font-bold text-[var(--text-primary)]">
                             {formatPct(
                               analysis.diagnostics.quality_of_earnings.cash_flow_accruals_ratio as
                                 | number
@@ -501,8 +519,8 @@ export function OrgCompanyDetailPage() {
                         </div>
                       </div>
                       {analysis.diagnostics.quality_of_earnings.accruals_flag ? (
-                        <div className="text-[11px] font-medium text-[var(--text-secondary)]">
-                          Đánh giá:{' '}
+                        <div className="px-4 py-3 bg-[var(--bg-header)] text-xs font-medium text-[var(--text-secondary)]">
+                          <strong className="text-[var(--text-primary)]">Đánh giá: </strong>
                           {analysis.diagnostics.quality_of_earnings.accruals_flag ===
                           'CASH_BACKED_EARNINGS'
                             ? 'Lợi nhuận được bảo chứng bằng dòng tiền thực'
@@ -516,10 +534,12 @@ export function OrgCompanyDetailPage() {
             ) : null}
           </div>
         ) : (
-          <EmptyState
-            title="Chưa có dữ liệu phân tích"
-            description="Cần ít nhất 1 kỳ BCTC đã chốt để hiển thị Điểm Tựa, Điểm Nghẽn và 5 trụ cột tài chính."
-          />
+          <Panel>
+            <EmptyState
+              title="Chưa có dữ liệu phân tích"
+              description="Cần ít nhất 1 kỳ BCTC đã chốt để hiển thị Điểm Tựa, Điểm Nghẽn và 5 trụ cột tài chính."
+            />
+          </Panel>
         )
       ) : null}
 
@@ -532,10 +552,12 @@ export function OrgCompanyDetailPage() {
             mode="table"
           />
         ) : (
-          <EmptyState
-            title="Chưa có bảng 20 chỉ số"
-            description="Chốt ít nhất 1 kỳ BCTC để hệ thống tính toán bộ 20 chỉ số tài chính chuẩn."
-          />
+          <Panel>
+            <EmptyState
+              title="Chưa có bảng 20 chỉ số"
+              description="Chốt ít nhất 1 kỳ BCTC để hệ thống tính toán bộ 20 chỉ số tài chính chuẩn."
+            />
+          </Panel>
         )
       ) : null}
 
@@ -550,91 +572,82 @@ export function OrgCompanyDetailPage() {
       {/* Tab 4: Financial Statements Management & Import */}
       {activeTab === 'statements' ? (
         <div className="space-y-4">
-          {canWrite ? (
-            <Panel className="p-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-                  Nhập Báo cáo Tài chính kỳ mới
-                </h2>
-                <p className="text-xs text-[var(--text-secondary)]">
-                  Hỗ trợ nạp trực tiếp file XML từ HTKK, file Excel mẫu (TT99/TT200/TT133) hoặc nhập
-                  qua biểu mẫu Web.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  ref={xmlInputRef}
-                  type="file"
-                  accept=".xml"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) importXmlMutation.mutate(file);
-                    e.target.value = '';
-                  }}
-                />
-                <input
-                  ref={excelInputRef}
-                  type="file"
-                  accept=".xlsx"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) importExcelMutation.mutate(file);
-                    e.target.value = '';
-                  }}
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => xmlInputRef.current?.click()}
-                  disabled={importXmlMutation.isPending}
-                >
-                  <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
-                  {importXmlMutation.isPending ? 'Đang nạp XML...' : 'Nạp XML HTKK'}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => excelInputRef.current?.click()}
-                  disabled={importExcelMutation.isPending}
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
-                  {importExcelMutation.isPending ? 'Đang nạp Excel...' : 'Nạp Excel BCTC'}
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate(`/portfolio/${companyId}/statements/new`)}
-                >
-                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                  Biểu mẫu Web 3 phần
-                </Button>
-              </div>
-            </Panel>
-          ) : null}
-
-          {/* Template Downloads Strip */}
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]">
-            <span>Tải file Excel mẫu chuẩn:</span>
-            {(['TT99_2025', 'TT200_2014', 'TT133_2016'] as const).map((std) => (
-              <button
-                key={std}
-                type="button"
-                onClick={() => void handleDownloadTemplate(std)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] cursor-pointer border border-[var(--border-subtle)]"
-              >
-                <Download className="h-3 w-3" aria-hidden="true" />
-                {ACCOUNTING_STANDARD_LABELS[std] ?? std}
-              </button>
-            ))}
-          </div>
-
-          <Panel>
+          <Panel ruled className="overflow-hidden">
             <PanelHeader
               title="Danh sách các kỳ Báo cáo Tài chính"
               description="Kỳ ở trạng thái Đã chốt sẽ tự động được đưa vào tính điểm sức khỏe và chuỗi lịch sử đa kỳ."
+              actions={
+                canWrite ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={xmlInputRef}
+                      type="file"
+                      accept=".xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) importXmlMutation.mutate(file);
+                        e.target.value = '';
+                      }}
+                    />
+                    <input
+                      ref={excelInputRef}
+                      type="file"
+                      accept=".xlsx"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) importExcelMutation.mutate(file);
+                        e.target.value = '';
+                      }}
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => xmlInputRef.current?.click()}
+                      disabled={importXmlMutation.isPending}
+                    >
+                      <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
+                      {importXmlMutation.isPending ? 'Đang nạp XML...' : 'Nạp XML HTKK'}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => excelInputRef.current?.click()}
+                      disabled={importExcelMutation.isPending}
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
+                      {importExcelMutation.isPending ? 'Đang nạp Excel...' : 'Nạp Excel BCTC'}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => navigate(`/portfolio/${companyId}/statements/new`)}
+                    >
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                      Biểu mẫu Web 3 phần
+                    </Button>
+                  </div>
+                ) : undefined
+              }
             />
+
+            {/* Docked Template Downloads Ribbon */}
+            <div className="px-5 py-2.5 bg-[var(--bg-subtle)]/55 border-b border-[var(--border-subtle)] flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]">
+              <span className="font-semibold">Tải file Excel mẫu chuẩn:</span>
+              {(['TT99_2025', 'TT200_2014', 'TT133_2016'] as const).map((std) => (
+                <button
+                  key={std}
+                  type="button"
+                  onClick={() => void handleDownloadTemplate(std)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] font-medium cursor-pointer border border-[var(--border-strong)]"
+                >
+                  <Download className="h-3 w-3 text-[var(--accent-primary)]" aria-hidden="true" />
+                  {ACCOUNTING_STANDARD_LABELS[std] ?? std}
+                </button>
+              ))}
+            </div>
+
             {statementsQuery.isLoading ? (
               <TableSkeleton rows={4} />
             ) : statements.length === 0 ? (
@@ -644,31 +657,26 @@ export function OrgCompanyDetailPage() {
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="ledger-table">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)]/50 text-[var(--text-secondary)]">
-                      <th className="py-2.5 px-4 font-semibold">Kỳ</th>
-                      <th className="py-2.5 px-3 font-semibold">Chuẩn / Kiểm toán</th>
-                      <th className="py-2.5 px-3 font-semibold text-right">Tổng tài sản</th>
-                      <th className="py-2.5 px-3 font-semibold text-right">Doanh thu</th>
-                      <th className="py-2.5 px-3 font-semibold text-right">LNST</th>
-                      <th className="py-2.5 px-3 font-semibold">Trạng thái</th>
-                      {canWrite ? (
-                        <th className="py-2.5 px-4 font-semibold text-right">Thao tác</th>
-                      ) : null}
+                    <tr>
+                      <th>Kỳ</th>
+                      <th>Chuẩn / Kiểm toán</th>
+                      <th className="text-right">Tổng tài sản</th>
+                      <th className="text-right">Doanh thu</th>
+                      <th className="text-right">LNST</th>
+                      <th>Trạng thái</th>
+                      {canWrite ? <th className="text-right">Thao tác</th> : null}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                  <tbody>
                     {statements.map((stmt) => (
-                      <tr
-                        key={stmt.id}
-                        className="hover:bg-[var(--bg-hover)]/45 transition-colors"
-                      >
-                        <td className="py-3 px-4 num font-semibold text-[var(--text-primary)]">
+                      <tr key={stmt.id}>
+                        <td className="num font-bold text-[var(--text-primary)]">
                           FY{stmt.fiscal_year} ({stmt.fiscal_period})
                         </td>
-                        <td className="py-3 px-3 text-[var(--text-secondary)]">
-                          <div>
+                        <td className="text-[var(--text-secondary)]">
+                          <div className="font-medium text-[var(--text-primary)]">
                             {ACCOUNTING_STANDARD_LABELS[stmt.accounting_standard] ??
                               stmt.accounting_standard}
                           </div>
@@ -676,27 +684,29 @@ export function OrgCompanyDetailPage() {
                             {AUDIT_STATUS_LABELS[stmt.audit_status] ?? stmt.audit_status}
                           </div>
                         </td>
-                        <td className="py-3 px-3 text-right num text-[var(--text-primary)]">
+                        <td className="text-right num text-[var(--text-primary)]">
                           {formatMoney(stmt.total_assets, stmt.currency, 1)}
                         </td>
-                        <td className="py-3 px-3 text-right num text-[var(--text-primary)]">
+                        <td className="text-right num text-[var(--text-primary)]">
                           {formatMoney(stmt.revenues, stmt.currency, 1)}
                         </td>
-                        <td className="py-3 px-3 text-right num text-[var(--text-primary)]">
+                        <td className="text-right num text-[var(--text-primary)]">
                           {formatMoney(stmt.net_income, stmt.currency, 1)}
                         </td>
-                        <td className="py-3 px-3">
+                        <td>
                           <span
-                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium"
+                            className="inline-flex items-center px-2 py-0.5 rounded-[2px] border text-[11px] font-semibold"
                             style={
                               stmt.status === 'finalized'
                                 ? {
                                     color: 'var(--risk-low-fg)',
                                     backgroundColor: 'var(--risk-low-bg)',
+                                    borderColor: 'var(--risk-low-border)',
                                   }
                                 : {
                                     color: 'var(--risk-medium-fg)',
                                     backgroundColor: 'var(--risk-medium-bg)',
+                                    borderColor: 'var(--risk-medium-border)',
                                   }
                             }
                           >
@@ -704,7 +714,7 @@ export function OrgCompanyDetailPage() {
                           </span>
                         </td>
                         {canWrite ? (
-                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <td className="text-right whitespace-nowrap">
                             <div className="inline-flex items-center gap-1.5">
                               <Button
                                 variant="secondary"
