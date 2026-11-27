@@ -886,6 +886,8 @@ class ModelRegistryState:
         self._lock = RLock()
         self.training_lock = RLock()
         self._bundle: ModelArtifactBundle | None = None
+        self._v2_bundle: ModelArtifactBundle | None = None
+        self._v2_checked = False
         self._initialized = False
         self._directory: Path | None = None
         self._pointer_mtime_ns: int | None = None
@@ -898,10 +900,35 @@ class ModelRegistryState:
                 self._reload_if_pointer_changed(self._directory)
             return self._bundle
 
+    def get_scale_free_v2(self) -> ModelArtifactBundle | None:
+        """Return the active scale_free_v2 bundle, loading v2.0.0-kaggle beside legacy latest."""
+        with self._lock:
+            active = self.get()
+            if (
+                active is not None
+                and getattr(active, "scoring_contract", "legacy_v1") == "scale_free_v2"
+            ):
+                return active
+            if self._v2_checked:
+                return self._v2_bundle
+            self._v2_checked = True
+            if self._directory is not None:
+                candidate_dir = self._directory / "v2.0.0-kaggle"
+                if candidate_dir.is_dir():
+                    try:
+                        loaded = load_bundle(candidate_dir)
+                        if getattr(loaded, "scoring_contract", "legacy_v1") == "scale_free_v2":
+                            self._v2_bundle = loaded
+                    except ModelPipelineError as error:
+                        logger.warning("Cannot load v2.0.0-kaggle bundle: %s", error)
+            return self._v2_bundle
+
     def set(self, bundle: ModelArtifactBundle | None) -> None:
         """Explicitly publish or clear the active model in memory."""
         with self._lock:
             self._bundle = bundle
+            self._v2_bundle = None
+            self._v2_checked = False
             self._initialized = True
             self._directory = None
             self._pointer_mtime_ns = None
@@ -957,6 +984,8 @@ class ModelRegistryState:
             if self._initialized and self._directory is None:
                 return
             self._bundle = None
+            self._v2_bundle = None
+            self._v2_checked = False
             self._directory = resolved
             self._pointer_mtime_ns = None
             self._pointer_sha256 = None

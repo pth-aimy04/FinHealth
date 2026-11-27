@@ -333,7 +333,11 @@ def _score_statement_with_adapter(
 ) -> dict[str, Any]:
     """Score one statement using Lane C's v2.0.0-kaggle engine, else deterministic fallback."""
     scoring_mode: ScoringMode = "multi_period" if has_prior else "single_period"
-    bundle = model_registry.get() if model_registry is not None else None
+    bundle = (
+        model_registry.get_scale_free_v2() or model_registry.get()
+        if model_registry is not None
+        else None
+    )
     model_version = DEFAULT_FALLBACK_MODEL_VERSION
     ood_bounds: Mapping[str, Sequence[float]] | None = None
     pd_12m: float | None = None
