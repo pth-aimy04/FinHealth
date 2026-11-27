@@ -59,15 +59,15 @@
 ## WAVE 1 — 4 Backend Lanes Song Song (Parallel Coding Agents)
 
 ### [Lane A — `identity-privacy`] Task T03: Organization Workspace & RBAC API
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane A (agent-identity)`
 - **Description:** Triển khai `src/finhealth/api/routers/organizations.py` (tạo tổ chức, giới hạn 5 org/user & 50 thành viên/org, chuyển `active_org_id` lưu server-side trong `UserSession`, mời thành viên bằng mã 1 lần băm SHA-256 72h, chấp nhận lời mời kiểm khớp email, đổi vai trò `org_admin`/`analyst`/`viewer`, chặn gỡ `org_admin` cuối cùng, xem `organization_audit_logs`) và cập nhật `workspace.py` cô lập `/me/*` theo `OrgContext.organization.id` + kiểm tra RBAC.
 - **Acceptance criteria:**
-  - [ ] `viewer` xem được dữ liệu tổ chức nhưng bị `403` trên mọi thao tác ghi; thành viên tổ chức khác nhận `403`/`404` (chống IDOR).
-  - [ ] Không thể hạ cấp hoặc xóa `org_admin` cuối cùng của tổ chức (`409`).
-  - [ ] Lời mời không thể bị tài khoản khác email chấp nhận (`403`) và hết hạn sau 72h.
+  - [x] `viewer` xem được dữ liệu tổ chức nhưng bị `403` trên mọi thao tác ghi; thành viên tổ chức khác nhận `403`/`404` (chống IDOR).
+  - [x] Không thể hạ cấp hoặc xóa `org_admin` cuối cùng của tổ chức (`409`).
+  - [x] Lời mời không thể bị tài khoản khác email chấp nhận (`403`) và hết hạn sau 72h.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_org_rbac_invariants.py tests/integration/test_organizations_and_privacy.py -k "org or rbac or invite"`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_org_rbac_invariants.py tests/integration/test_organizations_and_privacy.py -k "org or rbac or invite"`
 - **Dependencies:** T02
 - **Files likely touched:**
   - `src/finhealth/api/schemas/accounts.py`
@@ -77,15 +77,15 @@
 - **Estimated scope:** Medium (4 files)
 
 ### [Lane A — `identity-privacy`] Task T04: Data Privacy Luật 91/2025/QH15 & Auto-Personal Org
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane A (agent-identity)`
 - **Description:** Cập nhật `src/finhealth/api/routers/accounts.py`: giữ nguyên invariant `VerifyOtpInput.new_password` khi xác thực email, tự động khởi tạo Workspace mặc định (`is_personal=True`, vai trò `org_admin`) khi verify email xong; bổ sung `job_title` vào profile; triển khai `GET /api/v1/auth/me/export` (xuất dữ liệu cá nhân JSON) và `POST /api/v1/auth/delete-account` (yêu cầu mật khẩu + OTP, chặn `409` nếu là `org_admin` duy nhất của org còn thành viên khác, ngược lại thu hồi phiên và xóa cứng toàn bộ PII/workspace riêng).
 - **Acceptance criteria:**
-  - [ ] Verify email mới tự động tạo đúng 1 Workspace cá nhân; `test_verification_cannot_preserve_attacker_selected_password` tiếp tục xanh.
-  - [ ] `GET /api/v1/auth/me/export` chỉ chứa dữ liệu của user đăng nhập, không rò rỉ dữ liệu user khác.
-  - [ ] `POST /api/v1/auth/delete-account` thu hồi session ngay lập tức (cookie cũ trả `401`) và xóa sạch bản ghi `users` + dữ liệu riêng (giữ `admin_audit_logs` với `actor_id=NULL`).
+  - [x] Verify email mới tự động tạo đúng 1 Workspace cá nhân; `test_verification_cannot_preserve_attacker_selected_password` tiếp tục xanh.
+  - [x] `GET /api/v1/auth/me/export` chỉ chứa dữ liệu của user đăng nhập, không rò rỉ dữ liệu user khác.
+  - [x] `POST /api/v1/auth/delete-account` thu hồi session ngay lập tức (cookie cũ trả `401`) và xóa sạch bản ghi `users` + dữ liệu riêng (giữ `admin_audit_logs` với `actor_id=NULL`).
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/integration/test_accounts_and_admin.py tests/integration/test_organizations_and_privacy.py`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/integration/test_accounts_and_admin.py tests/integration/test_organizations_and_privacy.py`
 - **Dependencies:** T03
 - **Files likely touched:**
   - `src/finhealth/api/routers/accounts.py`
@@ -96,15 +96,15 @@
 ---
 
 ### [Lane B — `financial-data`] Task T05: Tỷ số Mở rộng, Sửa Bug Âm VCSH, Validator Cân đối & VAS Mapper
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane B (agent-financial-data)`
 - **Description:** Mở rộng `financial_ratios.py` tính thêm Gross Margin, Quick Ratio, DSO, DIO, EBITDA Margin, Short-Term Debt Share, `equity_to_assets`, `is_negative_equity`, `is_thin_equity` (không phá vỡ các test hiện hữu); tạo `accounting_validator.py` (kiểm tra cân đối `TA = TL + E` dung sai 0,5%, `CA <= TA`, `Cash/Inv/AR <= CA`, cảnh báo âm VCSH) và `vn_accounting_mapper.py` ánh xạ mã chỉ tiêu chuẩn **TT99/2025**, **TT200/2014**, **TT133/2016**.
 - **Acceptance criteria:**
-  - [ ] Doanh nghiệp âm VCSH trả `is_negative_equity=True`, `equity_to_assets < 0`, `roe=None`, `debt_to_equity=None` (không `inf`/`NaN`).
-  - [ ] `accounting_validator` chỉ đích danh tên trường & mức lệch cho mọi lỗi cấu trúc bảng cân đối.
-  - [ ] `vn_accounting_mapper` ánh xạ đúng các mã chỉ tiêu trọng yếu cho cả 3 chế độ TT99/TT200/TT133 về cùng tập trường chuẩn hóa.
+  - [x] Doanh nghiệp âm VCSH trả `is_negative_equity=True`, `equity_to_assets < 0`, `roe=None`, `debt_to_equity=None` (không `inf`/`NaN`).
+  - [x] `accounting_validator` chỉ đích danh tên trường & mức lệch cho mọi lỗi cấu trúc bảng cân đối.
+  - [x] `vn_accounting_mapper` ánh xạ đúng các mã chỉ tiêu trọng yếu cho cả 3 chế độ TT99/TT200/TT133 về cùng tập trường chuẩn hóa.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_etl_pipeline.py tests/unit/test_vn_accounting_and_validation.py -k "ratio or validator or mapper"`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_etl_pipeline.py tests/unit/test_vn_accounting_and_validation.py -k "ratio or validator or mapper"`
 - **Dependencies:** T02
 - **Files likely touched:**
   - `src/finhealth/etl/financial_ratios.py`
@@ -114,15 +114,15 @@
 - **Estimated scope:** Medium (4 files)
 
 ### [Lane B — `financial-data`] Task T06: HTKK XML Parser, Biểu mẫu Excel TT99/TT200/TT133 & 3 Hồ sơ Mẫu VN
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane B (agent-financial-data)`
 - **Description:** Tạo `htkk_xml_parser.py` dùng `defusedxml` (giới hạn ≤ 5 MB, chặn XXE, tự nhận diện TT99/TT200/TT133, trích MST/kỳ/chỉ tiêu), `excel_templates.py` (`openpyxl` sinh template `.xlsx` có mã chỉ tiêu & parse upload `.xlsx` ở chế độ `read_only=True, data_only=True`), và `vn_samples.py` chứa 3 hồ sơ DN mẫu VN đa kỳ (4–5 năm, cân đối kế toán 100%: Minh An Vững mạnh, Hoàng Long Suy giảm ngầm, Đại Phát Nguy cơ cao).
 - **Acceptance criteria:**
-  - [ ] Parser XML HTKK chặn thành công payload XXE và file > 5 MB; parse đúng các file XML mẫu TT200/TT133/TT99.
-  - [ ] Round-trip xuất file Excel mẫu → điền số liệu → nạp lại khớp 100% ở cả 3 chế độ kế toán.
-  - [ ] Cả 3 hồ sơ mẫu VN vượt qua `accounting_validator` với 0 lỗi cứng.
+  - [x] Parser XML HTKK chặn thành công payload XXE và file > 5 MB; parse đúng các file XML mẫu TT200/TT133/TT99.
+  - [x] Round-trip xuất file Excel mẫu → điền số liệu → nạp lại khớp 100% ở cả 3 chế độ kế toán.
+  - [x] Cả 3 hồ sơ mẫu VN vượt qua `accounting_validator` với 0 lỗi cứng.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_vn_accounting_and_validation.py`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_vn_accounting_and_validation.py`
 - **Dependencies:** T05
 - **Files likely touched:**
   - `src/finhealth/etl/htkk_xml_parser.py`
@@ -132,15 +132,15 @@
 - **Estimated scope:** Medium (4 files)
 
 ### [Lane B — `financial-data`] Task T07: API Danh bạ DN Tổ chức, BCTC Draft/Finalized & Import XML/Excel
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane B (agent-financial-data)`
 - **Description:** Xây dựng `schemas/org_financials.py` và `routers/org_companies.py` cung cấp CRUD `OrgCompany` (MST, VSIC, `business_type`, `listing_status`, `relationship_tag`, cờ chặn `financial_institution`), quản lý `OrgFinancialStatement` (lưu `draft` / chốt `finalized`, chọn đơn vị Đồng/Triệu/Tỷ, chạy `accounting_validator` trả kèm lỗi từng dòng), tải template `.xlsx`, nạp file XML HTKK / Excel, và `POST /api/v1/org/samples/seed` (idempotent).
 - **Acceptance criteria:**
-  - [ ] Toàn bộ endpoint cô lập tuyệt đối theo `OrgContext.organization.id` và kiểm tra RBAC (`viewer` chỉ đọc, `analyst` tạo/sửa/import, `org_admin` xóa cứng).
-  - [ ] Không cho phép chốt `finalized` khi còn lỗi cứng cân đối kế toán (trừ khi lưu `draft`).
-  - [ ] `POST /api/v1/org/samples/seed` chạy 2 lần không tạo bản sao trùng lặp.
+  - [x] Toàn bộ endpoint cô lập tuyệt đối theo `OrgContext.organization.id` và kiểm tra RBAC (`viewer` chỉ đọc, `analyst` tạo/sửa/import, `org_admin` xóa cứng).
+  - [x] Không cho phép chốt `finalized` khi còn lỗi cứng cân đối kế toán (trừ khi lưu `draft`).
+  - [x] `POST /api/v1/org/samples/seed` chạy 2 lần không tạo bản sao trùng lặp.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/integration/test_org_companies_and_statements.py`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/integration/test_org_companies_and_statements.py`
 - **Dependencies:** T06
 - **Files likely touched:**
   - `src/finhealth/api/schemas/org_financials.py`
@@ -151,14 +151,14 @@
 ---
 
 ### [Lane C — `ml-bankruptcy-engine`] Task T08: Sửa Rò rỉ Nhãn `kaggle_loader.py` & 19 Đặc trưng Không thứ nguyên
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane C (agent-ml-engine)`
 - **Description:** Sửa `src/finhealth/ml/kaggle_loader.py` gắn `next_is_bankrupt = 1` **chỉ tại dòng `year == max_year`** của mỗi công ty `failed` (mọi năm trước đó mang nhãn `0`), khai thác đủ `X1–X18` (bỏ `X8` vốn hóa và `eps`) để tính toàn bộ 19 đặc trưng không thứ nguyên (`CORE_BANKRUPTCY_FEATURES`) và 5 biến thiên YoY (`MULTI_PERIOD_FEATURES`), kèm cờ `is_negative_equity` & `equity_to_assets`.
 - **Acceptance criteria:**
-  - [ ] Trên `american_bankruptcy.csv`: có đúng 609 dòng `next_is_bankrupt == 1`; Train ≤ 2014 (490), Val 2015–2016 (62), Test 2017–2018 (57); **0% trùng lặp công ty nhãn `1`** giữa Train/Val và Test.
-  - [ ] Không có biến phụ thuộc đơn vị tiền tệ (`eps`, `X8`, tài sản thô) trong tập đặc trưng huấn luyện.
+  - [x] Trên `american_bankruptcy.csv`: có đúng 609 dòng `next_is_bankrupt == 1`; Train ≤ 2014 (490), Val 2015–2016 (62), Test 2017–2018 (57); **0% trùng lặp công ty nhãn `1`** giữa Train/Val và Test.
+  - [x] Không có biến phụ thuộc đơn vị tiền tệ (`eps`, `X8`, tài sản thô) trong tập đặc trưng huấn luyện.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_ml_bankruptcy_v2.py -k "leakage or loader"`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_ml_bankruptcy_v2.py -k "leakage or loader"`
 - **Dependencies:** T02
 - **Files likely touched:**
   - `src/finhealth/ml/kaggle_loader.py`
@@ -166,16 +166,16 @@
 - **Estimated scope:** Small (2 files)
 
 ### [Lane C — `ml-bankruptcy-engine`] Task T09: Hiệu chuẩn 4 Mô hình, Độ tin cậy 4 Lớp, PD↔0–100 & Đa Worker Registry
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane C (agent-ml-engine)`
 - **Description:** Nâng cấp `distress_classifier.py`, tạo `confidence.py` và cập nhật `registry.py` + `explainer.py`: Platt-calibrate đồng đều cả 4 mô hình (LR, RF, XGB, LGBM) trên Validation; hỗ trợ lưu & suy luận cả 2 pipeline (`single_period` & `multi_period`); triển khai `classify_bankruptcy_tier` (`1%/3%/8%`), `map_pd_to_health_score` (đơn điệu 0–100), Độ tin cậy 4 lớp (Đầy đủ + OOD + Phương sai ensemble + Kiểm toán), `CashFlowOverlay`, và reload `ModelRegistryState` an toàn theo `latest.json` mtime/sha256.
 - **Acceptance criteria:**
-  - [ ] Cả 4 mô hình đều có Platt calibrator và mean predicted probability trên Validation gần base rate thực.
-  - [ ] Hàm `map_pd_to_health_score` giảm đơn điệu tuyệt đối trên `[0, 1]` và khớp 1-1 với 4 vùng `STRONG/STABLE/WATCH/CRITICAL`.
-  - [ ] Bất biến đơn vị tiền tệ: nhân toàn bộ khoản mục BCTC với `25_000` cho ra `pd_12m` và `health_score` khớp sai số `< 1e-9`.
-  - [ ] Sai số tái dựng TreeSHAP `< 1e-5` và `output_space` phản ánh đúng mô hình đang giải thích.
+  - [x] Cả 4 mô hình đều có Platt calibrator và mean predicted probability trên Validation gần base rate thực.
+  - [x] Hàm `map_pd_to_health_score` giảm đơn điệu tuyệt đối trên `[0, 1]` và khớp 1-1 với 4 vùng `STRONG/STABLE/WATCH/CRITICAL`.
+  - [x] Bất biến đơn vị tiền tệ: nhân toàn bộ khoản mục BCTC với `25_000` cho ra `pd_12m` và `health_score` khớp sai số `< 1e-9`.
+  - [x] Sai số tái dựng TreeSHAP `< 1e-5` và `output_space` phản ánh đúng mô hình đang giải thích.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_ml_bankruptcy_v2.py tests/unit/test_ml_pipeline.py`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_ml_bankruptcy_v2.py tests/unit/test_ml_pipeline.py`
 - **Dependencies:** T08
 - **Files likely touched:**
   - `src/finhealth/ml/distress_classifier.py`
@@ -186,15 +186,15 @@
 - **Estimated scope:** Medium (5 files)
 
 ### [Lane C — `ml-bankruptcy-engine`] Task T10: Huấn luyện & Xuất bản Artifact `v2.0.0-kaggle` Sạch Leakage
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane C (agent-ml-engine)`
 - **Description:** Cập nhật `train_cli.py` hỗ trợ huấn luyện & kiểm định hoàn chỉnh gói `v2.0.0-kaggle` (cả chế độ `single_period` và `multi_period`), sinh đầy đủ `evaluation_report.json`, `BENCHMARK_REPORT.md` và biểu đồ kiểm định out-of-time (ROC/PR/Calibration/SHAP), kiểm chứng thực tế trên tập dữ liệu `data/raw/kaggle/american_bankruptcy.csv`.
 - **Acceptance criteria:**
-  - [ ] Chạy CLI `python -m finhealth.ml.train_cli --dataset kaggle --model-version v2.0.0-kaggle` thành công với `RANDOM_SEED = 42`.
-  - [ ] `data/artifacts/models/v2.0.0-kaggle/evaluation_report.json` ghi rõ provenance thực (không còn chuỗi stale `"synthetic stochastic outcomes"`), `non_forward_supervised_rows = 0`, 0% entity leakage và Brier score hiệu chuẩn của cả 4 mô hình.
+  - [x] Chạy CLI `python -m finhealth.ml.train_cli --dataset kaggle --model-version v2.0.0-kaggle` thành công với `RANDOM_SEED = 42`.
+  - [x] `data/artifacts/models/v2.0.0-kaggle/evaluation_report.json` ghi rõ provenance thực (không còn chuỗi stale `"synthetic stochastic outcomes"`), `non_forward_supervised_rows = 0`, 0% entity leakage và Brier score hiệu chuẩn của cả 4 mô hình.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\python.exe -m finhealth.ml.train_cli --dataset kaggle --model-version v2.0.0-kaggle`
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_ml_bankruptcy_v2.py tests/unit/test_visualization_and_cli.py`
+  - [x] `.\.venv\Scripts\python.exe -m finhealth.ml.train_cli --dataset kaggle --model-version v2.0.0-kaggle`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_ml_bankruptcy_v2.py tests/unit/test_visualization_and_cli.py`
 - **Dependencies:** T09
 - **Files likely touched:**
   - `src/finhealth/ml/train_cli.py`
@@ -205,15 +205,15 @@
 ---
 
 ### [Lane D — `risk-analytics`] Task T11: Altman $Z/Z'/Z''$ + Chặn TCTC, 5 Trụ cột & Từ điển 20 Chỉ số
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane D (agent-risk-analytics)`
 - **Description:** Tạo `src/finhealth/etl/altman.py` triển khai đầy đủ 3 biến thể $Z$ (`1.81/2.99`, yêu cầu vốn hóa), $Z'$ (`1.23/2.90`, vốn sổ sách SX), $Z''$ (`1.10/2.60`, phi SX) và chặn TCTC (`applicable=False`); tạo `metric_catalog.py` (từ điển 20 chỉ số tiếng Việt kèm tooltip, ngưỡng tham chiếu và hàm gán trạng thái); nâng cấp `corporate_finance.py` lên 5 trụ cột (20 chỉ số, phạt `0.0` khi `is_negative_equity=True`, loại `AAA..CCC` ở hàm v2).
 - **Acceptance criteria:**
-  - [ ] Cả 3 công thức Altman trả đúng điểm, vùng và cặp `(cutoff_low, cutoff_high)`; DN tài chính trả `applicable=False`.
-  - [ ] 5 trụ cột bao phủ đủ 20 chỉ số; khi `is_negative_equity=True`, điểm `debt_to_equity` và `roe` bị gán `0.0` (không bị bỏ qua).
-  - [ ] Mọi chỉ số trong `metric_catalog.py` có `label_vi`, `tooltip_vi`, `reference_range_vi`.
+  - [x] Cả 3 công thức Altman trả đúng điểm, vùng và cặp `(cutoff_low, cutoff_high)`; DN tài chính trả `applicable=False`.
+  - [x] 5 trụ cột bao phủ đủ 20 chỉ số; khi `is_negative_equity=True`, điểm `debt_to_equity` và `roe` bị gán `0.0` (không bị bỏ qua).
+  - [x] Mọi chỉ số trong `metric_catalog.py` có `label_vi`, `tooltip_vi`, `reference_range_vi`.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_risk_analytics_v2.py tests/unit/test_v12_business_logic.py`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_risk_analytics_v2.py tests/unit/test_v12_business_logic.py`
 - **Dependencies:** T02
 - **Files likely touched:**
   - `src/finhealth/etl/altman.py`
@@ -223,15 +223,15 @@
 - **Estimated scope:** Medium (4 files)
 
 ### [Lane D — `risk-analytics`] Task T12: Điểm Tựa/Điểm Nghẽn, Lịch sử Đa kỳ M11, Chuẩn ngành S01 & So sánh C03
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 1 / Lane D (agent-risk-analytics)`
 - **Description:** Tạo `driver_narrative.py` chuyển TreeSHAP thành tối đa 5 Điểm Tựa (xanh) + 5 Điểm Nghẽn (đỏ) với `impact_share_pct` (tổng 100%, tuyệt đối không trừ điểm sức khỏe sai toán SHAP); xây dựng `schemas/analytics.py`, `services_org.py` và `routers/org_analytics.py` cung cấp `CompanyAssessmentView` đầy đủ (3 nhận định trọng tâm, 5 trụ cột, lịch sử 3–5 năm có `health_score` & `pd_12m`, vị thế ngành S01 đối chiếu SEC cohort, so sánh 2–4 DN tổ chức C03, miễn trừ NĐ 88/2014/NĐ-CP).
 - **Acceptance criteria:**
-  - [ ] Output `drivers` không chứa thuật ngữ lập trình/ML; tổng `impact_share_pct` xấp xỉ 100%.
-  - [ ] `GET /api/v1/org/companies/{id}/analysis` trả chuỗi lịch sử 3–5 năm liền mạch qua mốc TT200 → TT99 có cả `health_score` và `pd_12m`.
-  - [ ] `GET /api/v1/org/companies/compare` hỗ trợ 2–4 DN cùng tổ chức, trả 422 nếu >4 và 404 nếu lẫn ID tổ chức khác.
+  - [x] Output `drivers` không chứa thuật ngữ lập trình/ML; tổng `impact_share_pct` xấp xỉ 100%.
+  - [x] `GET /api/v1/org/companies/{id}/analysis` trả chuỗi lịch sử 3–5 năm liền mạch qua mốc TT200 → TT99 có cả `health_score` và `pd_12m`.
+  - [x] `GET /api/v1/org/companies/compare` hỗ trợ 2–4 DN cùng tổ chức, trả 422 nếu >4 và 404 nếu lẫn ID tổ chức khác.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_risk_analytics_v2.py tests/integration/test_org_analysis_and_compare.py`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_risk_analytics_v2.py tests/integration/test_org_analysis_and_compare.py`
 - **Dependencies:** T11 *(cần đọc contract từ T05/T09; mock nhẹ nếu chạy trước khi merge Wave 1, chạy lại đầy đủ tại Checkpoint W1)*
 - **Files likely touched:**
   - `src/finhealth/etl/driver_narrative.py`
@@ -242,10 +242,10 @@
 - **Estimated scope:** Medium (5 files)
 
 ### Checkpoint W1: Sau Merge 4 Nhánh Wave 1 (T03–T12)
-- [ ] Merge lần lượt Lane A → Lane B → Lane C → Lane D vào nhánh tích hợp (đối chiếu 0 xung đột file).
-- [ ] `.\.venv\Scripts\ruff.exe check .` → 0 lỗi
-- [ ] `.\.venv\Scripts\mypy.exe src/finhealth` → 0 lỗi
-- [ ] `.\.venv\Scripts\pytest.exe -v` → 100% pass (bao gồm toàn bộ test mới của 4 module)
+- [x] Merge lần lượt Lane A → Lane B → Lane C → Lane D vào nhánh tích hợp (đối chiếu 0 xung đột file).
+- [x] `.\.venv\Scripts\ruff.exe check .` → 0 lỗi
+- [x] `.\.venv\Scripts\mypy.exe src/finhealth` → 0 lỗi
+- [x] `.\.venv\Scripts\pytest.exe -v` → 100% pass (bao gồm toàn bộ test mới của 4 module)
 
 ---
 

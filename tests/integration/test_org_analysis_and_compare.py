@@ -16,7 +16,7 @@ from finhealth.api.main import create_app
 from finhealth.api.routers import org_analytics
 from finhealth.api.schemas.analytics import LEGAL_DISCLAIMER_VI
 from finhealth.core.config import Settings
-from finhealth.db.account_models import Organization, OrganizationMember
+from finhealth.db.account_models import Organization, OrganizationMember, UserSession
 from finhealth.db.base import Base
 from finhealth.db.models import Company, FinancialMetric, FinancialStatement
 from finhealth.db.org_models import OrgAssessment, OrgCompany, OrgFinancialStatement
@@ -171,6 +171,10 @@ def org_env() -> Iterator[dict[str, Any]]:
                             role="analyst",
                         )
                     )
+                    for user_sess in db.scalars(
+                        select(UserSession).where(UserSession.user_id == analyst_id)
+                    ):
+                        user_sess.active_org_id = org_a.id
                     _seed_sec_manufacturing_peers(db, count=6)
 
                     # 5 companies in Org A (4 normal + 1 financial institution) and 1 in Org B
@@ -467,3 +471,32 @@ def test_org_compare_2_to_4_limits_and_cross_org_isolation(
     # Direct analysis of another org's company -> 404
     cross_direct = client.get(f"/api/v1/org/companies/{other_org_id}/analysis")
     assert cross_direct.status_code == 404
+
+
+def test_org_analysis_runs_real_v2_kaggle_bundle_without_mocks(org_env: dict[str, Any]) -> None:
+    """Verify services_org runs the real v2.0.0-kaggle bundle + confidence.py end-to-end."""
+    from finhealth.ml.registry import load_bundle
+
+    bundle_dir = Path("data/artifacts/models/v2.0.0-kaggle")
+    assert (bundle_dir / "models.joblib").is_file(), "v2.0.0-kaggle artifact bundle must exist"
+
+    client: TestClient = org_env["client"]
+    c1_id = org_env["c1_id"]
+    client.app.state.model_registry.set(load_bundle(bundle_dir))  # type: ignore[union-attr]
+
+    res = client.get(
+        f"/api/v1/org/companies/{c1_id}/analysis", params={"force_recompute": "true"}
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    summary = body["summary"]
+    assert summary["scoring_eligible"] is True
+    assert summary["model_version"] == "v2.0.0-kaggle"
+    assert summary["scoring_mode"] == "multi_period"
+    assert 0.0 <= summary["pd_12m"] <= 1.0
+    assert 0.0 <= summary["health_score"] <= 100.0
+    assert summary["risk_tier"] in ("STRONG", "STABLE", "WATCH", "CRITICAL")
+    assert summary["confidence"]["level"] in ("HIGH", "MODERATE", "LOW")
+    assert summary["confidence"]["ensemble_spread"] is not None
+    assert body["drivers"]["strengths"] or body["drivers"]["bottlenecks"]
+    assert body["summary"]["legal_disclaimer_vi"] == LEGAL_DISCLAIMER_VI

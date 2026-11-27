@@ -2,8 +2,7 @@
 
 from collections.abc import Mapping, Sequence
 from datetime import date
-from importlib import import_module
-from math import exp, isfinite, log1p
+from math import exp, isfinite
 from statistics import median
 from typing import Any, Literal
 
@@ -43,12 +42,18 @@ from finhealth.etl.corporate_finance import (
 from finhealth.etl.driver_narrative import translate_drivers_to_business
 from finhealth.etl.financial_ratios import _finite, _safe_div, compute_statement_ratios
 from finhealth.etl.metric_catalog import METRIC_CATALOG
+from finhealth.ml.confidence import (
+    apply_cash_flow_overlay,
+    assess_confidence,
+    classify_bankruptcy_tier,
+    map_pd_to_health_score,
+)
 from finhealth.ml.feature_contracts import (
     CORE_BANKRUPTCY_FEATURES,
-    ConfidenceLevel,
     RiskTier,
     ScoringMode,
 )
+from finhealth.ml.registry import score_company_bankruptcy
 
 RULE_VERSION = "v1.0"
 DEFAULT_FALLBACK_MODEL_VERSION = "v2.0.0-deterministic-adapter"
@@ -141,33 +146,6 @@ _STATEMENT_COLUMNS: tuple[str, ...] = (
     "eps_basic",
     "eps_diluted",
 )
-
-
-def classify_bankruptcy_tier(pd_12m: float) -> RiskTier:
-    """Map calibrated 12-month bankruptcy probability to credit-aligned risk tiers."""
-    if not isfinite(pd_12m) or not 0.0 <= pd_12m <= 1.0:
-        raise ValueError("pd_12m must be finite and within [0, 1]")
-    if pd_12m < 0.01:
-        return "STRONG"
-    if pd_12m < 0.03:
-        return "STABLE"
-    if pd_12m < 0.08:
-        return "WATCH"
-    return "CRITICAL"
-
-
-def map_pd_to_health_score(pd_12m: float) -> float:
-    """Convert calibrated PD monotonically onto [0, 100] aligned with the four risk bands."""
-    if not isfinite(pd_12m) or not 0.0 <= pd_12m <= 1.0:
-        raise ValueError("pd_12m must be finite and within [0, 1]")
-    if pd_12m < 0.01:
-        return round(100.0 - 20.0 * (pd_12m / 0.01), 2)
-    if pd_12m < 0.03:
-        return round(80.0 - 20.0 * ((pd_12m - 0.01) / 0.02), 2)
-    if pd_12m < 0.08:
-        return round(60.0 - 25.0 * ((pd_12m - 0.03) / 0.05), 2)
-    tail = min(1.0, log1p((pd_12m - 0.08) / 0.08) / log1p((1.0 - 0.08) / 0.08))
-    return round(max(0.0, 35.0 * (1.0 - tail)), 2)
 
 
 def _statement_to_record(
@@ -269,120 +247,14 @@ def _statement_to_record(
     return record
 
 
-def _load_lane_c_confidence_module() -> Any | None:
-    """Lazily load Lane C's confidence module when present in the integrated workspace."""
-    try:
-        return import_module("finhealth.ml.confidence")
-    except ImportError:
-        return None
-
-
-def _evaluate_cash_flow_overlay(
-    record: Mapping[str, Any],
-    *,
-    base_tier: RiskTier,
-    negative_ocf_streak: int,
-    audit_status: str,
-) -> dict[str, Any]:
-    """Apply the supplementary cash-flow and audit stress overlay without mutating raw PD."""
-    flags: list[str] = []
-    reasons_vi: list[str] = []
-    ocf = _finite(record.get("operating_cash_flow"))
-    icr = _finite(record.get("interest_coverage"))
-
-    if negative_ocf_streak >= 2:
-        flags.append("NEGATIVE_OCF_STREAK")
-        reasons_vi.append(
-            f"Dòng tiền hoạt động kinh doanh âm {negative_ocf_streak} năm liên tiếp."
-        )
-    if ocf is not None and ocf < 0.0 and icr is not None and icr < 1.0:
-        flags.append("WEAK_INTEREST_COVERAGE_AND_NEGATIVE_OCF")
-        reasons_vi.append(
-            "Khả năng thanh toán lãi vay dưới 1,0x đồng thời dòng tiền hoạt động âm."
-        )
-    if audit_status == "audited_adverse_disclaimer":
-        flags.append("ADVERSE_OR_DISCLAIMER_AUDIT")
-        reasons_vi.append("Báo cáo tài chính có ý kiến kiểm toán trái ngược hoặc từ chối.")
-
-    triggered = bool(flags)
-    adjusted_tier: RiskTier = base_tier
-    if triggered and base_tier in ("STRONG", "STABLE"):
-        adjusted_tier = "WATCH"
-
+def _overlay_to_view_dict(overlay: Any) -> dict[str, Any]:
+    """Normalize Lane C CashFlowOverlayResult into CashFlowOverlayView dictionary shape."""
     return {
-        "triggered": triggered,
-        "flags": flags,
-        "reasons_vi": reasons_vi,
-        "original_tier": base_tier,
-        "adjusted_tier": adjusted_tier,
-    }
-
-
-def _evaluate_confidence(
-    record: Mapping[str, Any],
-    *,
-    audit_status: str,
-    ensemble_spread: float | None = None,
-    ood_bounds: Mapping[str, Sequence[float]] | None = None,
-) -> dict[str, Any]:
-    """Compute the 4-layer reliability indicator (completeness, OOD, spread, audit status)."""
-    observed = sum(1 for key in CORE_BANKRUPTCY_FEATURES if _finite(record.get(key)) is not None)
-    completeness = round(observed / len(CORE_BANKRUPTCY_FEATURES), 4)
-    ood_features: list[str] = []
-    if ood_bounds:
-        for feat, bounds in ood_bounds.items():
-            val = _finite(record.get(feat))
-            if val is not None and len(bounds) == 2 and (val < bounds[0] or val > bounds[1]):
-                ood_features.append(feat)
-    is_ood = len(ood_features) >= 3
-
-    rank = 3  # 3=HIGH, 2=MODERATE, 1=LOW
-    reasons_vi: list[str] = []
-
-    if completeness < 0.70:
-        rank = min(rank, 1)
-        reasons_vi.append(
-            f"Độ đầy đủ dữ liệu đầu vào thấp ({completeness * 100:.0f}% chỉ tiêu cốt lõi)."
-        )
-    elif completeness < 0.90:
-        rank = min(rank, 2)
-        reasons_vi.append(
-            f"Một số chỉ tiêu tài chính chưa đầy đủ ({completeness * 100:.0f}% chỉ tiêu cốt lõi)."
-        )
-
-    if is_ood:
-        rank = max(1, rank - 1)
-        reasons_vi.append(
-            f"Có {len(ood_features)} chỉ tiêu nằm ngoài khoảng phân phối phổ biến "
-            "của tập kiểm định."
-        )
-
-    if ensemble_spread is not None and ensemble_spread > 0.08:
-        rank = max(1, rank - 1)
-        reasons_vi.append("Mức độ đồng thuận giữa các mô hình thành phần còn phân tán.")
-
-    if audit_status == "audited_adverse_disclaimer":
-        rank = 1
-        reasons_vi.append("Báo cáo tài chính có ý kiến kiểm toán trái ngược hoặc từ chối.")
-    elif audit_status == "unaudited":
-        rank = min(rank, 2)
-        reasons_vi.append("Báo cáo tài chính chưa được kiểm toán độc lập.")
-    elif audit_status == "audited_qualified":
-        rank = min(rank, 2)
-        reasons_vi.append("Báo cáo tài chính có ý kiến kiểm toán ngoại trừ.")
-
-    if not reasons_vi:
-        reasons_vi.append("Dữ liệu đầy đủ, trong vùng phân phối chuẩn và đã được kiểm toán.")
-
-    level: ConfidenceLevel = "HIGH" if rank >= 3 else "MODERATE" if rank == 2 else "LOW"
-    return {
-        "level": level,
-        "input_completeness": completeness,
-        "is_ood": is_ood,
-        "ood_features": ood_features,
-        "ensemble_spread": round(ensemble_spread, 4) if ensemble_spread is not None else None,
-        "audit_status": audit_status,
-        "reasons_vi": reasons_vi,
+        "triggered": bool(overlay.triggered),
+        "flags": list(overlay.flags),
+        "reasons_vi": list(overlay.reasons_vi),
+        "original_tier": overlay.base_tier,
+        "adjusted_tier": overlay.adjusted_tier,
     }
 
 
@@ -453,68 +325,87 @@ def _deterministic_pd_and_attributions(
 def _score_statement_with_adapter(
     record: Mapping[str, Any],
     *,
+    prior_record: Mapping[str, Any] | None = None,
     has_prior: bool,
     negative_ocf_streak: int,
     audit_status: str,
     model_registry: ModelRegistryState | None,
 ) -> dict[str, Any]:
-    """Score one statement using Lane C's v2 bundle when available, else deterministic adapter."""
+    """Score one statement using Lane C's v2.0.0-kaggle engine, else deterministic fallback."""
     scoring_mode: ScoringMode = "multi_period" if has_prior else "single_period"
     bundle = model_registry.get() if model_registry is not None else None
     model_version = DEFAULT_FALLBACK_MODEL_VERSION
-    ensemble_spread: float | None = None
     ood_bounds: Mapping[str, Sequence[float]] | None = None
     pd_12m: float | None = None
     shap_explanation: dict[str, Any] | None = None
 
-    if bundle is not None:
-        # Support Lane C's dual-mode bundle (assess_company_record) if present,
-        # or Wave-0 bundle if feature columns match scale-free contract.
-        assess_fn = getattr(bundle, "assess_record", None)
-        if callable(assess_fn):
-            lane_c_res = assess_fn(record, scoring_mode=scoring_mode, audit_status=audit_status)
-            pd_12m = _finite(getattr(lane_c_res, "pd_12m", None))
-            shap_explanation = getattr(lane_c_res, "shap_explanation", None)
-            model_version = str(getattr(lane_c_res, "model_version", bundle.model_version))
-        elif hasattr(bundle, "classifier") and bundle.classifier is not None:
-            feat_cols = tuple(getattr(bundle.classifier, "feature_columns", ()))
-            # Only invoke a live ML bundle if it uses scale-free features (never EPS/USD-only).
-            if feat_cols and "eps" not in feat_cols:
-                import pandas as pd
+    if bundle is not None and getattr(bundle, "scoring_contract", "legacy_v1") == "scale_free_v2":
+        records_seq: list[Mapping[str, Any]] = (
+            [prior_record, record] if has_prior and prior_record is not None else [record]
+        )
+        assessment = score_company_bankruptcy(
+            bundle,
+            records_seq,
+            audit_status=audit_status,
+            negative_ocf_streak=negative_ocf_streak,
+            interest_coverage=_finite(record.get("interest_coverage")),
+            operating_cash_flow=_finite(record.get("operating_cash_flow")),
+        )
+        overlay_dict = _overlay_to_view_dict(assessment.cash_flow_overlay)
+        health_score = round(assessment.health_score, 2)
+        if overlay_dict["triggered"] and assessment.risk_tier == "WATCH" and health_score >= 60.0:
+            health_score = 59.5
+        return {
+            "model_version": assessment.model_version,
+            "scoring_mode": assessment.scoring_mode,
+            "pd_12m": round(assessment.pd_12m, 6),
+            "health_score": health_score,
+            "risk_tier": assessment.risk_tier,
+            "confidence": assessment.confidence.to_dict(),
+            "cash_flow_overlay": overlay_dict,
+            "shap_explanation": assessment.shap_explanation,
+        }
 
-                from finhealth.ml.explainer import ShapExplainer
+    if bundle is not None and hasattr(bundle, "classifier") and bundle.classifier is not None:
+        feat_cols = tuple(getattr(bundle.classifier, "feature_columns", ()))
+        # Only invoke a legacy ML bundle if it uses scale-free features (never EPS/USD-only).
+        if feat_cols and "eps" not in feat_cols:
+            import pandas as pd
 
-                row_df = pd.DataFrame([{col: record.get(col) for col in feat_cols}])
-                probs = bundle.classifier.predict_proba(row_df)
-                pd_12m = float(probs[0])
-                model_version = bundle.model_version
-                shap_explanation = ShapExplainer(bundle.classifier).explain_instance(row_df)
-                ood_bounds = bundle.evaluation_report.get("feature_ood_bounds")
+            from finhealth.ml.explainer import ShapExplainer
+
+            row_df = pd.DataFrame([{col: record.get(col) for col in feat_cols}])
+            probs = bundle.classifier.predict_proba(row_df)
+            pd_12m = float(probs[0])
+            model_version = bundle.model_version
+            shap_explanation = ShapExplainer(bundle.classifier).explain_instance(row_df)
+            ood_bounds = bundle.evaluation_report.get("feature_ood_bounds")
 
     if pd_12m is None or not isfinite(pd_12m) or shap_explanation is None:
         pd_12m, shap_explanation = _deterministic_pd_and_attributions(record)
         model_version = DEFAULT_FALLBACK_MODEL_VERSION
 
-    # Delegate to Lane C confidence module if available and compatible.
-    _ = _load_lane_c_confidence_module()
     base_tier = classify_bankruptcy_tier(pd_12m)
-    overlay = _evaluate_cash_flow_overlay(
-        record,
-        base_tier=base_tier,
+    overlay_result = apply_cash_flow_overlay(
+        base_tier,
         negative_ocf_streak=negative_ocf_streak,
+        interest_coverage=_finite(record.get("interest_coverage")),
+        operating_cash_flow=_finite(record.get("operating_cash_flow")),
         audit_status=audit_status,
     )
-    effective_tier: RiskTier = overlay["adjusted_tier"]
-    health_score = map_pd_to_health_score(pd_12m)
+    overlay = _overlay_to_view_dict(overlay_result)
+    effective_tier: RiskTier = overlay_result.adjusted_tier
+    health_score = round(map_pd_to_health_score(pd_12m), 2)
     if overlay["triggered"] and effective_tier == "WATCH" and health_score >= 60.0:
         health_score = 59.5
 
-    confidence = _evaluate_confidence(
+    confidence = assess_confidence(
         record,
+        feature_ood_bounds=ood_bounds,
+        model_probabilities=None,
         audit_status=audit_status,
-        ensemble_spread=ensemble_spread,
-        ood_bounds=ood_bounds,
-    )
+        core_features=CORE_BANKRUPTCY_FEATURES,
+    ).to_dict()
     return {
         "model_version": model_version,
         "scoring_mode": scoring_mode,
@@ -764,9 +655,18 @@ def _ensure_org_assessment(
         db.refresh(existing)
         return existing, record, altman
 
+    has_consecutive_prior = (
+        prior_stmt is not None and prior_stmt.fiscal_year == stmt.fiscal_year - 1
+    )
+    prior_record = (
+        _statement_to_record(prior_stmt, company, None)
+        if has_consecutive_prior and prior_stmt is not None
+        else None
+    )
     scored = _score_statement_with_adapter(
         record,
-        has_prior=prior_stmt is not None and prior_stmt.fiscal_year == stmt.fiscal_year - 1,
+        prior_record=prior_record,
+        has_prior=has_consecutive_prior,
         negative_ocf_streak=negative_ocf_streak,
         audit_status=stmt.audit_status,
         model_registry=model_registry,
