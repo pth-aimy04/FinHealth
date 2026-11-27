@@ -697,6 +697,22 @@ def test_etl_and_inference_latency(real_panel: pd.DataFrame, bundle: ModelArtifa
     assert prediction_ms < 150
 
 
+def _assert_nested_approx(actual: object, expected: object) -> None:
+    """Compare nested evaluation reports with float ULP tolerance."""
+    if isinstance(actual, dict) and isinstance(expected, dict):
+        assert actual.keys() == expected.keys()
+        for key in actual:
+            _assert_nested_approx(actual[key], expected[key])
+    elif isinstance(actual, list) and isinstance(expected, list):
+        assert len(actual) == len(expected)
+        for left, right in zip(actual, expected, strict=True):
+            _assert_nested_approx(left, right)
+    elif isinstance(actual, float) or isinstance(expected, float):
+        assert actual == pytest.approx(expected, rel=1e-12, abs=1e-12)
+    else:
+        assert actual == expected
+
+
 def test_training_latency_and_saved_scores(
     real_panel: pd.DataFrame, bundle: ModelArtifactBundle
 ) -> None:
@@ -706,7 +722,9 @@ def test_training_latency_and_saved_scores(
         """Fit and evaluate the full ML pipeline on the real time series."""
         fitted = train_and_evaluate_pipeline(real_panel, 2021, validation_end_year=2022)
         for section in ("classification_xgboost", "forecasting", "split_summary"):
-            assert fitted.evaluation_report[section] == bundle.evaluation_report[section]
+            _assert_nested_approx(
+                fitted.evaluation_report[section], bundle.evaluation_report[section]
+            )
 
     elapsed, _ = _timing("C full training and evaluation", train, 1, warm=False)
     assert elapsed < 10_000

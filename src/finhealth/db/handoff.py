@@ -2,6 +2,7 @@
 
 import argparse
 from pathlib import Path
+from typing import cast
 
 from alembic import command
 from alembic.config import Config
@@ -15,13 +16,16 @@ from finhealth.db.models import Base, Company, FinancialMetric, FinancialStateme
 from finhealth.db.session import create_db_engine
 
 # Explicit allowlist: never export users, credentials, private workspaces or job logs.
-PUBLIC_TABLES: tuple[Table, ...] = (
-    Company.__table__,
-    FinancialStatement.__table__,
-    FinancialMetric.__table__,
-    ModelPrediction.__table__,
-    FilingVersion.__table__,
-    ForecastEvidence.__table__,
+PUBLIC_TABLES: tuple[Table, ...] = cast(
+    tuple[Table, ...],
+    (
+        Company.__table__,
+        FinancialStatement.__table__,
+        FinancialMetric.__table__,
+        ModelPrediction.__table__,
+        FilingVersion.__table__,
+        ForecastEvidence.__table__,
+    ),
 )
 
 

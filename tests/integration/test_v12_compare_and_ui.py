@@ -1,11 +1,6 @@
-"""Stage 9 endpoint and CSV checks against a real local cache or isolated SQLite."""
+"""Stage 9 endpoint checks against a real local cache or isolated SQLite."""
 
-import csv
-import io
-import json
-import shutil
 import sqlite3
-import subprocess
 from collections.abc import Iterator
 from contextlib import closing
 from datetime import date
@@ -168,7 +163,6 @@ def test_screener_annual_alignment_and_api_train_validation(tmp_path: Path) -> N
             _env_file=None,
             data_dir=tmp_path,
             DATABASE_URL=url,
-            frontend_dir=ROOT / "frontend/legacy",
         )
     )
     app.state.model_registry = ModelRegistryState()
@@ -218,8 +212,8 @@ def test_screener_annual_alignment_and_api_train_validation(tmp_path: Path) -> N
         )
 
 
-def test_history_provenance_and_ui_controls(real_api: TestClient) -> None:
-    """Expose full historical provenance on explicit export reads and deliver the controls."""
+def test_history_provenance_and_pagination(real_api: TestClient) -> None:
+    """Expose full historical provenance on explicit export reads and paginate companies."""
     result = real_api.get("/api/v1/companies/AAPL", params={"include_provenance": "true"})
     assert result.status_code == 200
     history = result.json()["history"]
@@ -234,51 +228,3 @@ def test_history_provenance_and_ui_controls(real_api: TestClient) -> None:
     assert first == all_companies[0]
     second = real_api.get("/api/v1/companies", params={"limit": 1, "offset": 1}).json()[0]
     assert second == all_companies[1]
-    html = real_api.get("/").text
-    assert '<html lang="vi">' in html
-    assert 'id="panel-compare"' in html
-    assert real_api.get("/static/account.html").status_code == 200
-    assert real_api.get("/static/js/csv.js").status_code == 200
-
-
-def test_csv_escaping_formula_protection_and_signed_numbers() -> None:
-    """Execute the actual browser serializer using Node when the runtime is installed."""
-    node = shutil.which("node")
-    if node is None:
-        pytest.skip("Node.js is required for the browser serializer test")
-    script = """
-import fs from 'node:fs';
-const source = fs.readFileSync('frontend/legacy/js/csv.js');
-const {serializeCsv} = await import('data:text/javascript;base64,' + source.toString('base64'));
-const {columns, rows} = JSON.parse(fs.readFileSync(0, 'utf8'));
-const headings = {cik: 'CIK', name: 'Tên công ty'};
-process.stdout.write(serializeCsv(columns, rows, (column) => headings[column] ?? column));
-"""
-    columns = ["cik", "name", "roa", "extra", "missing"]
-    rows = [
-        {
-            "cik": "0000320193",
-            "name": 'Issuer, "quoted"\r\nline',
-            "roa": -0.125,
-            "extra": formula,
-            "missing": None,
-        }
-        for formula in ("=2+2", "+2+2", "-2+2", "@SUM(1,2)", " \t=2+2")
-    ]
-    output = subprocess.run(
-        [node, "--input-type=module", "-e", script],
-        cwd=ROOT,
-        check=True,
-        input=json.dumps({"columns": columns, "rows": rows}).encode(),
-        capture_output=True,
-    ).stdout.decode()
-    assert output.count("\r\n") == 11
-    parsed = list(csv.DictReader(io.StringIO(output, newline="")))
-    for actual, expected in zip(parsed, rows, strict=True):
-        assert actual == {
-            "CIK": "'0000320193",
-            "Tên công ty": expected["name"],
-            "roa": "-0.125",
-            "extra": "'" + str(expected["extra"]),
-            "missing": "",
-        }

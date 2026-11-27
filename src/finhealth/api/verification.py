@@ -71,7 +71,7 @@ def confirm_code(
     if pair is None:
         raise HTTPException(400, invalid)
     record, user = pair
-    reserved = db.execute(
+    reserved = db.connection().execute(
         update(EmailVerificationCode)
         .where(
             EmailVerificationCode.id == record.id,
@@ -80,7 +80,6 @@ def confirm_code(
             EmailVerificationCode.attempts < OTP_ATTEMPTS,
         )
         .values(attempts=EmailVerificationCode.attempts + 1),
-        execution_options={"synchronize_session": False},
     ).rowcount
     if reserved != 1:
         db.rollback()
@@ -89,7 +88,7 @@ def confirm_code(
     if not user.active or user.email_verified or not verify_password(record.code_hash, code):
         db.commit()
         raise HTTPException(400, invalid)
-    consumed = db.execute(
+    consumed = db.connection().execute(
         update(EmailVerificationCode)
         .where(
             EmailVerificationCode.id == record.id,
@@ -97,7 +96,6 @@ def confirm_code(
             EmailVerificationCode.expires_at > utc_now(),
         )
         .values(used_at=utc_now()),
-        execution_options={"synchronize_session": False},
     ).rowcount
     if consumed != 1:
         db.rollback()

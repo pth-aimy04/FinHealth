@@ -6,7 +6,7 @@ from alembic import context
 from sqlalchemy import Connection
 
 from finhealth.core.config import get_settings
-from finhealth.db import account_models
+from finhealth.db import account_models, batch_models, org_models
 from finhealth.db.action_code_models import AccountActionCode
 from finhealth.db.lineage_models import FilingVersion, ForecastEvidence, IngestionRun
 from finhealth.db.models import Base
@@ -19,6 +19,8 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 _LINEAGE_TABLES = (FilingVersion, ForecastEvidence, IngestionRun)
 _ACCOUNT_TABLES = account_models.User
+_ORG_TABLES = (org_models.OrgCompany, org_models.OrgFinancialStatement, org_models.OrgAssessment)
+_BATCH_TABLES = (batch_models.OrgBatchJob, batch_models.OrgBatchJobRow)
 _VERIFICATION_TABLE = EmailVerificationCode
 _ACTION_CODE_TABLE = AccountActionCode
 

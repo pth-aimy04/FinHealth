@@ -6,7 +6,7 @@ from json import dumps
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
 from finhealth.core.constants import US_GAAP_TAG_FALLBACKS
 from finhealth.db.lineage_models import FilingVersion, ForecastEvidence
@@ -105,10 +105,24 @@ def backfill_legacy_evidence(session: Session) -> None:
     """Capture legacy rows as known at migration time, without claiming original inputs."""
     from finhealth.db.models import Company, FinancialStatement, ModelPrediction
 
+    legacy_columns = (
+        FinancialStatement.id,
+        FinancialStatement.company_id,
+        FinancialStatement.accession_number,
+        FinancialStatement.form_type,
+        FinancialStatement.fiscal_year,
+        FinancialStatement.fiscal_period,
+        FinancialStatement.period_end_date,
+        FinancialStatement.filed_date,
+        FinancialStatement.field_provenance,
+        *(getattr(FinancialStatement, name) for name in US_GAAP_TAG_FALLBACKS),
+    )
     versions = {
         statement.id: archive_statement(session, cik, statement, "legacy_snapshot")
         for statement, cik in session.execute(
-            select(FinancialStatement, Company.cik).join(Company)
+            select(FinancialStatement, Company.cik)
+            .join(Company)
+            .options(load_only(*legacy_columns))
         ).all()
     }
     for prediction in session.scalars(select(ModelPrediction)):

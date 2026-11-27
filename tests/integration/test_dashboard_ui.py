@@ -56,33 +56,23 @@ def dashboard(tmp_path_factory: pytest.TempPathFactory) -> Iterator[TestClient]:
         yield client
 
 
-def test_dashboard_index_and_lazy_asgi_entry(dashboard: TestClient) -> None:
-    """Serve the four workspaces and the ES module using the documented ASGI entry point."""
-    response = dashboard.get("/")
-    assert response.status_code == 200
-    assert response.headers["content-type"].startswith("text/html")
-    assert response.content == (ROOT / "frontend/legacy/index.html").read_bytes()
-    assert 'id="panel-screener"' in response.text
-    assert '/static/vendor/tabler/' in response.text
-    assert '/static/js/app.js' in response.text
+def test_dashboard_index_missing_and_lazy_asgi_entry(
+    dashboard: TestClient, tmp_path: Path
+) -> None:
+    """Return 503 when no frontend is present and expose the lazy ASGI entry point."""
+    empty_app = main.create_app(
+        Settings(_env_file=None, frontend_dir=tmp_path / "missing", ingestion_worker_enabled=False)
+    )
+    empty_app.state.model_registry = ModelRegistryState()
+    with TestClient(empty_app) as empty_client:
+        response = empty_client.get("/")
+        assert response.status_code == 503
+        assert "Frontend files missing" in response.json()["detail"]
+    live_root = dashboard.get("/")
+    assert live_root.status_code == 200
+    assert "text/html" in live_root.headers["content-type"]
     assert isinstance(main.app, FastAPI)
     assert main.app is main.app
-
-
-def test_dashboard_static_assets(dashboard: TestClient) -> None:
-    """Serve bundled production assets with stable JavaScript MIME types."""
-    from re import findall
-
-    assets = findall(r'(?:src|href)="(/static/[^"]+\.(?:js|css))"',
-                     dashboard.get("/").text)
-    assert assets
-    for asset in assets:
-        response = dashboard.get(asset)
-        assert response.status_code == 200
-        path = ROOT / "frontend/legacy" / asset.removeprefix("/static/")
-        assert response.content == path.read_bytes()
-        expected = "text/css" if asset.endswith(".css") else "javascript"
-        assert expected in response.headers["content-type"]
 
 
 @pytest.mark.parametrize("filename", FIGURES)

@@ -26,15 +26,9 @@ From the repository root, activate the Python environment and start the complete
 uvicorn finhealth.api.main:app --host 127.0.0.1 --port 8000
 ```
 
-Open [the dashboard](http://127.0.0.1:8000) or [the API documentation](http://127.0.0.1:8000/docs).
-The original HTML/CSS/JavaScript interface has been restored and is served directly
-by FastAPI from `frontend/legacy`. No Node installation or frontend build is required.
-Open `/` for the dashboard and `/static/account.html` for account management.
-`FRONTEND_DIR` can override the static root; its default is `frontend/legacy`.
-
-The rejected React implementation remains inactive under `frontend/src` and
-`frontend/dist` for reference, outside the active static root. React migration documents
-and browser screenshots describe that earlier attempt, not the active interface.
+Open [the API documentation](http://127.0.0.1:8000/docs).
+The backend API is served by FastAPI. `FRONTEND_DIR` can be configured to point to a
+new frontend static root when available (defaults to `frontend`).
 
 The alternative factory entry point is
 `uvicorn finhealth.api.main:create_app --factory --host 127.0.0.1 --port 8000`.
@@ -173,22 +167,12 @@ flowchart LR
 | `src/finhealth/etl` | XBRL concept/context selection, accounting scope, ratios and temporal features |
 | `src/finhealth/ml` | Preprocessing, PCA/K-Means, next-period models, baselines, SHAP and artifacts |
 | `src/finhealth/api` | Validated contracts, thin routes and domain orchestration |
-| `frontend/legacy` | Active original dashboard, account pages, styles and ES modules |
 | `tests/unit` and `tests/integration` | Offline invariants, database/API boundaries and forensic verification |
-
-`frontend/legacy/index.html`, `styles.css` and `js` implement the restored interface.
-The original interactive SVG charts and financial API modules are used unchanged.
-Financial values are obtained from API responses. Static arrays define field labels,
-demo ticker identifiers and publication filenames. The API supplies the model's actual
-fitted feature inputs for the complete attribution table. The summary is a deterministic,
-data-derived diagnostic. The threshold marker is read from the active evaluation report.
-The calibrated proxy probability and raw TreeSHAP contributions (probability or log-odds,
-matching the active model output space) are displayed separately.
 
 | Route | Data |
 | --- | --- |
-| `GET /` | Dashboard HTML |
-| `GET /static/*` | Frontend CSS and ES modules |
+| `GET /` | Configured frontend `index.html` (returns 503 when no frontend is present) |
+| `GET /static/*` | Configured frontend static assets |
 | `GET /api/v1/health` | Database connectivity and model activation |
 | `GET /api/v1/dashboard/overview` | Actual company and annual-statement counts |
 | `GET /api/v1/companies` | Latest persisted company snapshots |

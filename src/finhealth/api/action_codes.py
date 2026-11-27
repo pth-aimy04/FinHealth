@@ -67,7 +67,7 @@ def consume_code(
     if pair is None:
         raise HTTPException(400, invalid)
     record, user = pair
-    reserved = db.execute(
+    reserved = db.connection().execute(
         update(AccountActionCode)
         .where(
             AccountActionCode.id == record.id,
@@ -76,7 +76,6 @@ def consume_code(
             AccountActionCode.attempts < OTP_ATTEMPTS,
         )
         .values(attempts=AccountActionCode.attempts + 1),
-        execution_options={"synchronize_session": False},
     ).rowcount
     if reserved != 1:
         db.rollback()
@@ -91,7 +90,7 @@ def consume_code(
     ):
         db.commit()
         raise HTTPException(400, invalid)
-    changed = db.execute(
+    changed = db.connection().execute(
         update(AccountActionCode)
         .where(
             AccountActionCode.id == record.id,
@@ -99,7 +98,6 @@ def consume_code(
             AccountActionCode.expires_at > utc_now(),
         )
         .values(used_at=utc_now()),
-        execution_options={"synchronize_session": False},
     ).rowcount
     if changed != 1:
         db.rollback()

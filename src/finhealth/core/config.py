@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     raw_sec_dir: Path | None = None
     processed_parquet_dir: Path | None = None
     model_artifacts_dir: Path | None = None
-    frontend_dir: Path = Path(__file__).resolve().parents[3] / "frontend" / "legacy"
+    frontend_dir: Path = Path(__file__).resolve().parents[3] / "frontend"
     random_seed: int = RANDOM_SEED
     public_base_url: str = "http://localhost:8000"
     session_hours: int = Field(default=8, ge=1, le=72)

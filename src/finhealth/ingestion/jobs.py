@@ -60,7 +60,7 @@ def _finish(
     retry = recoverable and attempt < MAX_ATTEMPTS
     stage = "queued" if retry else "failed" if error else "succeeded"
     with factory.begin() as session:
-        changed = session.execute(update(IngestionRun).where(
+        changed = session.connection().execute(update(IngestionRun).where(
             IngestionRun.id == job_id, IngestionRun.attempts == attempt,
         ).values(
             status="queued" if retry else "failed" if error else "succeeded",

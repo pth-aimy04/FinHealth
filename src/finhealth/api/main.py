@@ -124,6 +124,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     for router in routers:
         app.include_router(router, prefix="/api/v1")
+    spa_dist = configured.frontend_dir / "dist"
+    app.mount(
+        "/assets",
+        DashboardStaticFiles(directory=spa_dist / "assets", check_dir=False),
+        name="spa-assets",
+    )
     app.mount(
         "/static",
         DashboardStaticFiles(directory=configured.frontend_dir, check_dir=False),
@@ -135,18 +141,41 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         name="figures",
     )
 
-    @app.get("/", response_class=FileResponse, include_in_schema=False)
-    def dashboard_index() -> FileResponse:
-        """Serve the local dashboard through the same origin as the financial API."""
-        if not (configured.frontend_dir / "index.html").is_file():
+    def _resolve_index_html() -> FileResponse:
+        """Serve the built React SPA index when present, falling back to frontend_dir/index.html."""
+        built_index = spa_dist / "index.html"
+        raw_index = configured.frontend_dir / "index.html"
+        target = built_index if built_index.is_file() else raw_index
+        if not target.is_file():
             raise HTTPException(
                 503, "Frontend files missing. Restore the configured frontend directory."
             )
         return FileResponse(
-            configured.frontend_dir / "index.html",
+            target,
             media_type="text/html",
             headers={"Cache-Control": "no-cache"},
         )
+
+    @app.get("/", response_class=FileResponse, include_in_schema=False)
+    def dashboard_index() -> FileResponse:
+        """Serve the local dashboard through the same origin as the financial API."""
+        return _resolve_index_html()
+
+    @app.get("/app/{full_path:path}", response_class=FileResponse, include_in_schema=False)
+    @app.get("/app", response_class=FileResponse, include_in_schema=False)
+    @app.get("/screener", response_class=FileResponse, include_in_schema=False)
+    @app.get("/companies/{full_path:path}", response_class=FileResponse, include_in_schema=False)
+    @app.get("/compare", response_class=FileResponse, include_in_schema=False)
+    @app.get("/clusters", response_class=FileResponse, include_in_schema=False)
+    @app.get("/stress", response_class=FileResponse, include_in_schema=False)
+    @app.get("/models", response_class=FileResponse, include_in_schema=False)
+    @app.get("/workspace", response_class=FileResponse, include_in_schema=False)
+    @app.get("/account", response_class=FileResponse, include_in_schema=False)
+    @app.get("/admin", response_class=FileResponse, include_in_schema=False)
+    def dashboard_spa_routes(full_path: str = "") -> FileResponse:
+        """Serve the React SPA entry for client-side financial workspace routes."""
+        _ = full_path
+        return _resolve_index_html()
 
     return app
 

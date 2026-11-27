@@ -2,8 +2,8 @@
 
 ## Thành phần đã đưa lên GitHub
 
-- Backend Python/FastAPI, giao diện HTML/CSS/JavaScript đang chạy trong `frontend/legacy`.
-- Alembic migrations 0001–0007, tests, tài liệu và frontend React tham khảo.
+- Backend Python/FastAPI (`src/finhealth`).
+- Alembic migrations 0001–0007, tests và tài liệu backend.
 - Cache SEC gốc, bộ dữ liệu Kaggle hiện có, các panel Parquet, mô hình và ảnh biểu đồ.
 - `data/seed/financial.sqlite3`: xuất trực tiếp từ SQL Server hiện tại, chỉ có `companies`,
   `financial_statements`, `financial_metrics`, `model_predictions`, `filing_versions`,

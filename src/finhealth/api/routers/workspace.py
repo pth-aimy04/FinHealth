@@ -19,11 +19,15 @@ from finhealth.ml.registry import ModelArtifactBundle
 router = APIRouter(prefix="/me", tags=["personal workspace"])
 Db = Annotated[Session, Depends(get_db)]
 Owner = Annotated[User, Depends(require_user)]
+WorkspaceModel = type[WatchlistItem] | type[SavedScreener] | type[SavedAnalysis]
 
 
-def limit_saved(db: Session, model: type, user_id: int) -> None:
+def limit_saved(db: Session, model: WorkspaceModel, user_id: int) -> None:
     """Bound per-owner saved collections to prevent unbounded personal storage."""
-    if db.scalar(select(func.count()).select_from(model).where(model.user_id == user_id)) >= 200:
+    count = (
+        db.scalar(select(func.count()).select_from(model).where(model.user_id == user_id)) or 0
+    )
+    if count >= 200:
         raise HTTPException(409, "Đã đạt giới hạn 200 mục. Hãy xóa mục không cần thiết.")
 
 
@@ -66,12 +70,15 @@ def follow(cik: str, user: Owner, db: Db) -> dict[str, object]:
         db.commit()
     except IntegrityError:
         db.rollback()
-        item = db.scalar(
+        existing_item = db.scalar(
             select(WatchlistItem).where(
                 WatchlistItem.user_id == user.id,
                 WatchlistItem.company_id == company.id,
             )
         )
+        if existing_item is None:
+            raise HTTPException(409, "Không thể cập nhật danh sách theo dõi") from None
+        item = existing_item
     return {"id": item.id}
 
 
@@ -172,9 +179,12 @@ def read_analysis(item_id: int, user: Owner, db: Db) -> dict[str, Any]:
 @router.delete("/{collection}/{item_id}", status_code=204)
 def delete_saved(collection: str, item_id: int, user: Owner, db: Db) -> None:
     """Delete only from a fixed collection and only under the authenticated owner."""
-    model = {"watchlist": WatchlistItem, "screeners": SavedScreener, "analyses": SavedAnalysis}.get(
-        collection
-    )
+    collections: dict[str, WorkspaceModel] = {
+        "watchlist": WatchlistItem,
+        "screeners": SavedScreener,
+        "analyses": SavedAnalysis,
+    }
+    model = collections.get(collection)
     if model is None:
         raise HTTPException(404, "Không tìm thấy bộ sưu tập")
     item = db.scalar(select(model).where(model.id == item_id, model.user_id == user.id))

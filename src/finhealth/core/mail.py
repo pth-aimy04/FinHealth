@@ -21,8 +21,12 @@ def require_mail_configuration(settings: Settings) -> None:
 def send_account_email(settings: Settings, recipient: str, subject: str, body: str) -> None:
     """Send only through authenticated STARTTLS with a verified server certificate."""
     require_mail_configuration(settings)
+    username = settings.smtp_username
+    secret = settings.smtp_password
+    if not username or secret is None:
+        raise EmailDeliveryError("Email is not configured; contact the FinHealth administrator")
     message = EmailMessage()
-    message["From"] = formataddr((settings.mail_from_name, settings.smtp_username))
+    message["From"] = formataddr((settings.mail_from_name, username))
     message["To"] = recipient
     message["Subject"] = subject
     message.set_content(body)
@@ -33,11 +37,11 @@ def send_account_email(settings: Settings, recipient: str, subject: str, body: s
             timeout=settings.mail_timeout_seconds,
         ) as server:
             server.starttls(context=ssl.create_default_context())
-            password = settings.smtp_password.get_secret_value()
+            password = secret.get_secret_value()
             if settings.smtp_host.lower() == "smtp.gmail.com":
                 # Google displays app passwords in four-character groups for readability.
                 password = password.replace(" ", "")
-            server.login(settings.smtp_username, password)
+            server.login(username, password)
             server.send_message(message)
     except (smtplib.SMTPException, OSError) as error:
         raise EmailDeliveryError("Email delivery failed; please retry later") from error
