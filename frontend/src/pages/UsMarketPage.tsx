@@ -3,7 +3,7 @@ import { ScreenerPage } from './ScreenerPage';
 
 export function UsMarketPage() {
   return (
-    <div className="space-y-4 animate-view">
+    <div className="space-y-4 animate-view min-w-0">
       <div className="surface px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-l-4 border-l-[var(--accent-primary)]">
         <div className="flex items-center gap-2.5">
           <Globe className="h-4 w-4 text-[var(--accent-primary)] shrink-0" aria-hidden="true" />

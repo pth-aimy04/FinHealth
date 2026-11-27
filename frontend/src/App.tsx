@@ -6,6 +6,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { OverviewPage } from '@/pages/OverviewPage';
 import { PortfolioPage } from '@/pages/PortfolioPage';
 import { OrgCompanyDetailPage } from '@/pages/OrgCompanyDetailPage';
+import { OrgStatementEditorPage } from '@/pages/OrgStatementEditorPage';
 import { BatchAssessmentPage } from '@/pages/BatchAssessmentPage';
 import { ComparePage } from '@/pages/ComparePage';
 import { UsMarketPage } from '@/pages/UsMarketPage';
@@ -43,6 +44,11 @@ export function App() {
                 <Route index element={<OverviewPage />} />
                 <Route path="portfolio" element={<PortfolioPage />} />
                 <Route path="portfolio/:id" element={<OrgCompanyDetailPage />} />
+                <Route path="portfolio/:id/statements/new" element={<OrgStatementEditorPage />} />
+                <Route
+                  path="portfolio/:id/statements/:statementId/edit"
+                  element={<OrgStatementEditorPage />}
+                />
                 <Route path="batch" element={<BatchAssessmentPage />} />
                 <Route path="compare" element={<ComparePage />} />
                 <Route path="us-market" element={<UsMarketPage />} />

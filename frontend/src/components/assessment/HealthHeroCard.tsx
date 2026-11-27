@@ -103,7 +103,7 @@ export function HealthHeroCard({
         <div className="min-w-0 space-y-1">
           {companyName ? (
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold tracking-[-0.02em] text-[var(--text-primary)] truncate">
+              <h1 className="text-lg sm:text-xl font-bold tracking-[-0.02em] text-[var(--text-primary)] break-words">
                 {companyName}
               </h1>
               {identifierLabel ? (
@@ -132,7 +132,7 @@ export function HealthHeroCard({
         </div>
 
         {(onExportPdf || onNewStatement || onCompare) ? (
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {onNewStatement ? (
               <Button variant="secondary" size="sm" onClick={onNewStatement}>
                 <FilePlus2 className="h-3.5 w-3.5" aria-hidden="true" />

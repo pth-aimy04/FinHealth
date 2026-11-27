@@ -83,7 +83,28 @@ function buildSecSummaryView(data: CompanyFullAnalysis): AssessmentSummaryView {
   const pd = data.latest_prediction?.distress_probability ?? data.company.distress_probability;
   const score = mapPdToSingleHealthScore(pd);
   const { tier, label } = classifyRiskTierFromPd(pd);
-  const isFinancialSector = (data.company.sector ?? '').toLowerCase().includes('finance');
+  const sectorLower = (data.company.sector ?? '').toLowerCase();
+  const isFinancialSector =
+    sectorLower.includes('finance') ||
+    sectorLower.includes('insurance') ||
+    sectorLower.includes('bank');
+
+  const coreObservedKeys = [
+    data.company.roa,
+    data.company.roe,
+    data.company.debt_ratio,
+    data.company.current_ratio,
+    data.company.operating_margin,
+    data.company.working_capital_ratio,
+    data.company.retained_earnings_ratio,
+    data.company.ebit_to_assets,
+    data.company.asset_turnover,
+    data.company.ocf_ratio,
+  ];
+  const observedCount = coreObservedKeys.filter(
+    (v) => typeof v === 'number' && Number.isFinite(v),
+  ).length;
+  const computedCompleteness = Number((observedCount / coreObservedKeys.length).toFixed(2));
 
   const takeaways: string[] = [];
   if (typeof data.company.roa === 'number') {
@@ -111,8 +132,8 @@ function buildSecSummaryView(data: CompanyFullAnalysis): AssessmentSummaryView {
     risk_label_vi: isFinancialSector ? 'Loại trừ (Tài chính)' : label,
     pd_12m: isFinancialSector ? null : pd,
     confidence: {
-      level: data.history.length >= 3 ? 'HIGH' : 'MODERATE',
-      input_completeness: 0.92,
+      level: computedCompleteness >= 0.9 && data.history.length >= 3 ? 'HIGH' : 'MODERATE',
+      input_completeness: computedCompleteness,
       is_ood: false,
       ood_features: [],
       ensemble_spread: null,
@@ -267,11 +288,19 @@ export function CompanyDetailPage() {
   const formType = searchParams.get('form_type') === '10-Q' ? '10-Q' : '10-K';
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const analysisQuery = useQuery({
     queryKey: ['company', identifier, formType],
     queryFn: () => api.getCompany(identifier, formType),
     enabled: Boolean(identifier),
+  });
+
+  const secAssessmentQuery = useQuery({
+    queryKey: ['company-assessment', identifier],
+    queryFn: () => api.getSecCompanyAssessment(identifier),
+    enabled: Boolean(identifier) && formType === '10-K',
+    retry: false,
   });
 
   const alertsQuery = useQuery({
@@ -289,17 +318,45 @@ export function CompanyDetailPage() {
   });
 
   const data = analysisQuery.data;
+  const unifiedAssessment = formType === '10-K' ? secAssessmentQuery.data : undefined;
 
-  const summaryView = useMemo(() => (data ? buildSecSummaryView(data) : null), [data]);
-  const driversView = useMemo(() => (data ? buildSecDriversView(data) : null), [data]);
-  const altmanView = useMemo(() => (data ? buildSecAltmanView(data) : null), [data]);
+  const summaryView = useMemo(
+    () =>
+      unifiedAssessment
+        ? (unifiedAssessment.summary as unknown as AssessmentSummaryView)
+        : data
+          ? buildSecSummaryView(data)
+          : null,
+    [data, unifiedAssessment],
+  );
+  const driversView = useMemo(
+    () =>
+      unifiedAssessment
+        ? (unifiedAssessment.drivers as unknown as DriversSplitView)
+        : data
+          ? buildSecDriversView(data)
+          : null,
+    [data, unifiedAssessment],
+  );
+  const altmanView = useMemo(
+    () =>
+      unifiedAssessment
+        ? (unifiedAssessment.altman as unknown as AltmanView)
+        : data
+          ? buildSecAltmanView(data)
+          : null,
+    [data, unifiedAssessment],
+  );
 
   async function handleExportSecPdf() {
     if (!identifier) return;
     setExportingPdf(true);
+    setPdfError(null);
     try {
       const blob = await api.downloadSecReportPdf(identifier);
       triggerBlobDownload(blob, `FinHealth_SEC_${identifier.toUpperCase()}.pdf`);
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : 'Không thể xuất báo cáo PDF SEC.');
     } finally {
       setExportingPdf(false);
     }
@@ -377,7 +434,7 @@ export function CompanyDetailPage() {
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => navigate(`/stress?ticker=${encodeURIComponent(idForUrl)}`)}
+            onClick={() => navigate(`/stress?id=${encodeURIComponent(idForUrl)}`)}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
             Kiểm thử Kịch bản
@@ -396,6 +453,10 @@ export function CompanyDetailPage() {
           ) : null}
         </div>
       </div>
+
+      {pdfError ? (
+        <ErrorState title="Không thể xuất báo cáo PDF" message={pdfError} />
+      ) : null}
 
       {/* Unified HealthHeroCard (Single Health Score, zero ML jargon, NĐ 88/2014 disclaimer) */}
       <HealthHeroCard

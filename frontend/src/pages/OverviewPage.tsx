@@ -28,14 +28,18 @@ import {
   TableSkeleton,
 } from '@/components/ui/Primitives';
 
-/** Monotonic PD -> 0..100 single Health Score aligned with backend map_pd_to_health_score. */
+/** Monotonic PD -> 0..100 single Health Score aligned with backend map_pd_to_health_score (80/60/35). */
 export function mapPdToSingleHealthScore(pd: number | null | undefined): number | null {
   if (typeof pd !== 'number' || !Number.isFinite(pd)) return null;
   const p = Math.max(0, Math.min(1, pd));
-  if (p <= 0.01) return Number((100 - (p / 0.01) * 15).toFixed(1));
-  if (p <= 0.03) return Number((85 - ((p - 0.01) / 0.02) * 20).toFixed(1));
-  if (p <= 0.08) return Number((65 - ((p - 0.03) / 0.05) * 25).toFixed(1));
-  return Number(Math.max(0, 40 - ((p - 0.08) / 0.92) * 40).toFixed(1));
+  if (p < 0.01) return Number((100 - 20 * (p / 0.01)).toFixed(1));
+  if (p < 0.03) return Number((80 - 20 * ((p - 0.01) / 0.02)).toFixed(1));
+  if (p < 0.08) return Number((60 - 25 * ((p - 0.03) / 0.05)).toFixed(1));
+  const tail = Math.min(
+    1,
+    Math.log1p((p - 0.08) / 0.08) / Math.log1p((1 - 0.08) / 0.08),
+  );
+  return Number(Math.max(0, 35 * (1 - tail)).toFixed(1));
 }
 
 export function OverviewPage() {

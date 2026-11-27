@@ -228,6 +228,8 @@ export const api = {
     request<CompanyFullAnalysis>(
       `/companies/${encodeURIComponent(identifier)}${buildQuery({ form_type: formType })}`,
     ),
+  getSecCompanyAssessment: (identifier: string) =>
+    request<CompanyAssessmentView>(`/companies/${encodeURIComponent(identifier)}/assessment`),
   analyzeCompany: (identifier: string, forceRefresh = false) =>
     request<CompanyFullAnalysis>(
       `/companies/${encodeURIComponent(identifier)}/analyze${buildQuery({ force_refresh: forceRefresh })}`,

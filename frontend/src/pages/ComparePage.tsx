@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Building2, Globe, Plus, Scale, X } from 'lucide-react';
@@ -31,13 +31,26 @@ const MAX_COMPARE_COUNT = 4;
 
 export function ComparePage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, activeOrg } = useAuth();
+  const { user, activeOrg, isLoading: authLoading, isOrgsLoading } = useAuth();
 
-  const initialSource = searchParams.get('source') === 'org' && user ? 'org' : 'sec';
-  const [source, setSource] = useState<'org' | 'sec'>(initialSource);
+  const urlSource = searchParams.get('source');
+  const waitingForOrgAuth = urlSource === 'org' && (authLoading || isOrgsLoading);
+  const [source, setSource] = useState<'org' | 'sec'>(
+    urlSource === 'org' && user ? 'org' : 'sec',
+  );
   const [inputTicker, setInputTicker] = useState('');
   const [selectedOrgIdToAdd, setSelectedOrgIdToAdd] = useState('');
   const [limitNotice, setLimitNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (urlSource === 'org' && user && activeOrg) {
+      setSource('org');
+    } else if (urlSource === 'sec') {
+      setSource('sec');
+    } else if (urlSource === 'org' && !authLoading && !user) {
+      setSource('sec');
+    }
+  }, [urlSource, user, activeOrg, authLoading]);
 
   const idsParam = searchParams.get('ids');
   const secIdentifiers =
@@ -64,6 +77,13 @@ export function ComparePage() {
   const commonYearValue = useCommonYear
     ? Number(searchParams.get('common_year')) || new Date().getFullYear() - 1
     : null;
+  const [commonYearDraft, setCommonYearDraft] = useState(
+    commonYearValue !== null ? String(commonYearValue) : '',
+  );
+
+  useEffect(() => {
+    setCommonYearDraft(commonYearValue !== null ? String(commonYearValue) : '');
+  }, [commonYearValue]);
 
   const orgListQuery = useQuery({
     queryKey: ['org', activeOrg?.id, 'companies'],
@@ -74,7 +94,11 @@ export function ComparePage() {
   const secCompareQuery = useQuery({
     queryKey: ['compare', 'sec', secIdentifiers.join(','), commonYearValue ?? 'latest'],
     queryFn: () => api.compareCompanies(secIdentifiers, commonYearValue),
-    enabled: source === 'sec' && secIdentifiers.length >= 2,
+    enabled:
+      !waitingForOrgAuth &&
+      !(urlSource === 'org' && Boolean(user && activeOrg)) &&
+      source === 'sec' &&
+      secIdentifiers.length >= 2,
   });
 
   const orgCompareQuery = useQuery({
@@ -86,7 +110,7 @@ export function ComparePage() {
       commonYearValue ?? 'latest',
     ],
     queryFn: () => api.compareOrgCompanies(orgCompanyIds, commonYearValue),
-    enabled: source === 'org' && Boolean(user && activeOrg) && orgCompanyIds.length >= 2,
+    enabled: !waitingForOrgAuth && source === 'org' && Boolean(user && activeOrg) && orgCompanyIds.length >= 2,
   });
 
   function updateSearch(patch: Record<string, string | null>) {
@@ -131,8 +155,10 @@ export function ComparePage() {
   }
 
   const orgCompanies = orgListQuery.data ?? [];
-  const activeLoading = source === 'org' ? orgCompareQuery.isLoading : secCompareQuery.isLoading;
-  const activeError = source === 'org' ? orgCompareQuery.error : secCompareQuery.error;
+  const activeLoading =
+    waitingForOrgAuth || (source === 'org' ? orgCompareQuery.isLoading : secCompareQuery.isLoading);
+  const activeError =
+    waitingForOrgAuth ? null : source === 'org' ? orgCompareQuery.error : secCompareQuery.error;
 
   const chartData =
     source === 'org'
@@ -236,14 +262,24 @@ export function ComparePage() {
             </button>
             {useCommonYear ? (
               <input
-                type="number"
-                min={2010}
-                max={2035}
-                value={commonYearValue ?? ''}
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={commonYearDraft}
                 onChange={(e) => {
-                  const val = Number(e.target.value);
+                  const digits = e.target.value.replace(/[^\d]/g, '').slice(0, 4);
+                  setCommonYearDraft(digits);
+                  const val = Number(digits);
+                  if (digits.length === 4 && Number.isInteger(val) && val >= 2010 && val <= 2035) {
+                    updateSearch({ common_year: String(val) });
+                  }
+                }}
+                onBlur={() => {
+                  const val = Number(commonYearDraft);
                   if (Number.isInteger(val) && val >= 2010 && val <= 2035) {
                     updateSearch({ common_year: String(val) });
+                  } else if (commonYearValue !== null) {
+                    setCommonYearDraft(String(commonYearValue));
                   }
                 }}
                 aria-label="Chọn năm tài chính chung"

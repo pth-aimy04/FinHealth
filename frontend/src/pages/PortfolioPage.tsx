@@ -16,7 +16,9 @@ import { api } from '@/lib/api';
 import {
   BUSINESS_TYPE_LABELS,
   RELATIONSHIP_TAG_LABELS,
+  RISK_TIER_META,
   formatDate,
+  formatScore,
 } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
 import type {
@@ -64,8 +66,9 @@ export function PortfolioPage() {
 
   const companiesQuery = useQuery({
     queryKey: [
-      'org-companies',
+      'org',
       activeOrg?.id,
+      'companies',
       {
         q: queryText.trim(),
         relationship_tag: relationshipFilter || undefined,
@@ -93,7 +96,7 @@ export function PortfolioPage() {
       setFormTaxCode('');
       setFormTicker('');
       setFormSectorName('');
-      await queryClient.invalidateQueries({ queryKey: ['org-companies', activeOrg?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['org', activeOrg?.id, 'companies'] });
     },
     onError: (err) =>
       setErrorMessage(err instanceof Error ? err.message : 'Không thể tạo hồ sơ doanh nghiệp.'),
@@ -106,7 +109,7 @@ export function PortfolioPage() {
       setStatusMessage(
         `Đã khởi tạo ${res.created_companies} doanh nghiệp mẫu VN mới (${res.created_statements} kỳ BCTC).`,
       );
-      await queryClient.invalidateQueries({ queryKey: ['org-companies', activeOrg?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['org', activeOrg?.id, 'companies'] });
     },
     onError: (err) =>
       setErrorMessage(err instanceof Error ? err.message : 'Không thể nạp doanh nghiệp mẫu.'),
@@ -117,7 +120,7 @@ export function PortfolioPage() {
       api.updateOrgCompany(id, { archived }),
     onSuccess: async () => {
       setErrorMessage(null);
-      await queryClient.invalidateQueries({ queryKey: ['org-companies', activeOrg?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['org', activeOrg?.id, 'companies'] });
     },
     onError: (err) =>
       setErrorMessage(err instanceof Error ? err.message : 'Không thể cập nhật trạng thái lưu trữ.'),
@@ -128,7 +131,7 @@ export function PortfolioPage() {
     onSuccess: async () => {
       setErrorMessage(null);
       setStatusMessage('Đã xóa vĩnh viễn hồ sơ doanh nghiệp.');
-      await queryClient.invalidateQueries({ queryKey: ['org-companies', activeOrg?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['org', activeOrg?.id, 'companies'] });
     },
     onError: (err) =>
       setErrorMessage(err instanceof Error ? err.message : 'Không thể xóa doanh nghiệp.'),
@@ -486,7 +489,7 @@ export function PortfolioPage() {
                   <th className="py-2.5 px-4 font-medium">Doanh nghiệp</th>
                   <th className="py-2.5 px-4 font-medium">MST / Mã CK</th>
                   <th className="py-2.5 px-4 font-medium">Quan hệ & Loại hình</th>
-                  <th className="py-2.5 px-4 font-medium">Phạm vi chấm điểm</th>
+                  <th className="py-2.5 px-4 font-medium">Sức khỏe / Phạm vi</th>
                   <th className="py-2.5 px-4 font-medium">Cập nhật</th>
                   <th className="py-2.5 px-4 font-medium text-right">Thao tác</th>
                 </tr>
@@ -539,17 +542,32 @@ export function PortfolioPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      {company.scoring_eligible ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]">
-                          Đủ điều kiện chấm điểm
-                        </span>
-                      ) : (
+                      {!company.scoring_eligible ? (
                         <span
                           title={company.scoring_exclusion_reason ?? undefined}
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--risk-medium-bg)] text-[var(--risk-medium-fg)]"
                         >
                           <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                           Loại trừ (TCTC)
+                        </span>
+                      ) : company.latest_risk_tier && RISK_TIER_META[company.latest_risk_tier] ? (
+                        <div className="flex items-center gap-2">
+                          <span className="num font-semibold text-[var(--text-primary)]">
+                            {formatScore(company.latest_health_score, 1)}
+                          </span>
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium"
+                            style={{
+                              color: RISK_TIER_META[company.latest_risk_tier].fg,
+                              backgroundColor: RISK_TIER_META[company.latest_risk_tier].bg,
+                            }}
+                          >
+                            {RISK_TIER_META[company.latest_risk_tier].label}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--risk-low-bg)] text-[var(--risk-low-fg)]">
+                          Đủ điều kiện chấm điểm
                         </span>
                       )}
                     </td>
@@ -623,7 +641,13 @@ export function PortfolioPage() {
           onClose={() => setImportTarget(null)}
           onImported={() => {
             void queryClient.invalidateQueries({
-              queryKey: ['org-company-statements', importTarget.id],
+              queryKey: ['org', activeOrg?.id, 'statements', importTarget.id],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['org', activeOrg?.id, 'analysis', importTarget.id],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['org', activeOrg?.id, 'companies'],
             });
           }}
         />

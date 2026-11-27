@@ -19,7 +19,7 @@
    - Unified single **0–100 Health Score** across Overview, Portfolio, Compare, Batch, Detail, and PDF; no `AAA..CCC` credit-rating labels on customer UI; Decree 88/2014/NĐ-CP disclaimer on all assessments and PDFs.
    - Full Altman $Z / Z' / Z''$ with dynamic cutoffs, 5 Financial Pillars & 20 ratios with Vietnamese tooltips, 2-column plain-business **Điểm Tựa & Điểm Nghẽn** (no ML jargon leaked to end users), 3–5 year multi-period trajectory, and 2–4 company side-by-side comparison.
 5. **Reporting & Batch Screening (`batch-and-reporting`):**
-   - Server-side A4 Vietnamese PDF report (`reportlab` + `matplotlib` Agg + embedded `BeVietnamPro` TTF fonts, zero GTK dependency).
+   - Server-side A4 Vietnamese PDF report (`reportlab` + `matplotlib` Agg + embedded `DejaVuSans` Unicode TTF fonts, zero GTK dependency).
    - Asynchronous DB-backed Batch Excel screening (up to 500 rows, ≤ 10 MB) with row-level error isolation and risk-ranked `.xlsx` export.
 
 ## Core Surface Map (React SPA)

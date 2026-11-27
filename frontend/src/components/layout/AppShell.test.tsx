@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppShell } from '@/components/layout/AppShell';
@@ -48,7 +48,7 @@ describe('AppShell navigation and workspace governance', () => {
     vi.clearAllMocks();
   });
 
-  it('hides Admin, ModelLab, and ClusterMap from normal users while showing both parallel spaces', () => {
+  it('hides Admin, ModelLab, and ClusterMap from normal users while showing both parallel spaces', async () => {
     const switchOrg = vi.fn().mockResolvedValue(undefined);
     mockUseAuth.mockReturnValue({
       user: {
@@ -117,7 +117,7 @@ describe('AppShell navigation and workspace governance', () => {
     // Org switcher works
     const switcher = screen.getByLabelText('Chuyển đổi tổ chức làm việc');
     fireEvent.change(switcher, { target: { value: '11' } });
-    expect(switchOrg).toHaveBeenCalledWith(11);
+    await waitFor(() => expect(switchOrg).toHaveBeenCalledWith(11));
   });
 
   it('shows Admin navigation only for system admins', () => {

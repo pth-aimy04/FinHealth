@@ -20,6 +20,7 @@ import { api } from '@/lib/api';
 import { formatPct, formatRatio, translateSector } from '@/lib/format';
 import type { CompanySummary } from '@/types/api';
 import { useAuth } from '@/context/AuthContext';
+import { mapPdToSingleHealthScore } from './OverviewPage';
 import {
   Button,
   EmptyState,
@@ -130,7 +131,7 @@ export function ScreenerPage() {
 
   function toggleCompare(id: string) {
     setSelectedTickers((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : prev.length < 5 ? [...prev, id] : prev,
+      prev.includes(id) ? prev.filter((item) => item !== id) : prev.length < 4 ? [...prev, id] : prev,
     );
   }
 
@@ -161,13 +162,13 @@ export function ScreenerPage() {
           const id = item.ticker || item.cik;
           return (
             <Link
-              to={`/companies/${encodeURIComponent(id)}`}
+              to={`/us-market/${encodeURIComponent(id)}`}
               className="flex items-center gap-2 no-underline text-[var(--text-primary)] hover:text-[var(--accent-primary)]"
             >
-              <span className="font-mono font-bold text-[var(--accent-primary)] w-12 shrink-0">
+              <span className="font-mono font-bold text-[var(--accent-primary)] w-11 shrink-0">
                 {item.ticker ?? '—'}
               </span>
-              <span className="truncate max-w-[180px] font-medium">{item.name}</span>
+              <span className="truncate max-w-[140px] font-medium">{item.name}</span>
             </Link>
           );
         },
@@ -175,7 +176,7 @@ export function ScreenerPage() {
       columnHelper.accessor('sector', {
         header: 'Nhóm ngành',
         cell: (info) => (
-          <span className="text-[var(--text-secondary)] truncate block max-w-[155px]">
+          <span className="text-[var(--text-secondary)] truncate block max-w-[125px]">
             {translateSector(info.getValue())}
           </span>
         ),
@@ -192,7 +193,8 @@ export function ScreenerPage() {
         header: 'Mức rủi ro',
         cell: (info) => <RiskBadge level={info.getValue()} />,
       }),
-      columnHelper.accessor('composite_health_score', {
+      columnHelper.accessor((row) => mapPdToSingleHealthScore(row.distress_probability), {
+        id: 'unified_health_score',
         header: 'Điểm SK',
         cell: (info) => <InlineProbBar value={info.getValue()} tone="health" />,
       }),
@@ -204,17 +206,9 @@ export function ScreenerPage() {
         header: 'ROA',
         cell: (info) => <span className="num">{formatPct(info.getValue())}</span>,
       }),
-      columnHelper.accessor('roe', {
-        header: 'ROE',
-        cell: (info) => <span className="num">{formatPct(info.getValue())}</span>,
-      }),
       columnHelper.accessor('debt_ratio', {
         header: 'Tỷ lệ nợ',
         cell: (info) => <span className="num">{formatPct(info.getValue())}</span>,
-      }),
-      columnHelper.accessor('current_ratio', {
-        header: 'TT Hiện hành',
-        cell: (info) => <span className="num">{formatRatio(info.getValue())}</span>,
       }),
       columnHelper.display({
         id: 'watch',
@@ -262,16 +256,14 @@ export function ScreenerPage() {
   const numericCols = new Set([
     'latest_fiscal_year',
     'distress_probability',
-    'composite_health_score',
+    'unified_health_score',
     'altman_z_score',
     'roa',
-    'roe',
     'debt_ratio',
-    'current_ratio',
   ]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[1.4rem] font-bold tracking-[-0.025em]">
@@ -289,7 +281,7 @@ export function ScreenerPage() {
               variant="primary"
               size="sm"
               onClick={() =>
-                navigate(`/compare?ids=${encodeURIComponent(selectedTickers.join(','))}`)
+                navigate(`/compare?source=sec&ids=${encodeURIComponent(selectedTickers.join(','))}`)
               }
             >
               <GitCompare className="h-3.5 w-3.5" aria-hidden="true" />
@@ -474,10 +466,10 @@ export function ScreenerPage() {
         </div>
       </Panel>
 
-      <Panel>
+      <Panel className="min-w-0 overflow-hidden">
         <PanelHeader
           title="Kết quả Sàng lọc Doanh nghiệp"
-          description="Bấm vào tiêu đề cột để sắp xếp. Đánh dấu từ 2 đến 5 doanh nghiệp để so sánh song song."
+          description="Bấm vào tiêu đề cột để sắp xếp. Đánh dấu từ 2 đến 4 doanh nghiệp để so sánh song song."
         />
         {companiesQuery.isLoading ? (
           <TableSkeleton rows={10} />
@@ -516,7 +508,7 @@ export function ScreenerPage() {
                         <th
                           key={header.id}
                           className={cn(
-                            'py-2.5 px-3 font-semibold whitespace-nowrap',
+                            'py-2.5 px-2 font-semibold whitespace-nowrap',
                             isNumeric && 'text-right',
                           )}
                         >
@@ -550,7 +542,7 @@ export function ScreenerPage() {
                         <td
                           key={cell.id}
                           className={cn(
-                            'px-3 whitespace-nowrap',
+                            'px-2 whitespace-nowrap',
                             density === 'compact' ? 'py-2' : 'py-3',
                             isNumeric && 'text-right',
                           )}

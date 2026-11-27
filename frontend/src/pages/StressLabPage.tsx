@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Play, RotateCcw } from 'lucide-react';
@@ -66,8 +66,15 @@ const PRESETS: Array<{ label: string; scenario: StressScenarioRequest }> = [
 
 export function StressLabPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [identifier, setIdentifier] = useState(searchParams.get('id') ?? 'AAPL');
+  const paramIdentifier = searchParams.get('id') ?? searchParams.get('ticker') ?? 'AAPL';
+  const [identifier, setIdentifier] = useState(paramIdentifier);
   const [scenario, setScenario] = useState<StressScenarioRequest>(PRESETS[0].scenario);
+
+  useEffect(() => {
+    if (paramIdentifier && paramIdentifier !== identifier) {
+      setIdentifier(paramIdentifier);
+    }
+  }, [paramIdentifier, identifier]);
 
   const companiesQuery = useQuery({
     queryKey: ['companies', { limit: 150 }],
@@ -244,7 +251,10 @@ export function StressLabPage() {
                     </div>
                     <p className="mt-0.5 text-[var(--text-primary)]">
                       Các chỉ số sau cú sốc vượt ngoài vùng dữ liệu huấn luyện đối với:{' '}
-                      <span className="font-mono">{result.ood_features.join(', ')}</span>.
+                      <span className="font-medium">
+                        {result.ood_features.map(humanizeFeature).join(', ')}
+                      </span>
+                      .
                     </p>
                   </div>
                 </div>

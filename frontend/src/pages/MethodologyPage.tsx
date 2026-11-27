@@ -16,7 +16,11 @@ export function MethodologyPage() {
     queryFn: api.getHealth,
   });
 
-  const activeVersion = healthQuery.data?.active_model_version ?? 'v2.0.0-kaggle';
+  const reportedVersion = healthQuery.data?.active_model_version;
+  const activeVersion =
+    reportedVersion && reportedVersion.startsWith('v2')
+      ? reportedVersion
+      : 'v2.0.0-kaggle (Scale-Free Ensemble)';
 
   return (
     <div className="space-y-6 animate-view max-w-5xl">
@@ -82,24 +86,24 @@ export function MethodologyPage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="p-3 rounded-[6px] border border-[var(--border-subtle)] bg-[var(--risk-low-bg)]/45">
-              <div className="font-semibold text-[var(--risk-low-fg)]">Vững mạnh (85–100)</div>
+              <div className="font-semibold text-[var(--risk-low-fg)]">Vững mạnh (80–100)</div>
               <div className="mt-1 text-[11px]">Nguy cơ 12 tháng &lt; 1,0%</div>
             </div>
             <div className="p-3 rounded-[6px] border border-[var(--border-subtle)] bg-[var(--accent-soft)]/50">
-              <div className="font-semibold text-[#1D4ED8]">Ổn định (65–85)</div>
+              <div className="font-semibold text-[#1D4ED8]">Ổn định (60–80)</div>
               <div className="mt-1 text-[11px]">Nguy cơ 12 tháng 1,0% – 3,0%</div>
             </div>
             <div className="p-3 rounded-[6px] border border-[var(--border-subtle)] bg-[var(--risk-medium-bg)]/50">
               <div className="font-semibold text-[var(--risk-medium-fg)]">
-                Cần theo dõi sát (40–65)
+                Cần theo dõi sát (35–60)
               </div>
               <div className="mt-1 text-[11px]">Nguy cơ 12 tháng 3,0% – 8,0%</div>
             </div>
             <div className="p-3 rounded-[6px] border border-[var(--border-subtle)] bg-[var(--risk-critical-bg)]/50">
               <div className="font-semibold text-[var(--risk-critical-fg)]">
-                Nguy cơ khủng hoảng cao (0–40)
+                Nguy cơ khủng hoảng cao (0–35)
               </div>
-              <div className="mt-1 text-[11px]">Nguy cơ 12 tháng &gt; 8,0%</div>
+              <div className="mt-1 text-[11px]">Nguy cơ 12 tháng &ge; 8,0%</div>
             </div>
           </div>
 
@@ -107,9 +111,9 @@ export function MethodologyPage() {
             {[
               'Khả năng thanh toán ngắn hạn (20%): Thanh toán hiện hành, thanh toán nhanh, tiền mặt, vốn lưu động.',
               'Cơ cấu vốn & Áp lực nợ vay (25%): Tỷ lệ nợ, vốn chủ/tổng tài sản, nợ ngắn hạn, khả năng trả lãi vay, lợi nhuận giữ lại (áp mức phạt 0 điểm khi âm VCSH).',
-              'Khả năng sinh lời (25%): Biên gộp, biên hoạt động, biên EBITDA, ROA, ROE.',
+              'Khả năng sinh lời (20%): Biên gộp, biên hoạt động, biên EBITDA, ROA, ROE.',
               'Hiệu quả luân chuyển vốn (15%): Vòng quay tổng tài sản, số ngày thu tiền bình quân (DSO), số ngày tồn kho (DIO).',
-              'Sức mạnh dòng tiền thực (15%): Dòng tiền HĐKD / Tổng nợ, dòng tiền tự do / Tổng nợ, tỷ lệ chuyển hóa tiền mặt (QoE).',
+              'Sức mạnh dòng tiền thực (20%): Dòng tiền HĐKD / Tổng nợ, dòng tiền tự do / Tổng nợ, tỷ lệ chuyển hóa tiền mặt (QoE).',
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-[var(--accent-primary)] shrink-0 mt-0.5" />

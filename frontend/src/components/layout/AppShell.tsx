@@ -79,7 +79,7 @@ export function AppShell() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { data: orgCompanies } = useQuery({
-    queryKey: ['org-companies', activeOrg?.id, 'quick-search'],
+    queryKey: ['org', activeOrg?.id, 'companies', 'quick-search'],
     queryFn: () => api.getOrgCompanies(),
     enabled: Boolean(user && activeOrg),
     staleTime: 60_000,
@@ -462,7 +462,7 @@ export function AppShell() {
 
         <main
           id="main-content"
-          className="flex-1 p-4 sm:p-6 max-w-[1440px] w-full mx-auto animate-view"
+          className="flex-1 min-w-0 p-4 sm:p-6 max-w-[1440px] w-full mx-auto animate-view"
         >
           <Outlet />
         </main>

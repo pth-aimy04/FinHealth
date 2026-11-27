@@ -95,8 +95,8 @@ export function WorkspacePage() {
               title="Danh sách theo dõi đang trống"
               description="Bấm biểu tượng ngôi sao ở Bộ lọc doanh nghiệp hoặc Hồ sơ công ty để thêm vào đây."
               action={
-                <Link to="/screener" className="no-underline">
-                  <Button variant="secondary" size="sm">Mở Bộ lọc doanh nghiệp</Button>
+                <Link to="/us-market" className="no-underline">
+                  <Button variant="secondary" size="sm">Mở Thị trường Mỹ (SEC)</Button>
                 </Link>
               }
             />
@@ -105,7 +105,7 @@ export function WorkspacePage() {
               {(watchlistQuery.data ?? []).map((item) => (
                 <li key={item.id} className="px-4 py-3 flex items-center justify-between gap-2">
                   <Link
-                    to={`/companies/${encodeURIComponent(item.ticker || item.cik)}`}
+                    to={`/us-market/${encodeURIComponent(item.ticker || item.cik)}`}
                     className="flex items-center gap-2 no-underline text-[var(--text-primary)] hover:text-[var(--accent-primary)]"
                   >
                     <span className="font-mono font-semibold text-[var(--accent-primary)]">
@@ -149,7 +149,7 @@ export function WorkspacePage() {
                 return (
                   <li key={sc.id} className="px-4 py-3 flex items-center justify-between gap-2">
                     <Link
-                      to={`/screener?${qs.toString()}`}
+                      to={`/us-market?${qs.toString()}`}
                       className="inline-flex items-center gap-1.5 font-medium text-[var(--text-primary)] hover:text-[var(--accent-primary)] no-underline"
                     >
                       <span>{sc.name}</span>
@@ -180,10 +180,10 @@ export function WorkspacePage() {
           ) : (analysesQuery.data ?? []).length === 0 ? (
             <EmptyState
               title="Chưa có phân tích nào được lưu"
-              description="Chấm điểm một báo cáo tự nhập trong mục Mô hình & Chấm điểm rồi lưu lại tại đây."
+              description="Quản lý danh bạ doanh nghiệp và nhập BCTC để theo dõi sức khỏe tài chính chuyên sâu."
               action={
-                <Link to="/models" className="no-underline">
-                  <Button variant="secondary" size="sm">Mở Phòng thí nghiệm Mô hình</Button>
+                <Link to="/portfolio" className="no-underline">
+                  <Button variant="secondary" size="sm">Mở Danh bạ Doanh nghiệp</Button>
                 </Link>
               }
             />

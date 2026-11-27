@@ -7,6 +7,7 @@ import {
   Download,
   FileSpreadsheet,
   FileUp,
+  Pencil,
   Plus,
   RefreshCw,
   Trash2,
@@ -17,6 +18,8 @@ import {
   ACCOUNTING_STANDARD_LABELS,
   AUDIT_STATUS_LABELS,
   formatMoney,
+  formatPct,
+  formatRatio,
 } from '@/lib/format';
 import {
   Button,
@@ -59,6 +62,7 @@ export function OrgCompanyDetailPage() {
   const excelInputRef = useRef<HTMLInputElement>(null);
 
   const canWrite = activeOrgRole === 'analyst' || activeOrgRole === 'org_admin';
+  const canDelete = activeOrgRole === 'org_admin';
   const isValidId = Number.isInteger(companyId) && companyId > 0;
 
   const companyQuery = useQuery({
@@ -105,6 +109,9 @@ export function OrgCompanyDetailPage() {
       void queryClient.invalidateQueries({
         queryKey: ['org', activeOrg?.id, 'analysis', companyId],
       });
+      void queryClient.invalidateQueries({
+        queryKey: ['org', activeOrg?.id, 'companies'],
+      });
     },
     onError: (err) => {
       setActionError(err instanceof Error ? err.message : 'Không thể chốt BCTC.');
@@ -121,6 +128,9 @@ export function OrgCompanyDetailPage() {
       });
       void queryClient.invalidateQueries({
         queryKey: ['org', activeOrg?.id, 'analysis', companyId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['org', activeOrg?.id, 'companies'],
       });
     },
     onError: (err) => {
@@ -399,6 +409,111 @@ export function OrgCompanyDetailPage() {
               mode="overview"
             />
             <DynamicAltmanGauge altman={analysis.altman} />
+
+            {/* DuPont & Quality of Earnings Diagnostics */}
+            {analysis.diagnostics &&
+            (analysis.diagnostics.dupont || analysis.diagnostics.quality_of_earnings) ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {analysis.diagnostics.dupont ? (
+                  <Panel>
+                    <PanelHeader
+                      title="Phân rã DuPont 3 nhân tố"
+                      description="Biên lợi nhuận ròng × Vòng quay tài sản × Đòn bẩy vốn chủ sở hữu."
+                    />
+                    <div className="p-4 grid grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <div className="text-[var(--text-muted)]">Biên lợi nhuận ròng</div>
+                        <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                          {formatPct(
+                            analysis.diagnostics.dupont.net_profit_margin as number | null | undefined,
+                            2,
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[var(--text-muted)]">Vòng quay tài sản TB</div>
+                        <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                          {formatRatio(
+                            analysis.diagnostics.dupont.asset_turnover_avg as number | null | undefined,
+                            2,
+                          )}
+                          x
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[var(--text-muted)]">Đòn bẩy vốn CSH TB</div>
+                        <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                          {formatRatio(
+                            analysis.diagnostics.dupont.equity_multiplier_avg as
+                              | number
+                              | null
+                              | undefined,
+                            2,
+                          )}
+                          x
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[var(--text-muted)]">ROE DuPont</div>
+                        <div className="mt-1 num text-base font-semibold text-[var(--accent-primary)]">
+                          {formatPct(
+                            analysis.diagnostics.dupont.roe_dupont_avg as number | null | undefined,
+                            2,
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Panel>
+                ) : null}
+
+                {analysis.diagnostics.quality_of_earnings ? (
+                  <Panel>
+                    <PanelHeader
+                      title="Chất lượng Lợi nhuận (QoE)"
+                      description="Đối chiếu mức độ bảo chứng lợi nhuận kế toán bằng dòng tiền hoạt động (OCF)."
+                    />
+                    <div className="p-4 space-y-2.5 text-xs">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-[var(--text-muted)]">Chuyển hóa tiền (OCF / LNST)</div>
+                          <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                            {formatRatio(
+                              analysis.diagnostics.quality_of_earnings.cash_conversion_qoe as
+                                | number
+                                | null
+                                | undefined,
+                              2,
+                            )}
+                            x
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[var(--text-muted)]">Tỷ lệ dồn tích (Accruals)</div>
+                          <div className="mt-1 num text-base font-semibold text-[var(--text-primary)]">
+                            {formatPct(
+                              analysis.diagnostics.quality_of_earnings.cash_flow_accruals_ratio as
+                                | number
+                                | null
+                                | undefined,
+                              2,
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {analysis.diagnostics.quality_of_earnings.accruals_flag ? (
+                        <div className="text-[11px] font-medium text-[var(--text-secondary)]">
+                          Đánh giá:{' '}
+                          {analysis.diagnostics.quality_of_earnings.accruals_flag ===
+                          'CASH_BACKED_EARNINGS'
+                            ? 'Lợi nhuận được bảo chứng bằng dòng tiền thực'
+                            : 'Lợi nhuận kế toán cao hơn dòng tiền thực — cần theo dõi công nợ & tồn kho'}
+                        </div>
+                      ) : null}
+                    </div>
+                  </Panel>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ) : (
           <EmptyState
@@ -591,6 +706,16 @@ export function OrgCompanyDetailPage() {
                         {canWrite ? (
                           <td className="py-3 px-4 text-right whitespace-nowrap">
                             <div className="inline-flex items-center gap-1.5">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() =>
+                                  navigate(`/portfolio/${companyId}/statements/${stmt.id}/edit`)
+                                }
+                              >
+                                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                Sửa
+                              </Button>
                               {stmt.status !== 'finalized' ? (
                                 <Button
                                   variant="primary"
@@ -602,15 +727,17 @@ export function OrgCompanyDetailPage() {
                                   Chốt BCTC
                                 </Button>
                               ) : null}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                aria-label={`Xóa BCTC FY${stmt.fiscal_year}`}
-                                onClick={() => deleteStmtMutation.mutate(stmt.id)}
-                                disabled={deleteStmtMutation.isPending}
-                              >
-                                <Trash2 className="h-3.5 w-3.5 text-[var(--risk-critical-fg)]" />
-                              </Button>
+                              {canDelete ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  aria-label={`Xóa BCTC FY${stmt.fiscal_year}`}
+                                  onClick={() => deleteStmtMutation.mutate(stmt.id)}
+                                  disabled={deleteStmtMutation.isPending}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 text-[var(--risk-critical-fg)]" />
+                                </Button>
+                              ) : null}
                             </div>
                           </td>
                         ) : null}

@@ -643,6 +643,8 @@ export interface OrgCompany {
   is_sample: boolean;
   scoring_eligible: boolean;
   scoring_exclusion_reason: string | null;
+  latest_health_score?: number | null;
+  latest_risk_tier?: RiskTier | null;
   created_at: string;
   updated_at: string;
 }
