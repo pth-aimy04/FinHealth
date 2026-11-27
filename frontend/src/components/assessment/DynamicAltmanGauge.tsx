@@ -11,22 +11,31 @@ export interface DynamicAltmanGaugeProps {
 }
 
 const VARIANT_META: Record<
-  AltmanVariant,
-  { title: string; subtitle: string }
+  'Z' | "Z'" | "Z''",
+  { title: string; subtitle: string; code: string }
 > = {
   Z: {
     title: 'Altman Z-Score',
     subtitle: 'Doanh nghiệp sản xuất niêm yết (dùng vốn hóa thị trường)',
+    code: 'Z',
   },
   "Z'": {
     title: "Altman Z'-Score",
     subtitle: 'Doanh nghiệp sản xuất chưa niêm yết (dùng vốn chủ sổ sách)',
+    code: "Z'",
   },
   "Z''": {
     title: "Altman Z''-Score",
     subtitle: 'Doanh nghiệp thương mại, dịch vụ & phi sản xuất',
+    code: "Z''",
   },
 };
+
+function normalizeAltmanVariant(variant: AltmanVariant | null): 'Z' | "Z'" | "Z''" {
+  if (variant === 'Z') return 'Z';
+  if (variant === "Z'" || variant === 'Z_PRIME') return "Z'";
+  return "Z''";
+}
 
 const ZONE_STYLE: Record<
   AltmanZone,
@@ -84,7 +93,7 @@ export function DynamicAltmanGauge({ altman }: DynamicAltmanGaugeProps) {
     );
   }
 
-  const variant = altman.variant ?? "Z''";
+  const variant = normalizeAltmanVariant(altman.variant);
   const variantMeta = VARIANT_META[variant];
   const zoneMeta = altman.zone ? ZONE_STYLE[altman.zone] : null;
   const cutoffLow = altman.cutoff_low ?? 1.1;

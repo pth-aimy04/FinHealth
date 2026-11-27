@@ -5,7 +5,7 @@
 
 export type RiskTier = 'STRONG' | 'STABLE' | 'WATCH' | 'CRITICAL';
 export type ConfidenceLevel = 'HIGH' | 'MODERATE' | 'LOW';
-export type AltmanVariant = 'Z' | "Z'" | "Z''";
+export type AltmanVariant = 'Z' | "Z'" | "Z''" | 'Z_PRIME' | 'Z_DOUBLE_PRIME';
 export type AltmanZone = 'SAFE' | 'GREY' | 'DISTRESS';
 export type PillarKey =
   | 'liquidity'
@@ -14,12 +14,19 @@ export type PillarKey =
   | 'efficiency'
   | 'cash_flow';
 export type PillarStatus = 'STRONG' | 'ADEQUATE' | 'WEAK' | 'CRITICAL' | 'UNAVAILABLE';
-export type MetricUnit = 'ratio' | 'percent' | 'times' | 'days';
+export type MetricUnit = 'ratio' | 'percent' | 'times' | 'days' | 'multiple';
 export type GoodDirection = 'higher' | 'lower';
 export type MetricStatus = 'GOOD' | 'NEUTRAL' | 'WARNING' | 'CRITICAL' | 'UNAVAILABLE';
 export type BenchmarkScope = 'sector' | 'universe' | 'unavailable';
-export type DriverSide = 'STRENGTH' | 'BOTTLENECK';
-export type ImpactStrength = 'VERY_HIGH' | 'HIGH' | 'MODERATE' | 'LOW';
+export type DriverSide = 'STRENGTH' | 'BOTTLENECK' | 'strength' | 'bottleneck';
+export type ImpactStrength =
+  | 'VERY_HIGH'
+  | 'HIGH'
+  | 'MODERATE'
+  | 'LOW'
+  | 'high'
+  | 'medium'
+  | 'low';
 
 export interface ConfidenceView {
   level: ConfidenceLevel;
