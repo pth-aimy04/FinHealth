@@ -416,14 +416,14 @@
 ## WAVE 3 — Final Integration, Wiring & Release Gate (Sequential — Lead Agent)
 
 ### Task T21: Đấu nối Routers (`main.py`), SPA Routes (`App.tsx`) & Bộ Kiểm thử E2E V1.0
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 3 / lead-integrator`
 - **Description:** Đăng ký toàn bộ router mới (`organizations`, `org_companies`, `org_analytics`, `reporting_v2`) và sửa CORS (`PATCH`, `DELETE`) trong `src/finhealth/api/main.py`; đấu nối toàn bộ tuyến đường mới (`/`, `/portfolio`, `/portfolio/:id`, `/batch`, `/compare`, `/us-market`, `/us-market/:identifier`, `/methodology`, `/organization`, `/account`, `/admin/*`) trong `frontend/src/App.tsx`; viết bộ kiểm thử tích hợp đầu-cuối `tests/integration/test_e2e_v10_golive.py` chạy trọn hành trình khách hàng.
 - **Acceptance criteria:**
-  - [ ] Hành trình E2E chạy xanh hoàn toàn: Đăng ký → Verify OTP → Auto Org → Mời Analyst/Viewer → Seed 3 DN mẫu + Import XML HTKK → Chấm điểm `v2.0.0-kaggle` → Xem 5 Trụ cột/Drivers/Lịch sử → So sánh → Batch Excel → Tải PDF → Xuất & Xóa tài khoản purge sạch dữ liệu.
-  - [ ] CORS preflight chấp nhận `GET, POST, PATCH, DELETE, OPTIONS`.
+  - [x] Hành trình E2E chạy xanh hoàn toàn: Đăng ký → Verify OTP → Auto Org → Mời Analyst/Viewer → Seed 3 DN mẫu + Import XML HTKK → Chấm điểm `v2.0.0-kaggle` → Xem 5 Trụ cột/Drivers/Lịch sử → So sánh → Batch Excel → Tải PDF → Xuất & Xóa tài khoản purge sạch dữ liệu.
+  - [x] CORS preflight chấp nhận `GET, POST, PATCH, DELETE, OPTIONS`.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/integration/test_e2e_v10_golive.py`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/integration/test_e2e_v10_golive.py`
 - **Dependencies:** Checkpoint W2
 - **Files likely touched:**
   - `src/finhealth/api/main.py`
@@ -432,20 +432,20 @@
 - **Estimated scope:** Medium (3 files)
 
 ### Task T22: Cổng Kiểm chứng Phát hành Cuối cùng (Final Go-Live Verification Gate)
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 3 / lead-integrator`
 - **Description:** Build bản production `frontend/dist`, chạy đầy đủ mọi cổng kiểm chứng bắt buộc của kho mã nguồn (`ruff check .`, `mypy src/finhealth`, `pytest -v`, `frontend` typecheck/test/build, `alembic upgrade head` & `downgrade`), đối chiếu toàn bộ Success Criteria của 6 file `spec/SPEC-*.md` và cập nhật `PRODUCT.md` / `README.md` phản ánh đúng trạng thái V1.0.
 - **Acceptance criteria:**
-  - [ ] `ruff check .` → 0 lỗi.
-  - [ ] `mypy src/finhealth` → 0 lỗi.
-  - [ ] `pytest -v` → 0 failed (toàn bộ unit + integration + E2E xanh).
-  - [ ] `npm --prefix frontend run typecheck && npm --prefix frontend test && npm --prefix frontend run build` → 0 lỗi.
-  - [ ] Mọi mục trong `spec/SPEC-*.md` đạt 100% Success Criteria.
+  - [x] `ruff check .` → 0 lỗi.
+  - [x] `mypy src/finhealth` → 0 lỗi.
+  - [x] `pytest -v` → 0 failed (toàn bộ unit + integration + E2E xanh).
+  - [x] `npm --prefix frontend run typecheck && npm --prefix frontend test && npm --prefix frontend run build` → 0 lỗi.
+  - [x] Mọi mục trong `spec/SPEC-*.md` đạt 100% Success Criteria.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\ruff.exe check .`
-  - [ ] `.\.venv\Scripts\mypy.exe src/finhealth`
-  - [ ] `.\.venv\Scripts\pytest.exe -v`
-  - [ ] `npm --prefix frontend run typecheck && npm --prefix frontend test && npm --prefix frontend run build`
+  - [x] `.\.venv\Scripts\ruff.exe check .`
+  - [x] `.\.venv\Scripts\mypy.exe src/finhealth`
+  - [x] `.\.venv\Scripts\pytest.exe -v`
+  - [x] `npm --prefix frontend run typecheck && npm --prefix frontend test && npm --prefix frontend run build`
 - **Dependencies:** T21
 - **Files likely touched:**
   - `PRODUCT.md`
@@ -453,6 +453,6 @@
 - **Estimated scope:** Small (2 docs files + verification runs)
 
 ### Checkpoint Final: Sẵn sàng Go-Live V1.0
-- [ ] Toàn bộ 22 task (T01–T22) đều `[x]`
-- [ ] 0 lỗi lint, 0 lỗi typecheck, 0 test fail, 0 thuật ngữ kỹ thuật ML lọt ra UI người dùng cuối
-- [ ] Sản phẩm sẵn sàng review cuối cùng & triển khai production
+- [x] Toàn bộ 22 task (T01–T22) đều `[x]`
+- [x] 0 lỗi lint, 0 lỗi typecheck, 0 test fail, 0 thuật ngữ kỹ thuật ML lọt ra UI người dùng cuối
+- [x] Sản phẩm sẵn sàng review cuối cùng & triển khai production

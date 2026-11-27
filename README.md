@@ -1,16 +1,26 @@
-# FinHealth
+# FinHealth Production V1.0
+
+Nền tảng phân tích sức khỏe tài chính và dự báo rủi ro phá sản 12 tháng đa tổ chức (Multi-Tenant B2B) kết hợp lõi học máy **Kaggle `v2.0.0-kaggle` (0% leakage, bất biến đơn vị tiền tệ)**, lớp đối chiếu **SEC EDGAR (`10-K`/`10-Q`)**, chuẩn kế toán Việt Nam (**TT99/2025/TT-BTC**, **TT200/2014**, **TT133/2016**, **Import XML HTKK**), xuất **Báo cáo PDF A4 tiếng Việt** & **Thẩm định Hàng loạt Excel**, và tuân thủ **Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15** cùng miễn trừ **Nghị định 88/2014/NĐ-CP**.
+
+## Điểm nổi bật bản phát hành V1.0
+
+- **Lõi ML Dự báo Phá sản 12 tháng (`v2.0.0-kaggle`):** Huấn luyện trên `data/raw/kaggle/american_bankruptcy.csv` (8.971 DN, 78.682 dòng, 609 sự kiện phá sản đúng năm `year == max_year`: 490 Train / 62 Val / 57 Test, **0% entity leakage**). Dùng 19 tỷ số không thứ nguyên (`CORE_BANKRUPTCY_FEATURES`, bất biến VND = USD), Platt-calibrate đồng đều 4 mô hình (LR, RF, XGBoost, LightGBM), Độ tin cậy 4 lớp, ánh xạ đơn điệu `PD ↔ Điểm Sức khỏe 0–100` (`STRONG / STABLE / WATCH / CRITICAL`) và Cash-Flow Overlay.
+- **Đa Tổ chức & Phân quyền RBAC (`organizations`):** Tự động tạo Workspace cá nhân khi xác thực email OTP; hỗ trợ tạo nhiều tổ chức, chuyển `active_org_id` phía server, mời thành viên bằng token SHA-256 (72h), phân quyền `org_admin` / `analyst` / `viewer`, cô lập dữ liệu tuyệt đối theo `org_id`.
+- **Tuân thủ Pháp lý VN 2026:**
+  - **Luật 91/2025/QH15:** Tự xuất dữ liệu cá nhân (`GET /api/v1/auth/me/export`) và tự xóa tài khoản kèm OTP (`POST /api/v1/auth/delete-account`) thu hồi phiên tức thì và xóa sạch PII.
+  - **Nghị định 88/2014/NĐ-CP:** Miễn trừ trách nhiệm pháp lý gắn trên mọi kết quả thẩm định & PDF; không hiển thị nhãn xếp hạng tín nhiệm `AAA..CCC` trên UI khách hàng.
+- **Nhập BCTC chuẩn Việt Nam (`org_companies`):** Web Form 3 phần (Lưu nháp / Chốt `finalized`, đơn vị Đồng/Triệu/Tỷ), bộ kiểm tra cân đối kế toán (`TA = TL + E` dung sai 0,5%), biểu mẫu Excel `.xlsx` và **Import XML HTKK (`defusedxml`, chặn XXE ≤ 5 MB)** cho **TT99/2025**, **TT200/2014**, **TT133/2016**; chặn chấm điểm Altman/ML tường minh cho Tổ chức tín dụng (`financial_institution`); nạp nhanh 3 hồ sơ DN mẫu VN (`POST /api/v1/org/samples/seed`).
+- **Phân tích 5 Trụ cột & Báo cáo (`org_analytics`, `reporting_v2`):** Altman đủ 3 biến thể $Z / Z' / Z''$ với ngưỡng động, 5 Trụ cột & 20 chỉ số có tooltip tiếng Việt, bảng 2 cột **Điểm Tựa & Điểm Nghẽn** bằng ngôn ngữ nghiệp vụ, lịch sử 3–5 năm, so sánh 2–4 DN, xuất **PDF A4 tiếng Việt** (`reportlab` + font `BeVietnamPro` nhúng, chạy đa nền tảng không cần GTK), và **Thẩm định Hàng loạt Excel bất đồng bộ** (`POST /api/v1/org/batch/jobs` + `export.xlsx`).
+- **React SPA Song song (`frontend/`):** Hai không gian tác nghiệp song song **Danh bạ DN Tổ chức (`/portfolio`)** và **Thị trường Mỹ SEC (`/us-market`)**, cùng `/batch`, `/compare`, `/stress`, `/methodology`, `/organization`, `/account`, và cổng quản trị `/admin` (hấp thụ `ModelLab` & `ClusterMap` chỉ dành cho Admin).
 
 ## Clone và chạy trên máy mới
 
-Repo có mã nguồn, dữ liệu tài chính, mô hình và ảnh biểu đồ đã được chủ dự án cho phép
-bàn giao. Snapshot chỉ chứa sáu bảng tài chính; không có tài khoản, mật khẩu, phiên
-đăng nhập, OTP hoặc dữ liệu cá nhân. Không cần Node để chạy giao diện đang sử dụng.
+Repo có mã nguồn, dữ liệu tài chính, mô hình (`v1.2.0`, `v2.0.0-kaggle`) và ảnh biểu đồ đã được chủ dự án cho phép
+bàn giao. Snapshot chỉ chứa các bảng tài chính công khai; không có tài khoản, mật khẩu, phiên
+đăng nhập, OTP hoặc dữ liệu cá nhân.
 
 Xem **[hướng dẫn cài đặt và khôi phục SQL Server](docs/clone-and-run.md)** để clone,
 cài Python, nạp dữ liệu và tạo tài khoản quản trị riêng. Có cả cách chạy bằng SQLite.
-
-Corporate financial health intelligence from SEC EDGAR annual filings, time-isolated
-machine learning and company-level TreeSHAP explanations.
 
 ## Launch
 

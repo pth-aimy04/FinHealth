@@ -98,7 +98,8 @@ export function StressLabPage() {
         </h1>
         <p className="text-xs text-[var(--text-secondary)] mt-0.5">
           Giả lập cú sốc doanh thu, biên lợi nhuận, nợ vay và dòng tiền hoạt động để kiểm tra độ
-          nhạy rủi ro và dịch chuyển TreeSHAP mà không làm thay đổi dữ liệu gốc.
+          nhạy rủi ro và các chỉ tiêu tài chính chịu tác động mạnh nhất mà không làm thay đổi dữ
+          liệu gốc.
         </p>
       </div>
 
@@ -270,8 +271,8 @@ export function StressLabPage() {
 
               <Panel>
                 <PanelHeader
-                  title="Các yếu tố TreeSHAP Dịch chuyển Mạnh nhất (Sau cú sốc − Cơ sở)"
-                  description="Mức dịch chuyển biên XGBoost thô (log-odds) do kịch bản cú sốc gây ra."
+                  title="Các Yếu tố Tài chính Dịch chuyển Mạnh nhất (Sau cú sốc − Cơ sở)"
+                  description="Mức biến động tác động của từng chỉ tiêu tài chính lên rủi ro do kịch bản cú sốc gây ra."
                   actions={<RiskBadge level={result.stressed.prediction.risk_level} />}
                 />
                 <div className="p-4 h-[260px]">
@@ -293,7 +294,7 @@ export function StressLabPage() {
                       />
                       <ReferenceLine x={0} stroke="var(--border-strong)" />
                       <Tooltip
-                        formatter={(v: unknown) => [formatSigned(Number(v), 4), 'Biến động SHAP']}
+                        formatter={(v: unknown) => [formatSigned(Number(v), 4), 'Mức dịch chuyển tác động']}
                         contentStyle={{
                           backgroundColor: 'var(--bg-surface)',
                           border: '1px solid var(--border-strong)',
