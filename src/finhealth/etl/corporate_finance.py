@@ -9,6 +9,12 @@ from math import fsum, isfinite, prod
 from typing import Any
 
 from finhealth.etl.financial_ratios import _finite, _safe_div
+from finhealth.etl.metric_catalog import (
+    METRIC_SPECS,
+    PILLAR_SPECS,
+    evaluate_metric_status,
+    format_metric_value_vi,
+)
 
 COMPOSITE_METRICS = ("roa", "ocf_ratio", "current_ratio", "debt_ratio")
 RESEARCH_GRADE_LABEL = "Internal Research Grade (Not an Agency Credit Rating)"
@@ -345,10 +351,26 @@ _PILLAR_LABELS: dict[str, str] = {
 }
 
 
+def _is_negative_equity(record: Record) -> bool:
+    """Detect negative stockholders' equity from an explicit flag or reported balance."""
+    if bool(record.get("is_negative_equity")):
+        return True
+    equity = _finite(record.get("stockholders_equity"))
+    return equity is not None and equity <= 0.0
+
+
 def _score_metric(
-    value: float | None, low: float, high: float, invert: bool, key: str
+    value: float | None,
+    low: float,
+    high: float,
+    invert: bool,
+    key: str,
+    *,
+    is_negative_equity: bool = False,
 ) -> float | None:
     """Map an observed finite financial ratio onto [0, 100] without imputing missing values."""
+    if is_negative_equity and key in ("debt_to_equity", "roe"):
+        return 0.0
     val = _finite(value)
     if val is None:
         return None
@@ -373,14 +395,24 @@ def _pillar_status(score: float | None) -> str:
 
 
 def compute_health_pillars(record: Record) -> dict[str, Any]:
-    """Compute 0-100 scores across the four fundamental financial health pillars."""
+    """Compute 0-100 scores across the four legacy financial health pillars."""
+    neg_equity = _is_negative_equity(record)
     pillars: dict[str, dict[str, Any]] = {}
     available_scores: list[float] = []
     for pillar_key, specs in _PILLAR_BOUNDS.items():
         scores = [
             s
             for metric_key, low, high, invert in specs
-            if (s := _score_metric(record.get(metric_key), low, high, invert, metric_key))
+            if (
+                s := _score_metric(
+                    record.get(metric_key),
+                    low,
+                    high,
+                    invert,
+                    metric_key,
+                    is_negative_equity=neg_equity,
+                )
+            )
             is not None
         ]
         pillar_score = fsum(scores) / len(scores) if scores else None
@@ -416,6 +448,134 @@ def compute_health_pillars(record: Record) -> dict[str, Any]:
         "overall_score": overall,
         "overall_grade": grade,
         "pillars": pillars,
+    }
+
+
+def _resolve_metric_value(record: Record, key: str) -> float | None:
+    """Return a precomputed ratio or derive it cleanly from raw statement lines when absent."""
+    direct = _finite(record.get(key))
+    if direct is not None:
+        return direct
+    assets = _finite(record.get("total_assets"))
+    liabilities = _finite(record.get("total_liabilities"))
+    current_assets = _finite(record.get("current_assets"))
+    current_liabilities = _finite(record.get("current_liabilities"))
+    revenues = _finite(record.get("revenues"))
+    cogs = _finite(record.get("cost_of_goods_sold"))
+    gross_profit = _finite(record.get("gross_profit"))
+    if gross_profit is None and revenues is not None and cogs is not None:
+        gross_profit = revenues - cogs
+    operating_income = _finite(record.get("operating_income"))
+    ebitda = _finite(record.get("ebitda"))
+    da = _finite(record.get("depreciation_amortization"))
+    if ebitda is None and operating_income is not None and da is not None:
+        ebitda = operating_income + da
+    if key == "quick_ratio":
+        inventory = _finite(record.get("inventory"))
+        if current_assets is not None and inventory is not None:
+            return _safe_div(current_assets - inventory, current_liabilities, True)
+        return None
+    if key == "equity_to_assets":
+        return _safe_div(record.get("stockholders_equity"), assets, True)
+    if key == "short_term_debt_share":
+        return _safe_div(current_liabilities, liabilities, True)
+    if key == "gross_margin":
+        return _safe_div(gross_profit, revenues, True)
+    if key == "ebitda_margin":
+        return _safe_div(ebitda, revenues, True)
+    if key == "dso_days":
+        ratio = _safe_div(record.get("accounts_receivable"), revenues, True)
+        return ratio * 365.0 if ratio is not None else None
+    if key == "dio_days":
+        ratio = _safe_div(record.get("inventory"), cogs, True)
+        return ratio * 365.0 if ratio is not None else None
+    if key == "cash_conversion_qoe":
+        return _safe_div(record.get("operating_cash_flow"), record.get("net_income"), True)
+    return None
+
+
+def compute_health_pillars_v2(
+    record: Record,
+    *,
+    prior_record: Record | None = None,
+    peer_positions: Mapping[str, Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Compute the V1.0 5-pillar, 20-metric assessment with Vietnamese context and no AAA..CCC."""
+    neg_equity = _is_negative_equity(record)
+    pillars_list: list[dict[str, Any]] = []
+    all_metrics: list[dict[str, Any]] = []
+    weighted_sum = 0.0
+    observed_weight = 0.0
+
+    for pillar_spec in PILLAR_SPECS:
+        metric_items: list[dict[str, Any]] = []
+        pillar_scores: list[float] = []
+        for spec in METRIC_SPECS:
+            if spec.pillar != pillar_spec.key:
+                continue
+            value = _resolve_metric_value(record, spec.key)
+            prior_val = _resolve_metric_value(prior_record, spec.key) if prior_record else None
+            yoy_change = (
+                round(value - prior_val, 6)
+                if value is not None and prior_val is not None
+                else None
+            )
+            metric_score = _score_metric(
+                value,
+                spec.score_low,
+                spec.score_high,
+                spec.good_direction == "lower",
+                spec.key,
+                is_negative_equity=neg_equity,
+            )
+            if metric_score is not None:
+                pillar_scores.append(metric_score)
+            status = evaluate_metric_status(spec.key, value, is_negative_equity=neg_equity)
+            peer_info = peer_positions.get(spec.key) if peer_positions else None
+            item = {
+                "key": spec.key,
+                "pillar": spec.pillar,
+                "label_vi": spec.label_vi,
+                "value": value,
+                "formatted_value_vi": format_metric_value_vi(spec.key, value),
+                "unit": spec.unit,
+                "good_direction": spec.good_direction,
+                "reference_range_vi": spec.reference_range_vi,
+                "tooltip_vi": spec.tooltip_vi,
+                "status": status,
+                "score": round(metric_score, 2) if metric_score is not None else None,
+                "yoy_change": yoy_change,
+                "peer_position": dict(peer_info) if peer_info is not None else None,
+            }
+            metric_items.append(item)
+            all_metrics.append(item)
+
+        pillar_score = round(fsum(pillar_scores) / len(pillar_scores), 2) if pillar_scores else None
+        if pillar_score is not None:
+            weighted_sum += pillar_score * pillar_spec.weight
+            observed_weight += pillar_spec.weight
+
+        pillars_list.append(
+            {
+                "key": pillar_spec.key,
+                "label_vi": pillar_spec.label_vi,
+                "description_vi": pillar_spec.description_vi,
+                "weight": pillar_spec.weight,
+                "score": pillar_score,
+                "status": _pillar_status(pillar_score),
+                "observed_metrics": len(pillar_scores),
+                "total_metrics": len(metric_items),
+                "metrics": metric_items,
+            }
+        )
+
+    overall_score = round(weighted_sum / observed_weight, 2) if observed_weight > 0 else None
+    return {
+        "overall_score": overall_score,
+        "overall_status": _pillar_status(overall_score),
+        "is_negative_equity": neg_equity,
+        "pillars": pillars_list,
+        "metrics": all_metrics,
     }
 
 
