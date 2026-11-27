@@ -252,14 +252,14 @@
 ## WAVE 2 — Reporting & 2 Frontend Lanes Song Song (Parallel Coding Agents)
 
 ### [Lane E — `batch-and-reporting`] Task T13: Bộ Xuất Báo cáo Thẩm định PDF Chuẩn A4 Tiếng Việt (M12)
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 2 / Lane E (agent-reporting)`
 - **Description:** Nhúng font `BeVietnamPro-Regular.ttf` & `BeVietnamPro-Bold.ttf` (SIL OFL) vào `src/finhealth/reporting/fonts/`; xây dựng `src/finhealth/reporting/pdf_generator.py` bằng `reportlab` + `matplotlib` (`Agg`) xuất PDF 3–4 trang A4 từ `CompanyAssessmentView` (Executive Summary, Radar 5 trụ cột, 2 cột Điểm Tựa/Điểm Nghẽn, Bảng 20 chỉ số & biểu đồ đa kỳ, chân trang đóng băng `model_version` + miễn trừ NĐ 88/2014).
 - **Acceptance criteria:**
-  - [ ] Sinh bytes bắt đầu bằng `%PDF-`, hiển thị đúng dấu tiếng Việt UTF-8 trên cả Windows và Linux không cần GTK.
-  - [ ] Xử lý an toàn khi thiếu dữ liệu lịch sử, âm VCSH hoặc DN thuộc nhóm loại trừ TCTC; đóng mọi `matplotlib` figure tránh rò RAM.
+  - [x] Sinh bytes bắt đầu bằng `%PDF-`, hiển thị đúng dấu tiếng Việt UTF-8 trên cả Windows và Linux không cần GTK.
+  - [x] Xử lý an toàn khi thiếu dữ liệu lịch sử, âm VCSH hoặc DN thuộc nhóm loại trừ TCTC; đóng mọi `matplotlib` figure tránh rò RAM.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_pdf_and_batch_excel.py -k pdf`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_pdf_and_batch_excel.py -k pdf`
 - **Dependencies:** Checkpoint W1
 - **Files likely touched:**
   - `src/finhealth/reporting/__init__.py`
@@ -269,15 +269,15 @@
 - **Estimated scope:** Medium (4 files)
 
 ### [Lane E — `batch-and-reporting`] Task T14: Thẩm định Hàng loạt qua Excel Bất đồng bộ & API Xuất PDF/Batch (S03, M12)
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 2 / Lane E (agent-reporting)`
 - **Description:** Tạo `batch_excel.py` (xuất template `.xlsx`, parse tối đa 500 dòng ≤ 10 MB ở chế độ `read_only`, xuất bảng kết quả `.xlsx` xếp hạng rủi ro giảm dần), `batch_worker.py` (chạy nền trên DB queue `org_batch_jobs`, cô lập lỗi từng dòng), `schemas/batch_reporting.py` và `routers/reporting_v2.py` (endpoints tải template, tạo batch job `202`, xem tiến độ/kết quả, xuất Excel tổng hợp, và tải `report.pdf` cho cả DN tổ chức & DN SEC).
 - **Acceptance criteria:**
-  - [ ] Upload Excel 10 DN có 2 dòng lỗi vẫn hoàn tất 8 dòng hợp lệ, sắp xếp `pd_12m` giảm dần và ghi rõ nguyên nhân 2 dòng lỗi.
-  - [ ] `viewer` xem & tải PDF/Excel được nhưng bị `403` khi upload batch mới; tổ chức khác gọi `job_id` hoặc `company_id` nhận `404`.
-  - [ ] Endpoint `report.pdf` trả `Content-Type: application/pdf` có áp dụng rate limit.
+  - [x] Upload Excel 10 DN có 2 dòng lỗi vẫn hoàn tất 8 dòng hợp lệ, sắp xếp `pd_12m` giảm dần và ghi rõ nguyên nhân 2 dòng lỗi.
+  - [x] `viewer` xem & tải PDF/Excel được nhưng bị `403` khi upload batch mới; tổ chức khác gọi `job_id` hoặc `company_id` nhận `404`.
+  - [x] Endpoint `report.pdf` trả `Content-Type: application/pdf` có áp dụng rate limit.
 - **Verification:**
-  - [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_pdf_and_batch_excel.py tests/integration/test_batch_jobs_and_pdf_api.py`
+  - [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_pdf_and_batch_excel.py tests/integration/test_batch_jobs_and_pdf_api.py`
 - **Dependencies:** T13
 - **Files likely touched:**
   - `src/finhealth/reporting/batch_excel.py`
@@ -290,16 +290,16 @@
 ---
 
 ### [Lane F — `frontend-core`] Task T15: Frontend API Client, Types, Formatters & Org AuthContext *(Ưu tiên Merge sớm)*
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 2 / Lane F (agent-fe-core)`
 - **Description:** Cập nhật `frontend/src/types/api.ts`, `frontend/src/lib/api.ts` (sửa bug `verifyEmail` gửi đủ `new_password`, sửa bug `compareCompanies` gửi `common_fiscal_year`, thêm đầy đủ API cho Organizations/RBAC, Account change-password/change-email/export/delete, Org Companies, Statements, XML/Excel import, Batch Jobs, PDF download), cập nhật `format.ts` (VND/Triệu/Tỷ + 4 cấp độ `RISK_TIER_META`), và mở rộng `AuthContext.tsx` quản lý `activeOrg` + tự động invalidate React Query cache khi đổi Workspace.
 - **Acceptance criteria:**
-  - [ ] `verifyEmail` gửi đủ `{ email, challenge, code, new_password }` khớp backend `VerifyOtpInput`.
-  - [ ] `compareCompanies` gửi đúng `common_fiscal_year` (khi chọn cùng năm) thay vì `period_policy`.
-  - [ ] Đổi Workspace trong `AuthContext` lập tức xóa/làm mới cache truy vấn của tổ chức cũ.
+  - [x] `verifyEmail` gửi đủ `{ email, challenge, code, new_password }` khớp backend `VerifyOtpInput`.
+  - [x] `compareCompanies` gửi đúng `common_fiscal_year` (khi chọn cùng năm) thay vì `period_policy`.
+  - [x] Đổi Workspace trong `AuthContext` lập tức xóa/làm mới cache truy vấn của tổ chức cũ.
 - **Verification:**
-  - [ ] `npm --prefix frontend run typecheck`
-  - [ ] `npm --prefix frontend test`
+  - [x] `npm --prefix frontend run typecheck`
+  - [x] `npm --prefix frontend test`
 - **Dependencies:** Checkpoint W1
 - **Files likely touched:**
   - `frontend/src/types/api.ts`
@@ -309,16 +309,16 @@
 - **Estimated scope:** Medium (4 files)
 
 ### [Lane F — `frontend-core`] Task T16: AccountPage, OrganizationPage & Điều hướng Song Song (`AppShell`)
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 2 / Lane F (agent-fe-core)`
 - **Description:** Hoàn thiện `AccountPage.tsx` (sửa bước Verify OTP kèm mật khẩu xác nhận, sửa controlled input `displayName`, bổ sung Đổi mật khẩu OTP, Đổi email OTP, Xuất dữ liệu cá nhân & Xóa tài khoản OTP); xây dựng `OrganizationPage.tsx` (tạo tổ chức, mời thành viên, quản lý vai trò RBAC, nhật ký kiểm toán); tái cấu trúc `AppShell.tsx` với Org Switcher, 2 không gian song song (**Danh bạ Doanh nghiệp** & **Thị trường Mỹ SEC**), **Thẩm định Hàng loạt**, **So sánh**, **Phương pháp luận**, và ẩn menu kỹ thuật ML khỏi người dùng thường.
 - **Acceptance criteria:**
-  - [ ] Người dùng thường không thấy mục `ModelLab` hay `ClusterMap` trên thanh điều hướng.
-  - [ ] `viewer` không thấy nút mời/xóa thành viên trên `OrganizationPage`.
-  - [ ] Đủ test component cho `AppShell` và `AccountPage`.
+  - [x] Người dùng thường không thấy mục `ModelLab` hay `ClusterMap` trên thanh điều hướng.
+  - [x] `viewer` không thấy nút mời/xóa thành viên trên `OrganizationPage`.
+  - [x] Đủ test component cho `AppShell` và `AccountPage`.
 - **Verification:**
-  - [ ] `npm --prefix frontend run typecheck`
-  - [ ] `npm --prefix frontend test`
+  - [x] `npm --prefix frontend run typecheck`
+  - [x] `npm --prefix frontend test`
 - **Dependencies:** T15
 - **Files likely touched:**
   - `frontend/src/pages/AccountPage.tsx`
@@ -328,16 +328,16 @@
 - **Estimated scope:** Medium (4 files)
 
 ### [Lane F — `frontend-core`] Task T17: Danh bạ Doanh nghiệp & Luồng Nhập BCTC (Web 3 Phần, Lưu Nháp, XML HTKK, Excel)
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 2 / Lane F (agent-fe-core)`
 - **Description:** Xây dựng `PortfolioPage.tsx` (M03: CRUD danh bạ DN tổ chức, tìm theo Tên/MST/Mã CK, lọc thẻ quan hệ/loại hình/mức sức khỏe, cảnh báo chặn TCTC) và 3 component nhập liệu trong `frontend/src/components/statements/`: `StatementEditorForm.tsx` (M04: 3 tab BS/IS/CF theo mã TT99/TT200/TT133, chọn đơn vị Đồng/Triệu/Tỷ, tự cộng tổng dòng cha, Lưu nháp), `BalanceCheckAssistant.tsx` (M05: tô rõ dòng lệch cân đối kế toán), và `ImportStatementModal.tsx` (tải template Excel + upload XML HTKK / Excel).
 - **Acceptance criteria:**
-  - [ ] Tự động cộng tổng các chỉ tiêu cha và hiển thị cảnh báo đúng dòng lệch khi Tổng TS ≠ Tổng NV.
-  - [ ] Chuyển đổi mượt giữa Đồng / Triệu đồng / Tỷ đồng và lưu nháp không mất dữ liệu.
-  - [ ] `viewer` chỉ xem được danh bạ, không thấy nút thêm/sửa/import.
+  - [x] Tự động cộng tổng các chỉ tiêu cha và hiển thị cảnh báo đúng dòng lệch khi Tổng TS ≠ Tổng NV.
+  - [x] Chuyển đổi mượt giữa Đồng / Triệu đồng / Tỷ đồng và lưu nháp không mất dữ liệu.
+  - [x] `viewer` chỉ xem được danh bạ, không thấy nút thêm/sửa/import.
 - **Verification:**
-  - [ ] `npm --prefix frontend run typecheck`
-  - [ ] `npm --prefix frontend test`
+  - [x] `npm --prefix frontend run typecheck`
+  - [x] `npm --prefix frontend test`
 - **Dependencies:** T15
 - **Files likely touched:**
   - `frontend/src/pages/PortfolioPage.tsx`
@@ -350,15 +350,15 @@
 ---
 
 ### [Lane G — `frontend-analytics`] Task T18: Bộ Component Đánh giá Chuẩn UX Rules Dùng Chung
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 2 / Lane G (agent-fe-analytics)`
 - **Description:** Tạo 5 component chuẩn thương mại trong `frontend/src/components/assessment/`: `HealthHeroCard.tsx` (Quy tắc 3 giây: 1 điểm 0–100, 4 cấp màu, PD 12 tháng, Độ tin cậy 4 lớp, 3 nhận định, nút PDF, miễn trừ pháp lý), `DriversSplitPanel.tsx` (2 cột Xanh–Đỏ Điểm Tựa & Điểm Nghẽn — không chứa chuỗi kỹ thuật ML), `FivePillarsSection.tsx` (Radar 5 trụ cột + bảng 20 chỉ số có tooltip, YoY, vị thế ngành), `DynamicAltmanGauge.tsx` (thanh 3 vùng theo `cutoff_low`/`cutoff_high` động + thẻ loại trừ TCTC), và `MultiPeriodHistoryCharts.tsx` (quỹ đạo Điểm sức khỏe & PD 3–5 năm).
 - **Acceptance criteria:**
-  - [ ] Unit tests xác nhận không có chuỗi kỹ thuật (`SHAP`, `log-odds`, `XGBoost`, `Random Forest`, `AAA`) trong DOM đầu ra.
-  - [ ] `DynamicAltmanGauge` hiển thị chính xác ngưỡng của $Z$, $Z'$ và $Z''$.
+  - [x] Unit tests xác nhận không có chuỗi kỹ thuật (`SHAP`, `log-odds`, `XGBoost`, `Random Forest`, `AAA`) trong DOM đầu ra.
+  - [x] `DynamicAltmanGauge` hiển thị chính xác ngưỡng của $Z$, $Z'$ và $Z''$.
 - **Verification:**
-  - [ ] `npm --prefix frontend run typecheck`
-  - [ ] `npm --prefix frontend test`
+  - [x] `npm --prefix frontend run typecheck`
+  - [x] `npm --prefix frontend test`
 - **Dependencies:** Checkpoint W1 *(chạy song song T15 bằng props từ spec; đồng bộ kiểu sau T15)*
 - **Files likely touched:**
   - `frontend/src/components/assessment/HealthHeroCard.tsx`
@@ -369,16 +369,16 @@
 - **Estimated scope:** Medium (5 files + co-located tests)
 
 ### [Lane G — `frontend-analytics`] Task T19: Overview Onboarding (M02), Hồ sơ DN Tổ chức & Thị trường Mỹ (SEC)
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 2 / Lane G (agent-fe-analytics)`
 - **Description:** Cập nhật `OverviewPage.tsx` (tổng quan Workspace + nút 1-click nạp 3 DN mẫu VN khi trống, dùng đúng 1 Điểm Sức khỏe duy nhất), xây dựng `OrgCompanyDetailPage.tsx` (4 tab chuẩn UX Rules + nút Xuất PDF + tab quản lý BCTC), tạo `UsMarketPage.tsx` (tab "Thị trường Mỹ SEC" gắn nhãn rõ nguồn SEC/USD) và cập nhật `CompanyDetailPage.tsx` (dùng chung `HealthHeroCard`, `DriversSplitPanel`, `DynamicAltmanGauge` — chấm dứt bug lệch 2 điểm sức khỏe và bug gán nhầm RF thành XGBoost log-odds).
 - **Acceptance criteria:**
-  - [ ] Cùng 1 doanh nghiệp hiển thị đúng 1 con số Điểm Sức khỏe duy nhất trên Overview, Portfolio, Compare và Detail.
-  - [ ] Người dùng mới nạp 3 DN mẫu và xem trọn hồ sơ trong < 30 giây.
-  - [ ] Trang chi tiết SEC không còn chuỗi `"SHAP (log-odds)"` hay hardcode `1.81 / 2.99` cho DN phi sản xuất.
+  - [x] Cùng 1 doanh nghiệp hiển thị đúng 1 con số Điểm Sức khỏe duy nhất trên Overview, Portfolio, Compare và Detail.
+  - [x] Người dùng mới nạp 3 DN mẫu và xem trọn hồ sơ trong < 30 giây.
+  - [x] Trang chi tiết SEC không còn chuỗi `"SHAP (log-odds)"` hay hardcode `1.81 / 2.99` cho DN phi sản xuất.
 - **Verification:**
-  - [ ] `npm --prefix frontend run typecheck`
-  - [ ] `npm --prefix frontend test`
+  - [x] `npm --prefix frontend run typecheck`
+  - [x] `npm --prefix frontend test`
 - **Dependencies:** T15, T18
 - **Files likely touched:**
   - `frontend/src/pages/OverviewPage.tsx`
@@ -388,16 +388,16 @@
 - **Estimated scope:** Medium (4 files)
 
 ### [Lane G — `frontend-analytics`] Task T20: Trang Batch Excel (S03), Compare (C03), Methodology (B2B) & Admin MLOps
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Lane:** `Wave 2 / Lane G (agent-fe-analytics)`
 - **Description:** Xây dựng `BatchAssessmentPage.tsx` (tải file mẫu, upload `.xlsx`, polling tiến độ job nền, bảng xếp hạng rủi ro + nút xuất Excel), nâng cấp `ComparePage.tsx` (chuyển nguồn DN Tổ chức / DN SEC, giới hạn đúng 2–4 DN, dùng đúng `common_fiscal_year`), tạo `MethodologyPage.tsx` (trang minh bạch kiểm định B2B + điều khoản NĐ 88/2014), và gộp `ModelLabPage` + `ClusterMapPage` thành các tab nội bộ bên trong `AdminPage.tsx` (chỉ admin truy cập).
 - **Acceptance criteria:**
-  - [ ] `ComparePage` chặn thêm quá 4 doanh nghiệp và chọn "Cùng năm tài chính" gửi đúng số năm tới backend.
-  - [ ] `BatchAssessmentPage` hiển thị tiến độ và tải về file Excel kết quả hợp lệ.
-  - [ ] `MethodologyPage` trình bày rõ giới hạn mô hình và kiểm định out-of-time mà không lộ nút Train Model.
+  - [x] `ComparePage` chặn thêm quá 4 doanh nghiệp và chọn "Cùng năm tài chính" gửi đúng số năm tới backend.
+  - [x] `BatchAssessmentPage` hiển thị tiến độ và tải về file Excel kết quả hợp lệ.
+  - [x] `MethodologyPage` trình bày rõ giới hạn mô hình và kiểm định out-of-time mà không lộ nút Train Model.
 - **Verification:**
-  - [ ] `npm --prefix frontend run typecheck`
-  - [ ] `npm --prefix frontend test`
+  - [x] `npm --prefix frontend run typecheck`
+  - [x] `npm --prefix frontend test`
 - **Dependencies:** T15, T18
 - **Files likely touched:**
   - `frontend/src/pages/BatchAssessmentPage.tsx`
@@ -407,9 +407,9 @@
 - **Estimated scope:** Medium (4 files)
 
 ### Checkpoint W2: Sau Merge 3 Nhánh Wave 2 (T13–T20)
-- [ ] Merge Lane E + Lane F + Lane G vào nhánh tích hợp.
-- [ ] `npm --prefix frontend run typecheck && npm --prefix frontend test` → 100% pass
-- [ ] `.\.venv\Scripts\pytest.exe -v tests/unit/test_pdf_and_batch_excel.py tests/integration/test_batch_jobs_and_pdf_api.py` → 100% pass
+- [x] Merge Lane E + Lane F + Lane G vào nhánh tích hợp.
+- [x] `npm --prefix frontend run typecheck && npm --prefix frontend test` → 100% pass
+- [x] `.\.venv\Scripts\pytest.exe -v tests/unit/test_pdf_and_batch_excel.py tests/integration/test_batch_jobs_and_pdf_api.py` → 100% pass
 
 ---
 

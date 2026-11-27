@@ -1004,6 +1004,7 @@ export type BatchRowStatus = 'pending' | 'succeeded' | 'failed' | 'excluded';
 export interface BatchJobSummary {
   id: number;
   organization_id: number;
+  created_by?: number | null;
   filename: string;
   status: BatchJobStatus;
   model_version: string | null;
@@ -1021,6 +1022,7 @@ export interface BatchJobSummary {
 export interface BatchJobRowResult {
   id: number;
   row_index: number;
+  risk_rank?: number | null;
   company_name: string;
   tax_code: string | null;
   fiscal_year: number | null;
@@ -1031,10 +1033,12 @@ export interface BatchJobRowResult {
   confidence_level: ConfidenceLevel | null;
   top_bottleneck_vi: string | null;
   error_message: string | null;
+  result_meta?: Record<string, unknown> | null;
 }
 
 export interface BatchJobDetail extends BatchJobSummary {
   rows: BatchJobRowResult[];
+  legal_disclaimer_vi?: string;
 }
 
 export interface WatchlistEntry {
