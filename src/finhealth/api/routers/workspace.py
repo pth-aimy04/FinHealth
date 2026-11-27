@@ -1,4 +1,4 @@
-"""Owner-scoped saved financial workspace for authenticated users."""
+"""Organization-scoped saved financial workspace with RBAC enforcement."""
 
 from typing import Annotated, Any
 
@@ -10,33 +10,43 @@ from sqlalchemy.orm import Session
 from finhealth.api.dependencies import get_active_model_bundle, get_db
 from finhealth.api.routers.models import _resolve_bundle
 from finhealth.api.schemas.accounts import AnalysisInput, ScreenerInput
-from finhealth.api.security import aware_time, request_limit, require_user
+from finhealth.api.security import OrgContext, aware_time, request_limit, require_org_role
 from finhealth.api.services import FinancialAnalysisService
-from finhealth.db.account_models import SavedAnalysis, SavedScreener, User, WatchlistItem
+from finhealth.db.account_models import SavedAnalysis, SavedScreener, WatchlistItem
 from finhealth.db.models import Company
 from finhealth.ml.registry import ModelArtifactBundle
 
 router = APIRouter(prefix="/me", tags=["personal workspace"])
 Db = Annotated[Session, Depends(get_db)]
-Owner = Annotated[User, Depends(require_user)]
+OrgReader = Annotated[OrgContext, Depends(require_org_role("viewer"))]
+OrgWriter = Annotated[OrgContext, Depends(require_org_role("analyst"))]
+WorkspaceModel = type[WatchlistItem] | type[SavedScreener] | type[SavedAnalysis]
 
 
-def limit_saved(db: Session, model: type, user_id: int) -> None:
-    """Bound per-owner saved collections to prevent unbounded personal storage."""
-    if db.scalar(select(func.count()).select_from(model).where(model.user_id == user_id)) >= 200:
+def limit_saved(db: Session, model: WorkspaceModel, organization_id: int) -> None:
+    """Bound per-organization saved collections to prevent unbounded workspace storage."""
+    count = (
+        db.scalar(
+            select(func.count())
+            .select_from(model)
+            .where(model.organization_id == organization_id)
+        )
+        or 0
+    )
+    if count >= 200:
         raise HTTPException(409, "Đã đạt giới hạn 200 mục. Hãy xóa mục không cần thiết.")
 
 
 @router.get("/watchlist")
-def watchlist(user: Owner, db: Db) -> list[dict[str, object]]:
-    """List only the authenticated owner's followed companies."""
+def watchlist(ctx: OrgReader, db: Db) -> list[dict[str, object]]:
+    """List only the active organization's followed companies."""
     rows = db.execute(
         select(WatchlistItem, Company)
         .join(
             Company,
             Company.id == WatchlistItem.company_id,
         )
-        .where(WatchlistItem.user_id == user.id)
+        .where(WatchlistItem.organization_id == ctx.organization.id)
         .order_by(WatchlistItem.id.desc())
     ).all()
     return [
@@ -46,54 +56,60 @@ def watchlist(user: Owner, db: Db) -> list[dict[str, object]]:
 
 
 @router.post("/watchlist/{cik}", status_code=201)
-def follow(cik: str, user: Owner, db: Db) -> dict[str, object]:
-    """Follow an existing company idempotently without accepting an owner from the client."""
+def follow(cik: str, ctx: OrgWriter, db: Db) -> dict[str, object]:
+    """Follow an existing company idempotently within the active organization workspace."""
     company = db.scalar(select(Company).where(Company.cik == cik))
     if company is None:
         raise HTTPException(404, "Không tìm thấy doanh nghiệp")
     existing = db.scalar(
         select(WatchlistItem).where(
-            WatchlistItem.user_id == user.id,
+            WatchlistItem.organization_id == ctx.organization.id,
             WatchlistItem.company_id == company.id,
         )
     )
     if existing:
         return {"id": existing.id}
-    limit_saved(db, WatchlistItem, user.id)
-    item = WatchlistItem(user_id=user.id, company_id=company.id)
+    limit_saved(db, WatchlistItem, ctx.organization.id)
+    item = WatchlistItem(
+        user_id=ctx.user.id,
+        organization_id=ctx.organization.id,
+        company_id=company.id,
+    )
     db.add(item)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
-        item = db.scalar(
+        existing_item = db.scalar(
             select(WatchlistItem).where(
-                WatchlistItem.user_id == user.id,
+                WatchlistItem.organization_id == ctx.organization.id,
                 WatchlistItem.company_id == company.id,
             )
         )
+        if existing_item is None:
+            raise HTTPException(409, "Không thể cập nhật danh sách theo dõi") from None
+        item = existing_item
     return {"id": item.id}
 
 
 @router.get("/screeners")
-def screeners(user: Owner, db: Db) -> list[dict[str, Any]]:
-    """Return typed screening snapshots for the current owner."""
+def screeners(ctx: OrgReader, db: Db) -> list[dict[str, Any]]:
+    """Return typed screening snapshots for the active organization."""
     rows = db.scalars(
         select(SavedScreener)
-        .where(
-            SavedScreener.user_id == user.id,
-        )
+        .where(SavedScreener.organization_id == ctx.organization.id)
         .order_by(SavedScreener.id.desc())
     ).all()
     return [{"id": row.id, "name": row.name, "filters": row.filters} for row in rows]
 
 
 @router.post("/screeners", status_code=201)
-def save_screener(payload: ScreenerInput, user: Owner, db: Db) -> dict[str, int]:
-    """Persist a validated filter configuration under the authenticated identity."""
-    limit_saved(db, SavedScreener, user.id)
+def save_screener(payload: ScreenerInput, ctx: OrgWriter, db: Db) -> dict[str, int]:
+    """Persist a validated filter configuration under the active organization."""
+    limit_saved(db, SavedScreener, ctx.organization.id)
     item = SavedScreener(
-        user_id=user.id,
+        user_id=ctx.user.id,
+        organization_id=ctx.organization.id,
         name=payload.name,
         filters=payload.filters.model_dump(mode="json", exclude_none=True),
     )
@@ -103,13 +119,11 @@ def save_screener(payload: ScreenerInput, user: Owner, db: Db) -> dict[str, int]
 
 
 @router.get("/analyses")
-def analyses(user: Owner, db: Db) -> list[dict[str, object]]:
-    """List private prediction summaries, never another owner's input or output."""
+def analyses(ctx: OrgReader, db: Db) -> list[dict[str, object]]:
+    """List private prediction summaries strictly within the active organization."""
     rows = db.scalars(
         select(SavedAnalysis)
-        .where(
-            SavedAnalysis.user_id == user.id,
-        )
+        .where(SavedAnalysis.organization_id == ctx.organization.id)
         .order_by(SavedAnalysis.id.desc())
     ).all()
     return [
@@ -127,17 +141,18 @@ def analyses(user: Owner, db: Db) -> list[dict[str, object]]:
 def save_analysis(
     payload: AnalysisInput,
     request: Request,
-    user: Owner,
+    ctx: OrgWriter,
     db: Db,
     active: Annotated[ModelArtifactBundle | None, Depends(get_active_model_bundle)],
 ) -> dict[str, int]:
     """Save only after explicit consent and recompute using a trusted server model."""
     request_limit(db, request, "saved-prediction", 20)
-    limit_saved(db, SavedAnalysis, user.id)
+    limit_saved(db, SavedAnalysis, ctx.organization.id)
     bundle = _resolve_bundle(payload.inputs.model_version, active, request.app.state.settings)
     result = FinancialAnalysisService().predict_manual_statement(payload.inputs, bundle)
     item = SavedAnalysis(
-        user_id=user.id,
+        user_id=ctx.user.id,
+        organization_id=ctx.organization.id,
         name=payload.name,
         model_version=bundle.model_version,
         inputs=payload.inputs.model_dump(mode="json"),
@@ -149,12 +164,12 @@ def save_analysis(
 
 
 @router.get("/analyses/{item_id}")
-def read_analysis(item_id: int, user: Owner, db: Db) -> dict[str, Any]:
-    """Constrain private record lookup by owner to avoid ID enumeration leaks."""
+def read_analysis(item_id: int, ctx: OrgReader, db: Db) -> dict[str, Any]:
+    """Constrain private record lookup by active organization to prevent IDOR leaks."""
     item = db.scalar(
         select(SavedAnalysis).where(
             SavedAnalysis.id == item_id,
-            SavedAnalysis.user_id == user.id,
+            SavedAnalysis.organization_id == ctx.organization.id,
         )
     )
     if item is None:
@@ -170,14 +185,22 @@ def read_analysis(item_id: int, user: Owner, db: Db) -> dict[str, Any]:
 
 
 @router.delete("/{collection}/{item_id}", status_code=204)
-def delete_saved(collection: str, item_id: int, user: Owner, db: Db) -> None:
-    """Delete only from a fixed collection and only under the authenticated owner."""
-    model = {"watchlist": WatchlistItem, "screeners": SavedScreener, "analyses": SavedAnalysis}.get(
-        collection
-    )
+def delete_saved(collection: str, item_id: int, ctx: OrgWriter, db: Db) -> None:
+    """Delete only from a fixed collection and only within the active organization."""
+    collections: dict[str, WorkspaceModel] = {
+        "watchlist": WatchlistItem,
+        "screeners": SavedScreener,
+        "analyses": SavedAnalysis,
+    }
+    model = collections.get(collection)
     if model is None:
         raise HTTPException(404, "Không tìm thấy bộ sưu tập")
-    item = db.scalar(select(model).where(model.id == item_id, model.user_id == user.id))
+    item = db.scalar(
+        select(model).where(
+            model.id == item_id,
+            model.organization_id == ctx.organization.id,
+        )
+    )
     if item is None:
         raise HTTPException(404, "Không tìm thấy mục đã lưu")
     db.delete(item)

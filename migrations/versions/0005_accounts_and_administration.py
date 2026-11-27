@@ -3,29 +3,136 @@
 import sqlalchemy as sa
 from alembic import context, op
 
-from finhealth.db import account_models as accounts
+from finhealth.db.base import NAMING_CONVENTION
 
 revision = "0005"
 down_revision = "0004"
 branch_labels = None
 depends_on = None
 
-MODELS = (
-    accounts.User,
-    accounts.UserSession,
-    accounts.AccountActionToken,
-    accounts.WatchlistItem,
-    accounts.SavedScreener,
-    accounts.SavedAnalysis,
-    accounts.AdminAuditLog,
-    accounts.SecurityRateLimit,
-)
+
+def _frozen_0005_tables() -> tuple[tuple[sa.Table, ...], sa.Table]:
+    """Freeze the revision-0005 schema so later revisions (0008+) evolve cleanly."""
+    meta = sa.MetaData(naming_convention=NAMING_CONVENTION)
+    # Stub parent tables solely for ForeignKey resolution in this local metadata.
+    sa.Table("companies", meta, sa.Column("id", sa.Integer(), primary_key=True))
+    sa.Table("ingestion_runs", meta, sa.Column("id", sa.Integer(), primary_key=True))
+
+    users = sa.Table(
+        "users",
+        meta,
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("email", sa.String(254), nullable=False, unique=True),
+        sa.Column("password_hash", sa.String(255), nullable=False),
+        sa.Column("display_name", sa.Unicode(120), nullable=False),
+        sa.Column("role", sa.String(16), nullable=False),
+        sa.Column("active", sa.Boolean(), nullable=False),
+        sa.Column("email_verified", sa.Boolean(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.CheckConstraint("role IN ('user', 'admin')", name="user_role"),
+    )
+    user_sessions = sa.Table(
+        "user_sessions",
+        meta,
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False, index=True),
+        sa.Column("token_hash", sa.String(64), nullable=False, unique=True),
+        sa.Column("csrf_hash", sa.String(64), nullable=False),
+        sa.Column("credential_stamp", sa.String(255), nullable=False),
+        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False, index=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    account_action_tokens = sa.Table(
+        "account_action_tokens",
+        meta,
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False, index=True),
+        sa.Column("token_hash", sa.String(64), nullable=False, unique=True),
+        sa.Column("purpose", sa.String(24), nullable=False),
+        sa.Column("pending_email", sa.String(254), nullable=True),
+        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("used_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    watchlist_items = sa.Table(
+        "watchlist_items",
+        meta,
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False, index=True),
+        sa.Column("company_id", sa.Integer(), sa.ForeignKey("companies.id"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.UniqueConstraint("user_id", "company_id"),
+    )
+    saved_screeners = sa.Table(
+        "saved_screeners",
+        meta,
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False, index=True),
+        sa.Column("name", sa.Unicode(120), nullable=False),
+        sa.Column("filters", sa.JSON(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+    )
+    saved_analyses = sa.Table(
+        "saved_analyses",
+        meta,
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False, index=True),
+        sa.Column("name", sa.Unicode(120), nullable=False),
+        sa.Column("model_version", sa.String(64), nullable=False),
+        sa.Column("inputs", sa.JSON(), nullable=False),
+        sa.Column("outputs", sa.JSON(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    )
+    admin_audit_logs = sa.Table(
+        "admin_audit_logs",
+        meta,
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("actor_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False, index=True),
+        sa.Column("action", sa.String(64), nullable=False),
+        sa.Column("target", sa.String(120), nullable=False),
+        sa.Column("outcome", sa.String(24), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    )
+    security_rate_limits = sa.Table(
+        "security_rate_limits",
+        meta,
+        sa.Column("bucket", sa.String(64), primary_key=True),
+        sa.Column("attempts", sa.Integer(), nullable=False),
+        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False, index=True),
+    )
+    ingestion_run_events = sa.Table(
+        "ingestion_run_events",
+        meta,
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column(
+            "run_id", sa.Integer(), sa.ForeignKey("ingestion_runs.id"), nullable=False, index=True
+        ),
+        sa.Column("stage", sa.String(32), nullable=False),
+        sa.Column("message", sa.Unicode(500), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    )
+    return (
+        (
+            users,
+            user_sessions,
+            account_action_tokens,
+            watchlist_items,
+            saved_screeners,
+            saved_analyses,
+            admin_audit_logs,
+            security_rate_limits,
+        ),
+        ingestion_run_events,
+    )
 
 
 def upgrade() -> None:
     """Add tables without rewriting financial data or assigning fabricated legacy actors."""
-    for model in MODELS:
-        create_or_validate(model.__table__)
+    tables, run_events = _frozen_0005_tables()
+    for table in tables:
+        create_or_validate(table)
     # Batch mode recreates only on SQLite, allowing a portable named foreign key.
     with op.batch_alter_table("ingestion_runs") as batch:
         batch.add_column(sa.Column("requested_by", sa.Integer(), nullable=True))
@@ -45,7 +152,7 @@ def upgrade() -> None:
         sqlite_where=sa.text("active_key IS NOT NULL"),
         postgresql_where=sa.text("active_key IS NOT NULL"),
     )
-    create_or_validate(accounts.IngestionRunEvent.__table__)
+    create_or_validate(run_events)
 
 
 def create_or_validate(table: sa.Table) -> None:
@@ -93,11 +200,12 @@ def create_or_validate(table: sa.Table) -> None:
 
 def downgrade() -> None:
     """Remove account data only when an operator explicitly requests downgrade."""
-    accounts.IngestionRunEvent.__table__.drop(op.get_bind())
+    tables, run_events = _frozen_0005_tables()
+    run_events.drop(op.get_bind())
     op.drop_index("uq_ingestion_active_key", table_name="ingestion_runs")
     with op.batch_alter_table("ingestion_runs") as batch:
         batch.drop_constraint("fk_ingestion_runs_requested_by_users", type_="foreignkey")
         for name in ("retry_of", "active_key", "stage", "started_at", "requested_by"):
             batch.drop_column(name)
-    for model in reversed(MODELS):
-        model.__table__.drop(op.get_bind())
+    for table in reversed(tables):
+        table.drop(op.get_bind())

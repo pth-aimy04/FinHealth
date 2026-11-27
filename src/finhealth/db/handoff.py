@@ -2,10 +2,11 @@
 
 import argparse
 from pathlib import Path
+from typing import cast
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Engine, Table, func, select
+from sqlalchemy import Engine, Table, func, inspect, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from finhealth.core.config import Settings
@@ -15,13 +16,16 @@ from finhealth.db.models import Base, Company, FinancialMetric, FinancialStateme
 from finhealth.db.session import create_db_engine
 
 # Explicit allowlist: never export users, credentials, private workspaces or job logs.
-PUBLIC_TABLES: tuple[Table, ...] = (
-    Company.__table__,
-    FinancialStatement.__table__,
-    FinancialMetric.__table__,
-    ModelPrediction.__table__,
-    FilingVersion.__table__,
-    ForecastEvidence.__table__,
+PUBLIC_TABLES: tuple[Table, ...] = cast(
+    tuple[Table, ...],
+    (
+        Company.__table__,
+        FinancialStatement.__table__,
+        FinancialMetric.__table__,
+        ModelPrediction.__table__,
+        FilingVersion.__table__,
+        ForecastEvidence.__table__,
+    ),
 )
 
 
@@ -39,9 +43,22 @@ def copy_financial_tables(source: Engine, target: Engine) -> dict[str, int]:
                     raise HandoffError(
                         f"Target table {table.name} is not empty; use a new database."
                     )
+            source_inspector = inspect(source)
+            source_tables = set(source_inspector.get_table_names())
             for table in PUBLIC_TABLES:
+                if table.name not in source_tables:
+                    counts[table.name] = 0
+                    continue
+                source_col_names = {
+                    col["name"] for col in source_inspector.get_columns(table.name)
+                }
+                common_cols = [col for col in table.columns if col.name in source_col_names]
+                if not common_cols:
+                    counts[table.name] = 0
+                    continue
+                order_col = table.c.id if "id" in source_col_names else common_cols[0]
                 count = 0
-                result = reader.execute(select(table).order_by(table.c.id)).mappings()
+                result = reader.execute(select(*common_cols).order_by(order_col)).mappings()
                 for rows in result.partitions(50):
                     writer.execute(table.insert(), [dict(row) for row in rows])
                     count += len(rows)

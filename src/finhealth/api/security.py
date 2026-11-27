@@ -3,23 +3,44 @@
 import hashlib
 import secrets
 import time
-from datetime import timedelta, timezone
-from typing import Annotated
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from typing import Annotated, Any, Literal, cast
 from urllib.parse import urlsplit
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy import delete, select, true, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from finhealth.api.dependencies import get_db
-from finhealth.db.account_models import SecurityRateLimit, User, UserSession
+from finhealth.db.account_models import (
+    Organization,
+    OrganizationMember,
+    SecurityRateLimit,
+    User,
+    UserSession,
+)
 from finhealth.db.base import utc_now
 
 SESSION_COOKIE = "finhealth_session"
 CSRF_COOKIE = "finhealth_csrf"
+
+OrgRole = Literal["viewer", "analyst", "org_admin"]
+ORG_ROLE_RANK: dict[OrgRole, int] = {"viewer": 1, "analyst": 2, "org_admin": 3}
+
+
+@dataclass(frozen=True)
+class OrgContext:
+    """Verified user identity paired with an authorized active organization scope."""
+
+    user: User
+    organization: Organization
+    role: OrgRole
 
 
 def digest(value: str) -> str:
@@ -55,15 +76,18 @@ def consume_limit(
     db.execute(delete(SecurityRateLimit).where(SecurityRateLimit.expires_at < now))
     db.commit()
     for _ in range(2):
-        changed = db.execute(
-            update(SecurityRateLimit)
-            .where(
-                SecurityRateLimit.bucket == key,
-                SecurityRateLimit.attempts < limit,
-            )
-            .values(attempts=SecurityRateLimit.attempts + 1)
-        ).rowcount
-        if changed:
+        result = cast(
+            CursorResult[Any],
+            db.execute(
+                update(SecurityRateLimit)
+                .where(
+                    SecurityRateLimit.bucket == key,
+                    SecurityRateLimit.attempts < limit,
+                )
+                .values(attempts=SecurityRateLimit.attempts + 1)
+            ),
+        )
+        if result.rowcount:
             db.commit()
             return
         if db.get(SecurityRateLimit, key) is not None:
@@ -114,11 +138,11 @@ def optional_identity(request: Request, db: Session) -> tuple[User, UserSession]
     return (pair[0], pair[1]) if pair else None
 
 
-def require_user(
+def _require_identity(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-) -> User:
-    """Authenticate private routes and require CSRF on every state-changing request."""
+) -> tuple[User, UserSession]:
+    """Authenticate private routes once and enforce CSRF/Origin on mutations."""
     identity = optional_identity(request, db)
     if identity is None:
         raise HTTPException(401, "Please sign in to continue")
@@ -128,7 +152,15 @@ def require_user(
         if not supplied or not secrets.compare_digest(digest(supplied), session.csrf_hash):
             raise HTTPException(403, "Invalid CSRF token")
         check_origin(request)
-    return user
+    return user, session
+
+
+def require_user(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
+    """Authenticate private routes and require CSRF on every state-changing request."""
+    return _require_identity(request, db)[0]
 
 
 def check_origin(request: Request) -> None:
@@ -155,6 +187,76 @@ def require_admin(user: Annotated[User, Depends(require_user)]) -> User:
     if user.role != "admin":
         raise HTTPException(403, "Administrator access required")
     return user
+
+
+def resolve_org_context(
+    user: User,
+    session: UserSession,
+    db: Session,
+) -> OrgContext:
+    """Resolve and verify the user's active organization strictly from server-side state."""
+    if session.active_org_id is not None:
+        row = db.execute(
+            select(Organization, OrganizationMember)
+            .join(OrganizationMember, OrganizationMember.organization_id == Organization.id)
+            .where(
+                Organization.id == session.active_org_id,
+                OrganizationMember.user_id == user.id,
+                Organization.active == true(),
+            )
+        ).first()
+        if row is None:
+            # Fail closed: never silently retarget a revoked or deactivated workspace.
+            raise HTTPException(403, "Bạn không có quyền truy cập không gian làm việc này")
+        organization, member = row
+        return OrgContext(user=user, organization=organization, role=_coerce_org_role(member.role))
+
+    fallback = db.execute(
+        select(Organization, OrganizationMember)
+        .join(OrganizationMember, OrganizationMember.organization_id == Organization.id)
+        .where(
+            OrganizationMember.user_id == user.id,
+            Organization.active == true(),
+        )
+        .order_by(Organization.is_personal.desc(), Organization.id.asc())
+    ).first()
+    if fallback is None:
+        raise HTTPException(403, "Bạn không có quyền truy cập không gian làm việc này")
+
+    organization, member = fallback
+    return OrgContext(user=user, organization=organization, role=_coerce_org_role(member.role))
+
+
+def _coerce_org_role(raw_role: str) -> OrgRole:
+    """Validate persisted organization role against the closed RBAC set."""
+    if raw_role == "viewer":
+        return "viewer"
+    if raw_role == "analyst":
+        return "analyst"
+    if raw_role == "org_admin":
+        return "org_admin"
+    raise HTTPException(403, "Vai trò tổ chức không hợp lệ")
+
+
+def require_org_role(min_role: OrgRole = "viewer") -> Callable[..., OrgContext]:
+    """Enforce server-verified organization membership and minimum RBAC privilege."""
+    if min_role not in ORG_ROLE_RANK:
+        raise ValueError(f"Unsupported organization role: {min_role}")
+
+    def _dependency(
+        identity: Annotated[tuple[User, UserSession], Depends(_require_identity)],
+        db: Annotated[Session, Depends(get_db)],
+    ) -> OrgContext:
+        user, session = identity
+        ctx = resolve_org_context(user, session, db)
+        if ORG_ROLE_RANK[ctx.role] < ORG_ROLE_RANK[min_role]:
+            raise HTTPException(403, "Vai trò hiện tại không đủ quyền thực hiện thao tác này")
+        return ctx
+
+    return _dependency
+
+
+require_org_context = require_org_role
 
 
 def revoke_sessions(db: Session, user_id: int) -> None:
@@ -189,6 +291,6 @@ def check_prediction_rate(
     request_limit(db, request, "prediction", 30)
 
 
-def aware_time(value: object) -> str:
+def aware_time(value: datetime | None) -> str:
     """Serialize UTC database timestamps consistently, including SQLite test timestamps."""
     return value.replace(tzinfo=timezone.utc).isoformat() if value is not None else ""

@@ -41,11 +41,10 @@ data/**
 !data/artifacts/models/*/*.md
 !data/seed/financial.sqlite3
 
-# Frontend and editor output
+# Editor and local output
 node_modules/
-frontend/test-results/
-frontend/*.tsbuildinfo
-audit-reports/frontend/playwright/
+*.tsbuildinfo
+.agents/
 .idea/
 .vscode/
 .DS_Store

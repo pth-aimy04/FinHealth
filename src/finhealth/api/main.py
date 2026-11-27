@@ -22,6 +22,10 @@ from finhealth.api.routers import (
     health,
     ingestion,
     models,
+    org_analytics,
+    org_companies,
+    organizations,
+    reporting_v2,
     reports,
     workspace,
 )
@@ -78,11 +82,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return configured
 
         app.dependency_overrides[get_settings] = app_settings
+    explicit_cors_origins = (
+        bool(configured.cors_allowed_origins) and "*" not in configured.cors_allowed_origins
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=configured.cors_allowed_origins,
-        allow_credentials=False,
-        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_credentials=explicit_cors_origins,
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
     app.add_middleware(RequestProtection)
@@ -118,12 +125,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ):
         app.add_exception_handler(exception_type, domain_error_handler)
     app.add_exception_handler(SQLAlchemyError, database_error_handler)
+    # Mount org_analytics before org_companies so static /org/companies/compare
+    # is matched ahead of dynamic /org/companies/{company_id}.
+    app.include_router(org_analytics.router)
+    app.include_router(reporting_v2.router)
     routers = (
-        health.router, companies.router, models.router, dashboard.router, reports.router,
-        ingestion.router, accounts.router, admin.router, workspace.router,
+        health.router,
+        companies.router,
+        models.router,
+        dashboard.router,
+        reports.router,
+        ingestion.router,
+        accounts.router,
+        organizations.router,
+        org_companies.router,
+        admin.router,
+        workspace.router,
     )
     for router in routers:
         app.include_router(router, prefix="/api/v1")
+    spa_dist = configured.frontend_dir / "dist"
+    app.mount(
+        "/assets",
+        DashboardStaticFiles(directory=spa_dist / "assets", check_dir=False),
+        name="spa-assets",
+    )
     app.mount(
         "/static",
         DashboardStaticFiles(directory=configured.frontend_dir, check_dir=False),
@@ -135,18 +161,49 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         name="figures",
     )
 
-    @app.get("/", response_class=FileResponse, include_in_schema=False)
-    def dashboard_index() -> FileResponse:
-        """Serve the local dashboard through the same origin as the financial API."""
-        if not (configured.frontend_dir / "index.html").is_file():
+    def _resolve_index_html() -> FileResponse:
+        """Serve the built React SPA index when present, falling back to frontend_dir/index.html."""
+        built_index = spa_dist / "index.html"
+        raw_index = configured.frontend_dir / "index.html"
+        target = built_index if built_index.is_file() else raw_index
+        if not target.is_file():
             raise HTTPException(
                 503, "Frontend files missing. Restore the configured frontend directory."
             )
         return FileResponse(
-            configured.frontend_dir / "index.html",
+            target,
             media_type="text/html",
             headers={"Cache-Control": "no-cache"},
         )
+
+    @app.get("/", response_class=FileResponse, include_in_schema=False)
+    def dashboard_index() -> FileResponse:
+        """Serve the local dashboard through the same origin as the financial API."""
+        return _resolve_index_html()
+
+    @app.get("/app/{full_path:path}", response_class=FileResponse, include_in_schema=False)
+    @app.get("/app", response_class=FileResponse, include_in_schema=False)
+    @app.get("/portfolio/{full_path:path}", response_class=FileResponse, include_in_schema=False)
+    @app.get("/portfolio", response_class=FileResponse, include_in_schema=False)
+    @app.get("/batch", response_class=FileResponse, include_in_schema=False)
+    @app.get("/compare", response_class=FileResponse, include_in_schema=False)
+    @app.get("/us-market/{full_path:path}", response_class=FileResponse, include_in_schema=False)
+    @app.get("/us-market", response_class=FileResponse, include_in_schema=False)
+    @app.get("/methodology", response_class=FileResponse, include_in_schema=False)
+    @app.get("/organization", response_class=FileResponse, include_in_schema=False)
+    @app.get("/screener", response_class=FileResponse, include_in_schema=False)
+    @app.get("/companies/{full_path:path}", response_class=FileResponse, include_in_schema=False)
+    @app.get("/clusters", response_class=FileResponse, include_in_schema=False)
+    @app.get("/stress", response_class=FileResponse, include_in_schema=False)
+    @app.get("/models", response_class=FileResponse, include_in_schema=False)
+    @app.get("/workspace", response_class=FileResponse, include_in_schema=False)
+    @app.get("/account", response_class=FileResponse, include_in_schema=False)
+    @app.get("/admin/{full_path:path}", response_class=FileResponse, include_in_schema=False)
+    @app.get("/admin", response_class=FileResponse, include_in_schema=False)
+    def dashboard_spa_routes(full_path: str = "") -> FileResponse:
+        """Serve the React SPA entry for client-side financial workspace routes."""
+        _ = full_path
+        return _resolve_index_html()
 
     return app
 

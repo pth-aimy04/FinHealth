@@ -1,5 +1,0 @@
-PASS guest: live financial API, navigation, filtering, responsive menu, optional login/registration OTP/admin rejection; 12 requests
-Error: Timeout: real company analysis loaded
-    at until (D:\DATN\tests\frontend\tabler_preview.cjs:23:39)
-    at async scenario (D:\DATN\tests\frontend\tabler_preview.cjs:82:5)
-    at async D:\DATN\tests\frontend\tabler_preview.cjs:149:3

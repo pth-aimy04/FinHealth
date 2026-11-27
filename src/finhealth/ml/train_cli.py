@@ -41,6 +41,7 @@ from finhealth.ml.registry import (
     ModelArtifactBundle,
     save_bundle,
     sync_company_prediction,
+    train_and_evaluate_kaggle_v2_pipeline,
     train_and_evaluate_pipeline,
 )
 from finhealth.ml.splitter import (
@@ -270,18 +271,55 @@ def benchmark_tables(bundle: ModelArtifactBundle, panel: pd.DataFrame) -> str:
     """Format required benchmark tables directly from the fitted evaluation report."""
     report = bundle.evaluation_report
     summary = report["split_summary"]
+    is_kaggle_v2 = report.get("scoring_contract") == "scale_free_v2"
     panels = [
         ["Panel rows", len(panel)],
         ["Companies", panel["company_id"].nunique()],
-        ["Synthetic rows", int(panel["data_source"].eq("synthetic_benchmark").sum())],
-        ["Cached SEC rows", int(panel["data_source"].eq("cached_sec").sum())],
+        *(
+            [
+                [
+                    "Kaggle US bankruptcy rows",
+                    int(panel["data_source"].eq("kaggle_us_bankruptcy").sum()),
+                ],
+                [
+                    "Total 1Y bankruptcy events (year == max_year)",
+                    summary.get("total_positive_rows"),
+                ],
+                ["Train positive events", summary.get("train_positive_rows")],
+                ["Validation positive events", summary.get("validation_positive_rows")],
+                ["Test positive events", summary.get("test_positive_rows")],
+                [
+                    "Entity leakage (Train/Val vs Test bankrupt overlap)",
+                    summary.get("entity_leakage_positive_overlap", 0),
+                ],
+            ]
+            if is_kaggle_v2
+            else [
+                ["Synthetic rows", int(panel["data_source"].eq("synthetic_benchmark").sum())],
+                ["Cached SEC rows", int(panel["data_source"].eq("cached_sec").sum())],
+            ]
+        ),
         ["Training feature rows", summary["train_feature_rows"]],
         ["Training supervised rows", summary["train_supervised_rows"]],
         ["Non-forward supervised rows", summary["non_forward_supervised_rows"]],
         ["Validation labeled rows", summary["validation_rows"]],
         ["Test feature rows", summary["test_rows"]],
         ["Test labeled rows", summary["test_classification_rows"]],
-        ["Panel proxy distress prevalence (%)", float(derive_distress_label(panel).mean() * 100)],
+        *(
+            [
+                [
+                    "Panel 1Y bankruptcy prevalence (%)",
+                    float(panel["next_is_bankrupt"].mean() * 100),
+                ]
+            ]
+            if is_kaggle_v2 and "next_is_bankrupt" in panel.columns
+            else [
+                [
+                    "Panel proxy distress prevalence (%)",
+                    float(derive_distress_label(panel).mean() * 100),
+                ]
+            ]
+        ),
         ["Threshold source", summary["threshold_source"]],
         ["Calibration publication date", summary.get("threshold_calibration_asof")],
     ]
@@ -623,14 +661,24 @@ def run_training(
             validation_end_year if validation_end_year is not None else train_end_year + 1
         )
         name = "sec_real_panel.parquet" if real_only else "benchmark_panel.parquet"
-    bundle = train_and_evaluate_pipeline(
-        panel,
-        train_end_year,
-        model_version,
-        settings.random_seed,
-        validation_end_year=validation_end_year,
-        imbalance_strategy=imbalance_strategy,
-    )
+    if dataset == "kaggle":
+        bundle = train_and_evaluate_kaggle_v2_pipeline(
+            panel,
+            train_end_year,
+            model_version,
+            settings.random_seed,
+            validation_end_year=validation_end_year,
+            imbalance_strategy=imbalance_strategy,
+        )
+    else:
+        bundle = train_and_evaluate_pipeline(
+            panel,
+            train_end_year,
+            model_version,
+            settings.random_seed,
+            validation_end_year=validation_end_year,
+            imbalance_strategy=imbalance_strategy,
+        )
     pipeline.export_to_parquet(
         [{str(k): v for k, v in row.items()} for row in panel.to_dict("records")],
         settings.parquet_path / name,
@@ -640,17 +688,32 @@ def run_training(
     )
     bundle.evaluation_report["data_provenance"] = {
         "mode": mode,
+        "dataset": dataset,
         "live_ingestion": live_status,
         "random_seed": settings.random_seed,
         "source_counts": {
             str(key): int(value) for key, value in panel["data_source"].value_counts().items()
         },
         "database": database_location,
-        "annual_selection": "first-observed filing per annual period; later revisions excluded",
+        "annual_selection": (
+            "1-year-ahead bankruptcy event on final observed fiscal year (year == max_year); "
+            "all prior years labeled 0"
+            if dataset == "kaggle"
+            else "first-observed filing per annual period; later revisions excluded"
+        ),
         "excluded_ciks": sorted(EXCLUDED_INDUSTRIAL_CIKS),
-        "purpose": "software benchmark; not validated real-world bankruptcy performance",
+        "purpose": (
+            "out-of-time US corporate bankruptcy validation (Kaggle 1999-2018)"
+            if dataset == "kaggle"
+            else (
+                "real SEC EDGAR fundamental distress evaluation"
+                if real_only
+                else "software benchmark; not validated real-world bankruptcy performance"
+            )
+        ),
         "labels": (
-            "observed US corporate bankruptcy outcomes (Kaggle US Company Bankruptcy dataset)"
+            "observed 1-year-ahead US corporate bankruptcy outcomes "
+            "(Chapter 7/11, year == max_year only)"
             if dataset == "kaggle"
             else (
                 "operational, cash-flow, and solvency distress rules applied to SEC financials"
@@ -672,7 +735,11 @@ def run_training(
         if activate
         else settings.data_dir / "artifacts" / f"figures_{model_version}"
     )
-    _, held_out, _ = prepare_validation_test(split["val"], split["test"], validation_end_year)
+    if dataset == "kaggle":
+        held_out = split["test"].copy()
+        held_out["next_is_distressed"] = held_out["next_is_bankrupt"].astype(float)
+    else:
+        _, held_out, _ = prepare_validation_test(split["val"], split["test"], validation_end_year)
     paths = EvaluationPlotGenerator(bundle, train, held_out, figures).generate()
     tables = benchmark_tables(bundle, panel)
     existing = settings.model_path / model_version
@@ -827,10 +894,16 @@ def main(argv: list[str] | None = None) -> int:
         )
     except (FinHealthError, ValueError, OSError) as error:
         parser.exit(1, f"Training failed: {error}\n")
-    print(
-        "Computed model evaluation - proxy or simulated distress labels "
-        "are not bankruptcy outcomes.\n"
-    )
+    if args.dataset == "kaggle":
+        print(
+            "Computed out-of-time US bankruptcy evaluation "
+            "(Kaggle 1999-2018, 1-year-ahead year == max_year labels, 0% entity leakage).\n"
+        )
+    else:
+        print(
+            "Computed model evaluation - proxy or simulated distress labels "
+            "are not bankruptcy outcomes.\n"
+        )
     print(tables)
     print(f"\nArtifacts: {destination.resolve()}")
     print(f"Figures: {(settings.data_dir / 'artifacts' / 'figures').resolve()}")

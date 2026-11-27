@@ -1,35 +1,25 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import App from "./app/app";
-import { SessionProvider } from "./app/session";
-import { ApiError } from "./lib/api/client";
-import "./styles/global.css";
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: (count, error) =>
-        !(
-          error instanceof ApiError &&
-          error.status >= 400 &&
-          error.status < 500
-        ) && count < 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-const root = document.getElementById("root");
-if (!root) throw new Error("Missing application root");
-createRoot(root).render(
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import '@fontsource/be-vietnam-pro/400.css';
+import '@fontsource/be-vietnam-pro/500.css';
+import '@fontsource/be-vietnam-pro/600.css';
+import '@fontsource/be-vietnam-pro/700.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '@fontsource/jetbrains-mono/600.css';
+import { App } from '@/App';
+import '@/index.css';
+
+try {
+  if (window.localStorage.getItem('finhealth-theme') === 'dark') {
+    document.documentElement.classList.add('dark');
+  }
+} catch {
+  // Bỏ qua nếu trình duyệt chặn storage
+}
+
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <SessionProvider>
-          <App />
-        </SessionProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <App />
   </StrictMode>,
 );
