@@ -29,6 +29,28 @@ _CONFIDENCE_ORDER: tuple[ConfidenceLevel, ...] = ("LOW", "MODERATE", "HIGH")
 _CONFIDENCE_RANK: dict[ConfidenceLevel, int] = {"LOW": 0, "MODERATE": 1, "HIGH": 2}
 _TIER_RANK: dict[RiskTier, int] = {"STRONG": 0, "STABLE": 1, "WATCH": 2, "CRITICAL": 3}
 
+_OOD_FEATURE_LABELS_VI: dict[str, str] = {
+    "roa": "Tỷ suất sinh lời trên tài sản (ROA)",
+    "ebit_to_assets": "Lợi nhuận hoạt động / Tổng tài sản",
+    "ebitda_to_assets": "EBITDA / Tổng tài sản",
+    "gross_margin": "Biên lợi nhuận gộp",
+    "operating_margin": "Biên lợi nhuận hoạt động",
+    "opex_to_revenue": "Tổng chi phí hoạt động / Doanh thu",
+    "asset_turnover": "Vòng quay tổng tài sản",
+    "current_ratio": "Hệ số thanh toán hiện hành",
+    "quick_ratio": "Hệ số thanh toán nhanh",
+    "working_capital_ratio": "Vốn lưu động ròng / Tổng tài sản",
+    "debt_ratio": "Nợ phải trả / Tổng tài sản",
+    "short_term_debt_share": "Tỷ trọng nợ ngắn hạn / Tổng nợ",
+    "long_term_debt_to_assets": "Nợ dài hạn / Tổng tài sản",
+    "retained_earnings_ratio": "Lợi nhuận giữ lại / Tổng tài sản",
+    "equity_to_assets": "Vốn chủ sở hữu / Tổng tài sản",
+    "is_negative_equity": "Tình trạng âm vốn chủ sở hữu",
+    "inventory_to_assets": "Hàng tồn kho / Tổng tài sản",
+    "receivables_to_revenue": "Phải thu ngắn hạn / Doanh thu",
+    "depreciation_to_assets": "Khấu hao / Tổng tài sản",
+}
+
 
 def classify_bankruptcy_tier(pd_12m: float) -> RiskTier:
     """Map calibrated 12-month bankruptcy probability to credit-aligned risk tiers."""
@@ -220,9 +242,13 @@ def assess_confidence(
     is_ood = len(ood_features) >= ood_count_threshold
     if is_ood:
         level = _downgrade_confidence(level, 1)
+        ood_labels = [
+            _OOD_FEATURE_LABELS_VI.get(feat, feat.replace("_", " "))
+            for feat in ood_features[:5]
+        ]
         reasons_vi.append(
             f"Phát hiện {len(ood_features)} chỉ số tài chính nằm ngoài vùng phân bố lịch sử "
-            f"(1%–99%): {', '.join(ood_features[:5])}."
+            f"(1%–99%): {', '.join(ood_labels)}."
         )
 
     # Layer 3: Calibrated 4-model ensemble disagreement.

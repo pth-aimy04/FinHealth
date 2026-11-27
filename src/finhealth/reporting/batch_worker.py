@@ -14,6 +14,7 @@ from finhealth.api.services_org import (
     DEFAULT_FALLBACK_MODEL_VERSION,
     FI_EXCLUSION_REASON_VI,
     RISK_TIER_LABELS_VI,
+    _compute_total_opex_to_revenue,
     _score_statement_with_adapter,
 )
 from finhealth.db.base import utc_now
@@ -128,11 +129,18 @@ def _build_batch_analytical_record(
 
     equity_to_assets = _safe_div(equity, assets, True)
     is_neg_eq = bool(equity is not None and equity <= 0.0)
+    neg_eq_flag: float | None = (1.0 if is_neg_eq else 0.0) if equity is not None else None
+    total_opex_ratio = _compute_total_opex_to_revenue(
+        revenues=revenues,
+        cogs=cogs,
+        operating_expenses=scaled.get("operating_expenses"),
+        ebitda=ebitda,
+    )
     extended: dict[str, Any] = {
         "gross_margin": _safe_div(gross_profit, revenues, True),
         "ebitda_margin": _safe_div(ebitda, revenues, True),
         "ebitda_to_assets": _safe_div(ebitda, assets, True),
-        "opex_to_revenue": _safe_div(scaled.get("operating_expenses"), revenues, True),
+        "opex_to_revenue": total_opex_ratio,
         "quick_ratio": (
             _safe_div(current_assets - inventory, current_liabilities, True)
             if current_assets is not None and inventory is not None
@@ -141,7 +149,7 @@ def _build_batch_analytical_record(
         "short_term_debt_share": _safe_div(current_liabilities, liabilities, True),
         "long_term_debt_to_assets": _safe_div(scaled.get("long_term_debt"), assets, True),
         "equity_to_assets": equity_to_assets,
-        "is_negative_equity": is_neg_eq,
+        "is_negative_equity": neg_eq_flag,
         "inventory_to_assets": _safe_div(inventory, assets, True),
         "receivables_to_revenue": _safe_div(receivables, revenues, True),
         "depreciation_to_assets": _safe_div(da, assets, True),
@@ -159,7 +167,8 @@ def _build_batch_analytical_record(
     for key, val in extended.items():
         if record.get(key) is None and val is not None:
             record[key] = val
-    record["is_negative_equity"] = is_neg_eq
+    record["opex_to_revenue"] = total_opex_ratio
+    record["is_negative_equity"] = neg_eq_flag
     return record, scaled
 
 
@@ -307,6 +316,10 @@ def process_batch_job(
         else:
             job.failed_rows += 1
 
+        # Flush incremental progress every 10 rows so polling clients observe live updates.
+        if job.processed_rows % 10 == 0:
+            db.commit()
+
     job.model_version = active_model_version or DEFAULT_FALLBACK_MODEL_VERSION
     job.summary_json = {
         "tier_distribution": tier_dist,
@@ -321,6 +334,25 @@ def process_batch_job(
     db.commit()
     db.refresh(job)
     return job
+
+
+def recover_stale_batch_jobs(db: Session) -> list[int]:
+    """Reset interrupted 'running' batch jobs to 'queued' and return pending job IDs."""
+    stale_running = list(
+        db.scalars(select(OrgBatchJob).where(OrgBatchJob.status == "running")).all()
+    )
+    for job in stale_running:
+        job.status = "queued"
+        job.error_message = None
+    if stale_running:
+        db.commit()
+    return list(
+        db.scalars(
+            select(OrgBatchJob.id)
+            .where(OrgBatchJob.status == "queued")
+            .order_by(OrgBatchJob.id.asc())
+        ).all()
+    )
 
 
 def run_batch_job_background(

@@ -169,6 +169,8 @@ class OrgCompanyResponse(BaseModel):
     is_sample: bool
     scoring_eligible: bool
     scoring_exclusion_reason: str | None
+    latest_health_score: float | None = None
+    latest_risk_tier: str | None = None
     created_at: str
     updated_at: str
 

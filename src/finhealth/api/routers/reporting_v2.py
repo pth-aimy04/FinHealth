@@ -49,7 +49,9 @@ from finhealth.api.security import (
 )
 from finhealth.api.services import FinancialAnalysisService
 from finhealth.api.services_org import (
+    FI_EXCLUSION_REASON_VI,
     RISK_TIER_LABELS_VI,
+    _compute_total_opex_to_revenue,
     _score_statement_with_adapter,
     get_org_company_assessment,
 )
@@ -66,7 +68,7 @@ from finhealth.etl.corporate_finance import (
 )
 from finhealth.etl.driver_narrative import translate_drivers_to_business
 from finhealth.etl.financial_ratios import _finite, _safe_div, compute_statement_ratios
-from finhealth.ingestion.schemas import is_manufacturing_sic
+from finhealth.ingestion.schemas import is_financial_institution_sic, is_manufacturing_sic
 from finhealth.ml.feature_contracts import ConfidenceLevel, RiskTier
 from finhealth.reporting.batch_excel import (
     MAX_BATCH_FILE_BYTES,
@@ -167,8 +169,11 @@ def _build_sec_assessment_view(
             ),
         )
 
-    is_mfg = is_manufacturing_sic(company.sic_code)
-    business_type = "manufacturing" if is_mfg else "trade_service"
+    is_fi = is_financial_institution_sic(company.sic_code)
+    is_mfg = not is_fi and is_manufacturing_sic(company.sic_code)
+    business_type = (
+        "financial_institution" if is_fi else "manufacturing" if is_mfg else "trade_service"
+    )
 
     records: list[dict[str, Any]] = []
     history_points: list[MultiPeriodHistoryPointView] = []
@@ -185,11 +190,18 @@ def _build_sec_assessment_view(
             "inventory": stmt.inventory,
             "total_liabilities": stmt.total_liabilities,
             "current_liabilities": stmt.current_liabilities,
+            "short_term_debt": getattr(stmt, "short_term_debt", None),
             "long_term_debt": stmt.long_term_debt,
+            "accounts_payable": getattr(stmt, "accounts_payable", None),
             "stockholders_equity": stmt.stockholders_equity,
             "retained_earnings": stmt.retained_earnings,
             "revenues": stmt.revenues,
+            "cost_of_goods_sold": getattr(stmt, "cost_of_goods_sold", None),
+            "gross_profit": getattr(stmt, "gross_profit", None),
+            "operating_expenses": getattr(stmt, "operating_expenses", None),
             "operating_income": stmt.operating_income,
+            "depreciation_amortization": getattr(stmt, "depreciation_amortization", None),
+            "ebitda": getattr(stmt, "ebitda", None),
             "interest_expense": stmt.interest_expense,
             "net_income": stmt.net_income,
             "operating_cash_flow": stmt.operating_cash_flow,
@@ -208,28 +220,65 @@ def _build_sec_assessment_view(
         assets = _finite(stmt.total_assets)
         equity_to_assets = _safe_div(equity, assets, True)
         is_neg_eq = bool(equity is not None and equity <= 0.0)
-        rec = {
+        neg_eq_flag: float | None = (1.0 if is_neg_eq else 0.0) if equity is not None else None
+        total_opex_ratio = _compute_total_opex_to_revenue(
+            revenues=raw.get("revenues"),
+            cogs=raw.get("cost_of_goods_sold"),
+            operating_expenses=raw.get("operating_expenses"),
+            ebitda=raw.get("ebitda"),
+        )
+        rec: dict[str, Any] = {
             **raw,
             **ratios,
             "equity_to_assets": equity_to_assets,
-            "is_negative_equity": is_neg_eq,
+            "is_negative_equity": neg_eq_flag,
+            "opex_to_revenue": total_opex_ratio,
             "cash_conversion_qoe": _safe_div(stmt.operating_cash_flow, stmt.net_income, True),
         }
         prior_rec = records[idx - 1] if idx > 0 else None
         has_prior = (
             prior_rec is not None and statements[idx - 1].fiscal_year == stmt.fiscal_year - 1
         )
+        if has_prior and prior_rec is not None:
+            for cur_k, delta_k in (
+                ("roa", "roa_yoy_delta"),
+                ("gross_margin", "gross_margin_yoy_delta"),
+                ("debt_ratio", "debt_ratio_yoy_delta"),
+                ("working_capital_ratio", "working_capital_yoy_delta"),
+                ("ocf_ratio", "ocf_ratio_yoy_delta"),
+                ("roe", "roe_yoy_delta"),
+            ):
+                cur_v, prev_v = _finite(rec.get(cur_k)), _finite(prior_rec.get(cur_k))
+                rec[delta_k] = cur_v - prev_v if cur_v is not None and prev_v is not None else None
+            cur_rev, prev_rev = _finite(rec.get("revenues")), _finite(prior_rec.get("revenues"))
+            rec["revenue_growth_yoy"] = (
+                (cur_rev - prev_rev) / prev_rev
+                if cur_rev is not None and prev_rev is not None and prev_rev > 0
+                else None
+            )
         ocf = _finite(stmt.operating_cash_flow)
         neg_ocf_streak = neg_ocf_streak + 1 if (ocf is not None and ocf < 0.0) else 0
 
-        scored = _score_statement_with_adapter(
-            rec,
-            prior_record=prior_rec if has_prior else None,
-            has_prior=has_prior,
-            negative_ocf_streak=neg_ocf_streak,
-            audit_status="audited_unqualified",
-            model_registry=model_registry,
-        )
+        if is_fi:
+            scored = {
+                "model_version": "excluded-fi",
+                "scoring_mode": "excluded",
+                "pd_12m": None,
+                "health_score": None,
+                "risk_tier": None,
+                "confidence": None,
+                "cash_flow_overlay": None,
+                "shap_explanation": None,
+            }
+        else:
+            scored = _score_statement_with_adapter(
+                rec,
+                prior_record=prior_rec if has_prior else None,
+                has_prior=has_prior,
+                negative_ocf_streak=neg_ocf_streak,
+                audit_status="audited_unqualified",
+                model_registry=model_registry,
+            )
         altman = compute_altman_assessment(
             rec,
             business_type=business_type,
@@ -269,7 +318,11 @@ def _build_sec_assessment_view(
     prior_rec = records[-2] if len(records) >= 2 else None
 
     pillars_raw = compute_health_pillars_v2(target_rec, prior_record=prior_rec)
-    drivers_raw = translate_drivers_to_business(last_scored["shap_explanation"], target_rec)
+    drivers_raw: dict[str, Any] = (
+        {"strengths": [], "bottlenecks": [], "total_impact_share_pct": 0.0}
+        if is_fi
+        else translate_drivers_to_business(last_scored["shap_explanation"], target_rec)
+    )
     dupont = compute_dupont(records)
     qoe = compute_quality_of_earnings(target_rec, prior_rec)
     checklist = compute_accounting_checklist(target_rec, prior_rec)
@@ -278,30 +331,51 @@ def _build_sec_assessment_view(
     health_score = _finite(last_scored.get("health_score"))
     pd_12m = _finite(last_scored.get("pd_12m"))
     takeaways: list[str] = []
-    if tier is not None and health_score is not None and pd_12m is not None:
-        pd_pct = f"{pd_12m * 100:.2f}%".replace(".", ",")
-        score_str = f"{health_score:.1f}".replace(".", ",")
-        takeaways.append(
-            f"Sức khỏe tài chính đạt {score_str}/100 ({RISK_TIER_LABELS_VI[tier]}), "
-            f"xác suất rủi ro 12 tháng ở mức {pd_pct}."
-        )
-    if drivers_raw.get("bottlenecks"):
-        takeaways.append(f"Điểm nghẽn chính: {drivers_raw['bottlenecks'][0]['headline_vi']}.")
-    if drivers_raw.get("strengths"):
-        takeaways.append(f"Điểm tựa nổi bật: {drivers_raw['strengths'][0]['headline_vi']}.")
+    if is_fi:
+        takeaways = [
+            FI_EXCLUSION_REASON_VI,
+            "Hồ sơ tổ chức tài chính chỉ dùng để tham khảo, "
+            "không chấm điểm mô hình phi tài chính.",
+        ]
+    else:
+        if tier is not None and health_score is not None and pd_12m is not None:
+            pd_pct = f"{pd_12m * 100:.2f}%".replace(".", ",")
+            score_str = f"{health_score:.1f}".replace(".", ",")
+            takeaways.append(
+                f"Sức khỏe tài chính đạt {score_str}/100 ({RISK_TIER_LABELS_VI[tier]}), "
+                f"xác suất rủi ro 12 tháng ở mức {pd_pct}."
+            )
+        if drivers_raw.get("bottlenecks"):
+            takeaways.append(f"Điểm nghẽn chính: {drivers_raw['bottlenecks'][0]['headline_vi']}.")
+        if drivers_raw.get("strengths"):
+            takeaways.append(f"Điểm tựa nổi bật: {drivers_raw['strengths'][0]['headline_vi']}.")
 
     summary = AssessmentSummaryView(
-        scoring_eligible=True,
+        scoring_eligible=not is_fi,
         scoring_mode=last_scored["scoring_mode"],
         model_version=str(last_scored["model_version"]),
         health_score=health_score,
         risk_tier=tier,
-        risk_label_vi=RISK_TIER_LABELS_VI[tier] if tier is not None else "Chưa xếp loại",
+        risk_label_vi=(
+            "Không áp dụng (Tổ chức tài chính)"
+            if is_fi
+            else RISK_TIER_LABELS_VI[tier]
+            if tier is not None
+            else "Chưa xếp loại"
+        ),
         pd_12m=pd_12m,
-        confidence=ConfidenceView.model_validate(last_scored["confidence"]),
-        cash_flow_overlay=CashFlowOverlayView.model_validate(last_scored["cash_flow_overlay"]),
+        confidence=(
+            ConfidenceView.model_validate(last_scored["confidence"])
+            if last_scored.get("confidence") is not None
+            else None
+        ),
+        cash_flow_overlay=(
+            CashFlowOverlayView.model_validate(last_scored["cash_flow_overlay"])
+            if last_scored.get("cash_flow_overlay") is not None
+            else None
+        ),
         top_3_takeaways_vi=takeaways[:3],
-        unavailable_reason_vi=None,
+        unavailable_reason_vi=FI_EXCLUSION_REASON_VI if is_fi else None,
         legal_disclaimer_vi=LEGAL_DISCLAIMER_VI,
     )
     meta = OrgCompanyMetaView(
@@ -567,6 +641,21 @@ def download_org_company_pdf_report(
             "Content-Disposition": f'attachment; filename="{slug}.pdf"',
             "Cache-Control": "no-store",
         },
+    )
+
+
+@router.get("/companies/{identifier}/assessment", response_model=CompanyAssessmentView)
+def get_sec_company_assessment(
+    request: Request,
+    identifier: str,
+    db: Db,
+) -> CompanyAssessmentView:
+    """Return the unified V1.0 scale-free assessment for an SEC issuer (matches PDF export)."""
+    company = FinancialAnalysisService().resolve_company(db, identifier)
+    return _build_sec_assessment_view(
+        db,
+        company=company,
+        model_registry=_get_model_registry(request),
     )
 
 

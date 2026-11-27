@@ -19,6 +19,7 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily  # type: ignore[impo
 from reportlab.pdfbase.ttfonts import TTFont  # type: ignore[import-untyped]
 from reportlab.platypus import (  # type: ignore[import-untyped]
     Image,
+    KeepTogether,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
@@ -83,6 +84,44 @@ _METRIC_STATUS_LABELS_VI: dict[str, str] = {
     "WARNING": "Cảnh báo",
     "CRITICAL": "Nguy hiểm",
     "UNAVAILABLE": "Thiếu số liệu",
+}
+
+_PILLAR_STATUS_LABELS_VI: dict[str, str] = {
+    "STRONG": "Mạnh",
+    "ADEQUATE": "Đạt chuẩn",
+    "WEAK": "Yếu",
+    "CRITICAL": "Nguy hiểm",
+    "UNAVAILABLE": "Thiếu số liệu",
+}
+
+_SCORING_MODE_LABELS_VI: dict[str, str] = {
+    "multi_period": "Đa kỳ (kèm xu hướng YoY)",
+    "single_period": "Đơn kỳ (1 năm BCTC)",
+    "excluded": "Loại trừ tổ chức tài chính",
+}
+
+_ACCOUNTING_STANDARD_LABELS_VI: dict[str, str] = {
+    "TT99_2025": "Thông tư 99/2025/TT-BTC",
+    "TT200_2014": "Thông tư 200/2014/TT-BTC",
+    "TT133_2016": "Thông tư 133/2016/TT-BTC",
+    "IFRS_USGAAP": "IFRS / US GAAP",
+    "US_GAAP": "US GAAP (SEC)",
+}
+
+_QOE_STATUS_LABELS_VI: dict[str, str] = {
+    "HIGH": "Cao (Dòng tiền bảo chứng lợi nhuận)",
+    "MODERATE": "Trung bình",
+    "LOW": "Thấp (Cần đối chiếu dòng tiền)",
+    "NEGATIVE_EARNINGS": "Lỗ ròng",
+    "UNAVAILABLE": "Chưa đủ dữ liệu",
+}
+
+_RADAR_SHORT_LABELS_VI: dict[str, str] = {
+    "liquidity": "Thanh toán\nngắn hạn",
+    "solvency": "Cơ cấu vốn &\nÁp lực nợ",
+    "profitability": "Khả năng\nsinh lời",
+    "efficiency": "Hiệu quả\nluân chuyển",
+    "cash_flow": "Sức mạnh\ndòng tiền",
 }
 
 
@@ -164,7 +203,7 @@ def _render_radar_chart_png(pillars: list[PillarView]) -> BytesIO | None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    labels = [p.label_vi for p in pillars]
+    labels = [_RADAR_SHORT_LABELS_VI.get(p.key, p.label_vi) for p in pillars]
     scores = [
         float(p.score) if p.score is not None and isfinite(p.score) else 0.0
         for p in pillars
@@ -174,7 +213,7 @@ def _render_radar_chart_png(pillars: list[PillarView]) -> BytesIO | None:
     angles_closed = angles + angles[:1]
     scores_closed = scores + scores[:1]
 
-    fig = plt.figure(figsize=(4.4, 3.6), dpi=200)
+    fig = plt.figure(figsize=(5.4, 4.3), dpi=200)
     try:
         plt.rcParams["font.family"] = "DejaVu Sans"
         ax: Any = fig.add_subplot(111, polar=True)
@@ -185,7 +224,8 @@ def _render_radar_chart_png(pillars: list[PillarView]) -> BytesIO | None:
         ax.set_yticks([25, 50, 75, 100])
         ax.set_yticklabels(["25", "50", "75", "100"], fontsize=7, color="#64748B")
         ax.set_xticks(angles)
-        ax.set_xticklabels(labels, fontsize=8, fontweight="bold", color="#0F172A")
+        ax.set_xticklabels(labels, fontsize=8.5, fontweight="bold", color="#0F172A")
+        ax.tick_params(axis="x", pad=16)
         ax.grid(color="#CBD5E1", linestyle="--", linewidth=0.6)
         ax.spines["polar"].set_color("#94A3B8")
 
@@ -193,9 +233,9 @@ def _render_radar_chart_png(pillars: list[PillarView]) -> BytesIO | None:
         ax.fill(angles_closed, scores_closed, color="#3B82F6", alpha=0.22)
         ax.scatter(angles, scores, color="#1E3A8A", s=24, zorder=5)
 
-        fig.tight_layout(pad=1.0)
+        fig.tight_layout(pad=1.3)
         buf = BytesIO()
-        fig.savefig(buf, format="png", dpi=200, bbox_inches="tight")
+        fig.savefig(buf, format="png", dpi=200, bbox_inches="tight", pad_inches=0.25)
         buf.seek(0)
         return buf
     finally:
@@ -214,6 +254,8 @@ def _render_history_chart_png(
     ]
     if len(valid_points) < 2:
         return None
+    # Show the most recent 8 fiscal periods so X-axis year labels remain crisp and legible.
+    valid_points = valid_points[-8:]
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -228,7 +270,7 @@ def _render_history_chart_png(
         for pt in valid_points
     ]
 
-    fig, ax1 = plt.subplots(figsize=(6.8, 2.5), dpi=200)
+    fig, ax1 = plt.subplots(figsize=(6.8, 2.35), dpi=200)
     try:
         plt.rcParams["font.family"] = "DejaVu Sans"
         x_pos = list(range(len(years)))
@@ -243,7 +285,14 @@ def _render_history_chart_png(
         )
         ax1.set_ylim(0, 105)
         ax1.set_xticks(x_pos)
-        ax1.set_xticklabels(years, fontsize=8, color="#0F172A")
+        rotation = 25 if len(years) > 6 else 0
+        ax1.set_xticklabels(
+            years,
+            fontsize=8,
+            color="#0F172A",
+            rotation=rotation,
+            ha="right" if rotation else "center",
+        )
         ax1.set_ylabel("Điểm Sức khỏe", fontsize=8, color="#1D4ED8")
         ax1.tick_params(axis="y", labelsize=8, labelcolor="#1D4ED8")
         ax1.grid(axis="y", color="#E2E8F0", linestyle="--", linewidth=0.6)
@@ -466,6 +515,9 @@ def generate_company_assessment_pdf(
     # =========================================================================
     # PAGE 1 — EXECUTIVE SUMMARY
     # =========================================================================
+    standard_label = _ACCOUNTING_STANDARD_LABELS_VI.get(
+        comp.accounting_standard or "", comp.accounting_standard or "—"
+    )
     banner_table = Table(
         [
             [
@@ -475,7 +527,7 @@ def generate_company_assessment_pdf(
                 Paragraph(
                     f"Đơn vị được thẩm định: <b>{_safe_text(comp.name)}</b>  |  "
                     f"Kỳ BCTC: <b>{_safe_text(comp.fiscal_year)}</b>  |  "
-                    f"Chuẩn kế toán: <b>{_safe_text(comp.accounting_standard)}</b>",
+                    f"Chuẩn kế toán: <b>{_safe_text(standard_label)}</b>",
                     styles["subtitle"],
                 )
             ],
@@ -525,7 +577,7 @@ def generate_company_assessment_pdf(
         [
             Paragraph("<b>Chuẩn BCTC & Tiền tệ</b>", styles["small"]),
             Paragraph(
-                f"{_safe_text(comp.accounting_standard)} ({_safe_text(comp.currency, 'VND')})",
+                f"{_safe_text(standard_label)} ({_safe_text(comp.currency, 'VND')})",
                 styles["body"],
             ),
             Paragraph("<b>Trạng thái kiểm toán</b>", styles["small"]),
@@ -603,6 +655,7 @@ def generate_company_assessment_pdf(
             _fmt_pct(summ.confidence.input_completeness, 0) if summ.confidence else "—"
         )
 
+        mode_label = _SCORING_MODE_LABELS_VI.get(summ.scoring_mode, summ.scoring_mode)
         kpi_table = Table(
             [
                 [
@@ -620,7 +673,7 @@ def generate_company_assessment_pdf(
                     Paragraph(
                         f"<font color='{tier_hex}'>{pd_txt}</font><br/>"
                         f"<font size='8' color='#475569'>Chế độ: "
-                        f"{_safe_text(summ.scoring_mode)}</font>",
+                        f"{_safe_text(mode_label)}</font>",
                         styles["kpi_value"],
                     ),
                     Paragraph(
@@ -738,7 +791,10 @@ def generate_company_assessment_pdf(
                 Paragraph(_safe_text(p.label_vi), styles["table_cell"]),
                 Paragraph(_fmt_pct(p.weight, 0), styles["table_cell_right"]),
                 Paragraph(_fmt_num(p.score, 1), styles["table_cell_right"]),
-                Paragraph(_safe_text(p.status), styles["table_cell"]),
+                Paragraph(
+                    _safe_text(_PILLAR_STATUS_LABELS_VI.get(p.status, p.status)),
+                    styles["table_cell"],
+                ),
             ]
         )
     pillar_summary_tbl = Table(
@@ -835,10 +891,15 @@ def generate_company_assessment_pdf(
             overlay_notes.append(f"• <b>Cảnh báo dòng tiền / kiểm toán:</b> {_safe_text(reason)}")
     qoe_data = assessment.diagnostics.quality_of_earnings or {}
     qoe_status = qoe_data.get("status") or qoe_data.get("label") or qoe_data.get("assessment")
+    qoe_status_vi = (
+        _QOE_STATUS_LABELS_VI.get(str(qoe_status).upper(), str(qoe_status))
+        if qoe_status
+        else None
+    )
     qoe_ratio = qoe_data.get("cash_conversion_ratio") or qoe_data.get("ocf_to_net_income")
-    if qoe_status or qoe_ratio is not None:
+    if qoe_status_vi or qoe_ratio is not None:
         overlay_notes.append(
-            f"• <b>Chất lượng lợi nhuận (QoE):</b> Trạng thái: {_safe_text(qoe_status)}  |  "
+            f"• <b>Chất lượng lợi nhuận (QoE):</b> Trạng thái: {_safe_text(qoe_status_vi)}  |  "
             f"Tỷ lệ chuyển hóa tiền (OCF/LNST): "
             f"{_fmt_num(float(qoe_ratio), 2) if isinstance(qoe_ratio, (int, float)) else '—'}"
         )
@@ -926,27 +987,28 @@ def generate_company_assessment_pdf(
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 4),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 2.2),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
             ]
         )
     )
     story.append(metrics_tbl)
-    story.append(Spacer(1, 4 * mm))
+    story.append(Spacer(1, 3 * mm))
 
-    story.append(Paragraph("Diễn biến Đa kỳ (3–5 năm)", styles["h2"]))
+    history_block: list[Any] = [Paragraph("Diễn biến Đa kỳ (tối đa 8 kỳ gần nhất)", styles["h2"])]
     history_buf = _render_history_chart_png(assessment.history)
     if history_buf is not None:
-        hist_img = Image(history_buf, width=usable_w, height=56 * mm, kind="proportional")
-        story.append(hist_img)
+        hist_img = Image(history_buf, width=usable_w, height=52 * mm, kind="proportional")
+        history_block.append(hist_img)
     else:
-        story.append(
+        history_block.append(
             Paragraph(
                 "Chưa đủ dữ liệu đa kỳ (cần tối thiểu 2 kỳ báo cáo đã chốt có điểm đánh giá) "
                 "để hiển thị biểu đồ xu hướng.",
                 styles["small"],
             )
         )
+    story.append(KeepTogether(history_block))
 
     doc.build(story, onFirstPage=_draw_footer, onLaterPages=_draw_footer)
     return ensure_valid_pdf_bytes(buffer)

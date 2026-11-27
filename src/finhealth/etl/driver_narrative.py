@@ -6,7 +6,12 @@ from math import fsum
 from typing import Any, Literal
 
 from finhealth.etl.financial_ratios import _finite
-from finhealth.etl.metric_catalog import METRIC_CATALOG, PillarKey, format_metric_value_vi
+from finhealth.etl.metric_catalog import (
+    METRIC_CATALOG,
+    PillarKey,
+    evaluate_metric_status,
+    format_metric_value_vi,
+)
 
 ImpactStrength = Literal["VERY_HIGH", "HIGH", "MODERATE", "LOW"]
 DriverSide = Literal["STRENGTH", "BOTTLENECK"]
@@ -54,7 +59,11 @@ _FEATURE_META: dict[str, _FeatureNarrativeMeta] = {
         ">= 12%",
     ),
     "opex_to_revenue": _FeatureNarrativeMeta(
-        "opex_to_revenue", "Chi phí hoạt động / Doanh thu", "efficiency", "percent", "<= 25%"
+        "opex_to_revenue",
+        "Tổng chi phí hoạt động / Doanh thu",
+        "efficiency",
+        "percent",
+        "<= 85%",
     ),
     "asset_turnover": _FeatureNarrativeMeta(
         "asset_turnover", "Vòng quay tổng tài sản", "efficiency", "times", ">= 0,70x"
@@ -267,6 +276,43 @@ def _build_copy_vi(
     return headline, detail
 
 
+def _is_semantically_adverse(feature: str, observed_val: float, is_neg_eq: bool) -> bool:
+    """Return True when an observed ratio is economically weak and must not appear as a Strength."""
+    if feature in METRIC_CATALOG:
+        return (
+            evaluate_metric_status(feature, observed_val, is_negative_equity=is_neg_eq)
+            in ("WARNING", "CRITICAL")
+        )
+    if feature == "receivables_to_revenue":
+        return observed_val > 0.25
+    if feature == "inventory_to_assets":
+        return observed_val > 0.35
+    if feature == "opex_to_revenue":
+        return observed_val > 0.92
+    if feature == "long_term_debt_to_assets":
+        return observed_val > 0.50
+    if feature == "is_negative_equity":
+        return observed_val >= 0.5
+    if feature == "negative_ocf_streak":
+        return observed_val >= 2.0
+    if feature == "ebit_to_assets":
+        return observed_val < 0.0
+    if feature == "ebitda_to_assets":
+        return observed_val < 0.03
+    if feature == "debt_ratio_yoy_delta":
+        return observed_val > 0.05
+    if feature in (
+        "roa_yoy_delta",
+        "roe_yoy_delta",
+        "gross_margin_yoy_delta",
+        "working_capital_yoy_delta",
+        "ocf_ratio_yoy_delta",
+        "revenue_growth_yoy",
+    ):
+        return observed_val < -0.05
+    return False
+
+
 def translate_drivers_to_business(
     shap_explanation: Mapping[str, Any] | None,
     record: Mapping[str, Any],
@@ -300,9 +346,6 @@ def translate_drivers_to_business(
             },
         }
 
-    fitted_inputs = shap_explanation.get("fitted_inputs")
-    fitted_map = fitted_inputs if isinstance(fitted_inputs, Mapping) else {}
-
     finite_items: list[tuple[str, float]] = []
     for feature, raw_val in raw_contribs.items():
         val = _finite(raw_val)
@@ -326,24 +369,15 @@ def translate_drivers_to_business(
     strengths: list[dict[str, Any]] = []
     bottlenecks: list[dict[str, Any]] = []
     tech_features: list[dict[str, Any]] = []
+    is_neg_eq = bool(record.get("is_negative_equity"))
 
     ordered_items = sorted(finite_items, key=lambda item: (-abs(item[1]), item[0]))
     for feature, attribution in ordered_items:
         share_pct = round((abs(attribution) / total_abs) * 100.0, 2)
         side: DriverSide = "BOTTLENECK" if attribution > 0.0 else "STRENGTH"
         meta = _lookup_meta(feature)
+        # Never substitute training medians for missing company facts in user-facing copy.
         observed_val = _finite(record.get(feature))
-        if observed_val is None:
-            observed_val = _finite(fitted_map.get(feature))
-        formatted = _format_feature_value(feature, observed_val, meta)
-        impact_strength = _classify_impact_strength(share_pct)
-        headline_vi, detail_vi = _build_copy_vi(
-            side=side,
-            meta=meta,
-            formatted_value=formatted,
-            impact_share_pct=share_pct,
-            strength=impact_strength,
-        )
 
         tech_features.append(
             {
@@ -353,6 +387,21 @@ def translate_drivers_to_business(
                 "direction": "INCREASES_RISK" if side == "BOTTLENECK" else "DECREASES_RISK",
                 "observed_value": observed_val,
             }
+        )
+
+        if observed_val is None:
+            continue
+        if side == "STRENGTH" and _is_semantically_adverse(feature, observed_val, is_neg_eq):
+            continue
+
+        formatted = _format_feature_value(feature, observed_val, meta)
+        impact_strength = _classify_impact_strength(share_pct)
+        headline_vi, detail_vi = _build_copy_vi(
+            side=side,
+            meta=meta,
+            formatted_value=formatted,
+            impact_share_pct=share_pct,
+            strength=impact_strength,
         )
 
         driver_card = {

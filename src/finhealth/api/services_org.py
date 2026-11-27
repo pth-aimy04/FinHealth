@@ -87,16 +87,16 @@ _COMPARE_CORE_METRICS: tuple[str, ...] = (
 )
 
 _VSIC_TO_SEC_SECTOR: dict[str, str] = {
-    "A": "Agriculture",
+    "A": "Agriculture, Forestry and Fishing",
     "B": "Mining",
     "C": "Manufacturing",
-    "D": "Utilities",
-    "E": "Utilities",
+    "D": "Transportation, Communications and Utilities",
+    "E": "Transportation, Communications and Utilities",
     "F": "Construction",
     "G": "Retail Trade",
-    "H": "Transportation",
+    "H": "Transportation, Communications and Utilities",
     "I": "Services",
-    "J": "Information",
+    "J": "Transportation, Communications and Utilities",
     "L": "Real Estate",
     "M": "Services",
     "N": "Services",
@@ -107,14 +107,33 @@ _SECTOR_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("xây dựng", "xây lắp", "hạ tầng", "construct"), "Construction"),
     (("bán lẻ", "bán buôn", "thương mại", "retail", "wholesale", "trade"), "Retail Trade"),
     (
-        ("công nghệ", "phần mềm", "viễn thông", "thông tin", "tech", "software", "info"),
-        "Information",
+        (
+            "công nghệ",
+            "phần mềm",
+            "viễn thông",
+            "thông tin",
+            "vận tải",
+            "logistics",
+            "kho bãi",
+            "hàng không",
+            "điện",
+            "nước",
+            "năng lượng",
+            "tech",
+            "software",
+            "info",
+            "transport",
+            "utilit",
+            "communicat",
+        ),
+        "Transportation, Communications and Utilities",
     ),
-    (("vận tải", "logistics", "kho bãi", "hàng không", "transport"), "Transportation"),
     (("bất động sản", "địa ốc", "real estate"), "Real Estate"),
-    (("điện", "nước", "năng lượng", "utilit"), "Utilities"),
     (("khai khoáng", "dầu khí", "mining"), "Mining"),
-    (("nông nghiệp", "thủy sản", "lâm nghiệp", "agricult"), "Agriculture"),
+    (
+        ("nông nghiệp", "thủy sản", "lâm nghiệp", "agricult", "forestry", "fishing"),
+        "Agriculture, Forestry and Fishing",
+    ),
     (("dịch vụ", "du lịch", "y tế", "giáo dục", "service"), "Services"),
 )
 
@@ -146,6 +165,49 @@ _STATEMENT_COLUMNS: tuple[str, ...] = (
     "eps_basic",
     "eps_diluted",
 )
+
+
+def _compute_total_opex_to_revenue(
+    *,
+    revenues: float | None,
+    cogs: float | None,
+    operating_expenses: float | None,
+    ebitda: float | None,
+) -> float | None:
+    """Compute Kaggle US X18/X16 total operating expenses (COGS + SG&A = Revenue - EBITDA)."""
+    rev = _finite(revenues)
+    if rev is None or rev <= 0.0:
+        return None
+    cogs_v = _finite(cogs)
+    opex_v = _finite(operating_expenses)
+    ebitda_v = _finite(ebitda)
+    if opex_v is not None and cogs_v is not None:
+        # Kaggle X18 combines COGS + SG&A; statements separating SG&A report opex < cogs.
+        total_opex = cogs_v + opex_v if opex_v < cogs_v else opex_v
+        return _safe_div(total_opex, rev, True)
+    if opex_v is not None:
+        return _safe_div(opex_v, rev, True)
+    if ebitda_v is not None:
+        return _safe_div(rev - ebitda_v, rev, True)
+    return None
+
+
+def _resolve_active_model_version(model_registry: ModelRegistryState | None) -> str:
+    """Resolve the active scale-free model version without executing ML inference."""
+    bundle = (
+        model_registry.get_scale_free_v2() or model_registry.get()
+        if model_registry is not None
+        else None
+    )
+    if bundle is None:
+        return DEFAULT_FALLBACK_MODEL_VERSION
+    if getattr(bundle, "scoring_contract", "legacy_v1") == "scale_free_v2":
+        return str(bundle.model_version)
+    if hasattr(bundle, "classifier") and bundle.classifier is not None:
+        feat_cols = tuple(getattr(bundle.classifier, "feature_columns", ()))
+        if feat_cols and "eps" not in feat_cols:
+            return str(bundle.model_version)
+    return DEFAULT_FALLBACK_MODEL_VERSION
 
 
 def _statement_to_record(
@@ -190,11 +252,19 @@ def _statement_to_record(
     is_neg_eq = bool(equity is not None and equity <= 0.0)
     is_thin_eq = bool(equity_to_assets is not None and 0.0 < equity_to_assets < 0.05)
 
+    total_opex_to_revenue = _compute_total_opex_to_revenue(
+        revenues=revenues,
+        cogs=cogs,
+        operating_expenses=raw.get("operating_expenses"),
+        ebitda=ebitda,
+    )
+    neg_eq_flag: float | None = (1.0 if is_neg_eq else 0.0) if equity is not None else None
+
     extended: dict[str, Any] = {
         "gross_margin": _safe_div(gross_profit, revenues, True),
         "ebitda_margin": _safe_div(ebitda, revenues, True),
         "ebitda_to_assets": _safe_div(ebitda, assets, True),
-        "opex_to_revenue": _safe_div(raw.get("operating_expenses"), revenues, True),
+        "opex_to_revenue": total_opex_to_revenue,
         "quick_ratio": (
             _safe_div(current_assets - inventory, current_liabilities, True)
             if current_assets is not None and inventory is not None
@@ -203,7 +273,7 @@ def _statement_to_record(
         "short_term_debt_share": _safe_div(current_liabilities, liabilities, True),
         "long_term_debt_to_assets": _safe_div(raw.get("long_term_debt"), assets, True),
         "equity_to_assets": equity_to_assets,
-        "is_negative_equity": 1.0 if is_neg_eq else 0.0,
+        "is_negative_equity": neg_eq_flag,
         "is_thin_equity": is_thin_eq,
         "inventory_to_assets": _safe_div(inventory, assets, True),
         "receivables_to_revenue": _safe_div(receivables, revenues, True),
@@ -224,7 +294,9 @@ def _statement_to_record(
     for key, val in extended.items():
         if record.get(key) is None and val is not None:
             record[key] = val
-    record["is_negative_equity"] = bool(is_neg_eq)
+    # Enforce Kaggle X18 total opex alignment and float 0.0/1.0 flag for confidence completeness.
+    record["opex_to_revenue"] = total_opex_to_revenue
+    record["is_negative_equity"] = neg_eq_flag
 
     if prior_stmt is not None and prior_stmt.fiscal_year == stmt.fiscal_year - 1:
         prior_rec = _statement_to_record(prior_stmt, company, None)
@@ -659,6 +731,16 @@ def _ensure_org_assessment(
         db.refresh(existing)
         return existing, record, altman
 
+    target_model_version = _resolve_active_model_version(model_registry)
+    existing = db.execute(
+        select(OrgAssessment).where(
+            OrgAssessment.org_statement_id == stmt.id,
+            OrgAssessment.model_version == target_model_version,
+        )
+    ).scalar_one_or_none()
+    if existing is not None and not force_recompute:
+        return existing, record, altman
+
     has_consecutive_prior = (
         prior_stmt is not None and prior_stmt.fiscal_year == stmt.fiscal_year - 1
     )
@@ -676,14 +758,15 @@ def _ensure_org_assessment(
         model_registry=model_registry,
     )
     model_version = str(scored["model_version"])
-    existing = db.execute(
-        select(OrgAssessment).where(
-            OrgAssessment.org_statement_id == stmt.id,
-            OrgAssessment.model_version == model_version,
-        )
-    ).scalar_one_or_none()
-    if existing is not None and not force_recompute:
-        return existing, record, altman
+    if model_version != target_model_version:
+        existing = db.execute(
+            select(OrgAssessment).where(
+                OrgAssessment.org_statement_id == stmt.id,
+                OrgAssessment.model_version == model_version,
+            )
+        ).scalar_one_or_none()
+        if existing is not None and not force_recompute:
+            return existing, record, altman
 
     drivers_payload = translate_drivers_to_business(scored["shap_explanation"], record)
     if existing is None:

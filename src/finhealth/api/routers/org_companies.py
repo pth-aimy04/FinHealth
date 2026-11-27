@@ -4,7 +4,7 @@ from datetime import date
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -26,7 +26,7 @@ from finhealth.api.schemas.org_financials import (
 )
 from finhealth.api.security import OrgContext, aware_time, require_org_role
 from finhealth.core.exceptions import EtlProcessingError
-from finhealth.db.org_models import OrgCompany, OrgFinancialStatement
+from finhealth.db.org_models import OrgAssessment, OrgCompany, OrgFinancialStatement
 from finhealth.etl.accounting_validator import validate_financial_statement
 from finhealth.etl.excel_templates import (
     MAX_EXCEL_UPLOAD_BYTES,
@@ -69,7 +69,80 @@ def _resolve_display_unit(currency: str, unit_scale: int, explicit: str | None) 
     return _DISPLAY_UNIT_MAP.get((currency, unit_scale), currency)
 
 
-def _serialize_company(company: OrgCompany) -> OrgCompanyResponse:
+def _latest_assessments_by_company(
+    db: Session, org_id: int, company_ids: list[int]
+) -> dict[int, tuple[float | None, str | None]]:
+    """Fetch latest finalized assessment (health_score, risk_tier) per org company."""
+    if not company_ids:
+        return {}
+    rows = db.execute(
+        select(
+            OrgAssessment.org_company_id,
+            OrgAssessment.health_score,
+            OrgAssessment.risk_tier,
+        )
+        .join(
+            OrgFinancialStatement,
+            OrgFinancialStatement.id == OrgAssessment.org_statement_id,
+        )
+        .where(
+            OrgAssessment.organization_id == org_id,
+            OrgAssessment.org_company_id.in_(company_ids),
+            OrgFinancialStatement.status == "finalized",
+        )
+        .order_by(
+            OrgFinancialStatement.fiscal_year.desc(),
+            OrgAssessment.id.desc(),
+        )
+    ).all()
+    latest: dict[int, tuple[float | None, str | None]] = {}
+    for cid, score, tier in rows:
+        if cid not in latest:
+            latest[cid] = (score, tier)
+    return latest
+
+
+def _invalidate_company_assessments(
+    db: Session,
+    *,
+    org_id: int,
+    company_id: int,
+    fiscal_years: tuple[int, ...] | None = None,
+) -> None:
+    """Delete cached OrgAssessment snapshots impacted by statement or company metadata edits."""
+    if fiscal_years is None:
+        db.execute(
+            delete(OrgAssessment).where(
+                OrgAssessment.organization_id == org_id,
+                OrgAssessment.org_company_id == company_id,
+            )
+        )
+        return
+    stmt_ids = list(
+        db.scalars(
+            select(OrgFinancialStatement.id).where(
+                OrgFinancialStatement.organization_id == org_id,
+                OrgFinancialStatement.org_company_id == company_id,
+                OrgFinancialStatement.fiscal_year.in_(fiscal_years),
+            )
+        ).all()
+    )
+    if stmt_ids:
+        db.execute(
+            delete(OrgAssessment).where(
+                OrgAssessment.organization_id == org_id,
+                OrgAssessment.org_company_id == company_id,
+                OrgAssessment.org_statement_id.in_(stmt_ids),
+            )
+        )
+
+
+def _serialize_company(
+    company: OrgCompany,
+    *,
+    latest_health_score: float | None = None,
+    latest_risk_tier: str | None = None,
+) -> OrgCompanyResponse:
     """Convert an OrgCompany ORM row into its API response with FI scoring gate."""
     scoring_eligible = company.business_type != "financial_institution"
     return OrgCompanyResponse(
@@ -87,6 +160,8 @@ def _serialize_company(company: OrgCompany) -> OrgCompanyResponse:
         is_sample=company.is_sample,
         scoring_eligible=scoring_eligible,
         scoring_exclusion_reason=None if scoring_eligible else FI_EXCLUSION_MESSAGE,
+        latest_health_score=latest_health_score if scoring_eligible else None,
+        latest_risk_tier=latest_risk_tier if scoring_eligible else None,
         created_at=aware_time(company.created_at),
         updated_at=aware_time(company.updated_at),
     )
@@ -228,8 +303,18 @@ def list_org_companies(
                 OrgCompany.ticker.ilike(pattern),
             )
         )
-    rows = db.scalars(stmt.order_by(OrgCompany.id.desc())).all()
-    return [_serialize_company(row) for row in rows]
+    rows = list(db.scalars(stmt.order_by(OrgCompany.id.desc())).all())
+    latest_map = _latest_assessments_by_company(
+        db, ctx.organization.id, [row.id for row in rows]
+    )
+    return [
+        _serialize_company(
+            row,
+            latest_health_score=latest_map.get(row.id, (None, None))[0],
+            latest_risk_tier=latest_map.get(row.id, (None, None))[1],
+        )
+        for row in rows
+    ]
 
 
 @router.post("/org/companies", response_model=OrgCompanyResponse, status_code=201)
@@ -268,7 +353,9 @@ def create_org_company(
 def get_org_company(company_id: int, ctx: ViewerCtx, db: Db) -> OrgCompanyResponse:
     """Retrieve one organization company by ID."""
     company = _get_org_company_or_404(db, ctx.organization.id, company_id)
-    return _serialize_company(company)
+    latest_map = _latest_assessments_by_company(db, ctx.organization.id, [company.id])
+    score, tier = latest_map.get(company.id, (None, None))
+    return _serialize_company(company, latest_health_score=score, latest_risk_tier=tier)
 
 
 @router.patch("/org/companies/{company_id}", response_model=OrgCompanyResponse)
@@ -281,8 +368,13 @@ def update_org_company(
     """Update company metadata or soft-archive flag (analyst/org_admin)."""
     company = _get_org_company_or_404(db, ctx.organization.id, company_id)
     updates = payload.model_dump(exclude_unset=True)
+    recompute_needed = "business_type" in updates or "listing_status" in updates
     for field, value in updates.items():
         setattr(company, field, value)
+    if recompute_needed:
+        _invalidate_company_assessments(
+            db, org_id=ctx.organization.id, company_id=company.id, fiscal_years=None
+        )
     try:
         db.commit()
     except IntegrityError as exc:
@@ -291,7 +383,9 @@ def update_org_company(
             409, "Mã số thuế (MST) cập nhật bị trùng trong không gian làm việc."
         ) from exc
     db.refresh(company)
-    return _serialize_company(company)
+    latest_map = _latest_assessments_by_company(db, ctx.organization.id, [company.id])
+    score, tier = latest_map.get(company.id, (None, None))
+    return _serialize_company(company, latest_health_score=score, latest_risk_tier=tier)
 
 
 @router.delete("/org/companies/{company_id}", status_code=204)
@@ -393,6 +487,12 @@ def create_or_upsert_statement(
         for field, val in scaled_fields.items():
             setattr(stmt, field, val)
 
+    _invalidate_company_assessments(
+        db,
+        org_id=ctx.organization.id,
+        company_id=company.id,
+        fiscal_years=(payload.fiscal_year, payload.fiscal_year + 1),
+    )
     db.commit()
     db.refresh(stmt)
     return _serialize_statement(stmt, is_manufacturing=company.business_type == "manufacturing")
@@ -469,6 +569,12 @@ def update_company_statement(
         stmt.validation_summary = validate_financial_statement(numeric_map).to_dict()
     stmt.status = target_status
 
+    _invalidate_company_assessments(
+        db,
+        org_id=ctx.organization.id,
+        company_id=company.id,
+        fiscal_years=(stmt.fiscal_year, stmt.fiscal_year + 1),
+    )
     db.commit()
     db.refresh(stmt)
     return _serialize_statement(stmt, is_manufacturing=company.business_type == "manufacturing")
@@ -490,6 +596,12 @@ def finalize_company_statement(
     numeric_map = _statement_numeric_dict(stmt)
     stmt.validation_summary = _enforce_finalization_gate(numeric_map)
     stmt.status = "finalized"
+    _invalidate_company_assessments(
+        db,
+        org_id=ctx.organization.id,
+        company_id=company.id,
+        fiscal_years=(stmt.fiscal_year, stmt.fiscal_year + 1),
+    )
     db.commit()
     db.refresh(stmt)
     return _serialize_statement(stmt, is_manufacturing=company.business_type == "manufacturing")
@@ -505,6 +617,12 @@ def delete_company_statement(
     """Permanently delete a financial statement (org_admin only)."""
     company = _get_org_company_or_404(db, ctx.organization.id, company_id)
     stmt = _get_org_statement_or_404(db, ctx.organization.id, company.id, statement_id)
+    _invalidate_company_assessments(
+        db,
+        org_id=ctx.organization.id,
+        company_id=company.id,
+        fiscal_years=(stmt.fiscal_year, stmt.fiscal_year + 1),
+    )
     db.delete(stmt)
     db.commit()
 
@@ -569,6 +687,12 @@ def _upsert_imported_draft(
         stmt.raw_source_meta = raw_source_meta
         for field, val in normalized_fields.items():
             setattr(stmt, field, val)
+    _invalidate_company_assessments(
+        db,
+        org_id=ctx.organization.id,
+        company_id=company.id,
+        fiscal_years=(fiscal_year, fiscal_year + 1),
+    )
     db.commit()
     db.refresh(stmt)
     return stmt

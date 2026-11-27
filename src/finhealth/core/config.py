@@ -1,14 +1,15 @@
 """Validated environment settings without import-time side effects."""
 
+import json
 import math
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 from urllib.parse import quote, quote_plus
 
 from pydantic import Field, PostgresDsn, SecretStr, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from finhealth.core.constants import RANDOM_SEED
 
@@ -41,7 +42,9 @@ class Settings(BaseSettings):
     mail_from_name: str = "FinHealth"
     mail_timeout_seconds: float = Field(default=15, gt=0, le=60)
     ingestion_worker_enabled: bool = False
-    cors_allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    cors_allowed_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["http://localhost:3000"]
+    )
 
     # Documentation placeholder: configure a monitored contact before SEC requests.
     sec_user_agent: str = "FinHealthAcademicResearch/1.0 (research@example.com)"
@@ -100,9 +103,14 @@ class Settings(BaseSettings):
     @field_validator("cors_allowed_origins", mode="before")
     @classmethod
     def validate_cors_allowed_origins(cls, value: object) -> object:
-        """Accept a list or comma-separated string of non-empty CORS origin URLs."""
+        """Accept a list, JSON array string, or comma-separated string of CORS origin URLs."""
         if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
+            stripped = value.strip()
+            if stripped.startswith("["):
+                parsed = json.loads(stripped)
+                if isinstance(parsed, list):
+                    return [str(origin).strip() for origin in parsed if str(origin).strip()]
+            return [origin.strip() for origin in stripped.split(",") if origin.strip()]
         if isinstance(value, list):
             return [str(origin).strip() for origin in value if str(origin).strip()]
         return value
